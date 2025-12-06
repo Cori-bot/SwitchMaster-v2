@@ -14,14 +14,10 @@ function Get-RiotWindow {
     return $null
 }
 
-function Focus-Window {
+function Set-WindowFocus {
     param([System.Diagnostics.Process]$Process)
     
     if ($Process) {
-        $hwnd = $Process.MainWindowHandle
-        # Check if minimized and restore
-        $placement = [IntPtr]::Zero
-        
         # Simple bring to front
         $wsh = New-Object -ComObject WScript.Shell
         $success = $wsh.AppActivate($Process.Id)
@@ -44,7 +40,7 @@ if ($Action -eq "Check") {
 }
 
 # Always focus first
-Focus-Window -Process $proc
+Set-WindowFocus -Process $proc
 
 if ($Action -eq "PasteTab") {
     # Paste
@@ -66,7 +62,7 @@ elseif ($Action -eq "PasteEnterStay") {
     Start-Sleep -Milliseconds 100
     # Stay Signed In sequence (Tab x 6, Enter, Tab, Enter) - based on python script logic
     # "Presser 6 fois Tab pour naviguer au bouton Rester connecté"
-    for ($i=0; $i -lt 6; $i++) {
+    for ($i = 0; $i -lt 6; $i++) {
         [System.Windows.Forms.SendKeys]::SendWait("{TAB}")
         Start-Sleep -Milliseconds 50
     }

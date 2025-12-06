@@ -361,10 +361,48 @@ ipcMain.handle('save-config', async (event, config) => {
     return true;
 });
 
-// 9. Fetch Account Stats (Deprecated/Removed feature request, keeping minimal handler if renderer calls it to prevent crash, or removing)
-// User asked to remove stats. Renderer still has code that *might* call it if I didn't clean up perfectly?
-// I removed stats logic from renderer.js, so I can remove it here too.
-// I will keep empty handler just in case to avoid crash if some old code persists, 
-// but actually I should clean it.
-ipcMain.handle('fetch-account-stats', async () => { return null; });
-ipcMain.handle('update-account-stats', async () => { return true; });
+// 9. Fetch Account Stats
+ipcMain.handle('fetch-account-stats', async (event, accountId) => {
+    try {
+        const accounts = await loadAccountsMeta();
+        const account = accounts.find(a => a.id === accountId);
+        
+        if (!account) {
+            throw new Error('Account not found');
+        }
+        
+        if (!account.riotId) {
+            throw new Error('Riot ID is required to fetch stats');
+        }
+        
+        const stats = await fetchAccountStats(account.riotId, account.gameType);
+        
+        // Update account with stats
+        account.stats = stats;
+        await saveAccountsMeta(accounts);
+        
+        return stats;
+    } catch (error) {
+        console.error('Error fetching account stats:', error);
+        throw error;
+    }
+});
+
+ipcMain.handle('update-account-stats', async (event, accountId, stats) => {
+    try {
+        const accounts = await loadAccountsMeta();
+        const account = accounts.find(a => a.id === accountId);
+        
+        if (!account) {
+            throw new Error('Account not found');
+        }
+        
+        account.stats = stats;
+        await saveAccountsMeta(accounts);
+        
+        return true;
+    } catch (error) {
+        console.error('Error updating account stats:', error);
+        throw error;
+    }
+});

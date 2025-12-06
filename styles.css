@@ -105,7 +105,7 @@ body {
 }
 
 .nav-item.active {
-    background-color: rgba(255, 70, 85, 0.1);
+    background-color: rgba(194, 194, 194, 0.1);
     color: var(--primary);
 }
 
@@ -379,6 +379,60 @@ body {
 .btn-delete:hover {
     color: #ff4655;
     background: rgba(255, 70, 85, 0.1);
+}
+
+/* Rank Section */
+.rank-section {
+    margin: 0;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.rank-current,
+.rank-peak {
+    flex: 1;
+    min-width: 120px;
+}
+
+.rank-header {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.rank-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.rank-icon {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    border-radius: 4px;
+}
+
+.rank-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.rank-loading {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-style: italic;
+    text-align: center;
+    padding: 8px 0;
 }
 
 /* Logs Panel */

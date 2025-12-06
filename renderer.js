@@ -71,9 +71,41 @@ function renderAccounts() {
         card.className = 'account-card';
 
         const gameTypeLabel = acc.gameType === 'league' ? 'League of Legends' : 'Valorant';
+        
+        // Build rank display HTML
+        let rankHTML = '';
+        if (acc.stats && acc.stats.rank) {
+            const isUnranked = acc.stats.rank === 'Unranked';
+            rankHTML = `
+                <div class="rank-section">
+                    <div class="rank-current">
+                        <div class="rank-header">Rank Actuel</div>
+                        <div class="rank-display">
+                            <img src="${acc.stats.rankIcon}" alt="${acc.stats.rank}" class="rank-icon" onerror="this.style.display='none'">
+                            <span class="rank-name">${acc.stats.rank}</span>
+                        </div>
+                    </div>
+                    ${isUnranked && acc.stats.peakRank && acc.stats.peakRank !== 'Unranked' ? `
+                    <div class="rank-peak">
+                        <div class="rank-header">Peak Rank</div>
+                        <div class="rank-display">
+                            <img src="${acc.stats.peakRankIcon}" alt="${acc.stats.peakRank}" class="rank-icon" onerror="this.style.display='none'">
+                            <span class="rank-name">${acc.stats.peakRank}</span>
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+        } else if (acc.riotId) {
+            rankHTML = `
+                <div class="rank-section">
+                    <div class="rank-loading">Chargement des stats...</div>
+                </div>
+            `;
+        }
 
         card.innerHTML = `
-            <div class="card-top-section" style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 16px;">
+            <div class="card-top-section" style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 8px;">
                 <div class="card-info" style="flex: 1;">
                     <div class="account-name">${acc.name}</div>
                     <div class="account-note">${acc.note || ''}</div>
@@ -93,6 +125,8 @@ function renderAccounts() {
                     </div>
                 </div>
             </div>
+
+            ${rankHTML}
 
             <div class="card-actions">
                 <button class="btn-switch" data-id="${acc.id}" data-game="${acc.gameType}">CONNECTER</button>
@@ -122,8 +156,64 @@ async function loadAccounts() {
         renderAccounts();
         log('Accounts loaded.');
         checkStatus();
+        
+        // Load stats for accounts with Riot ID (async, don't block)
+        for (const acc of accounts) {
+            if (acc.riotId && (!acc.stats || !acc.stats.rank)) {
+                loadAccountStats(acc.id).catch(err => {
+                    // Silently fail - stats are optional
+                    console.log(`Could not load stats for ${acc.name}:`, err.message);
+                });
+            }
+        }
     } catch (err) {
         log(`Error loading accounts: ${err.message}`);
+    }
+}
+
+async function loadAccountStats(accountId) {
+    try {
+        const stats = await ipcRenderer.invoke('fetch-account-stats', accountId);
+        // Update local account data
+        const account = accounts.find(a => a.id === accountId);
+        if (account) {
+            account.stats = stats;
+            renderAccounts(); // Re-render to show stats
+        }
+    } catch (err) {
+        console.error('Error loading account stats:', err);
+        throw err;
+    }
+}
+
+async function openEditModal(id) {
+    const account = accounts.find(a => a.id === id);
+    if (!account) return;
+
+    modalTitle.textContent = "Modifier un Compte";
+    inputEditId.value = account.id;
+    inputName.value = account.name;
+    inputUsername.value = '';
+    inputUsername.setAttribute('placeholder', '••••••••');
+    inputPassword.value = '';
+    inputPassword.setAttribute('placeholder', '••••••••');
+    inputRiotId.value = account.riotId || '';
+    document.querySelector(`input[name="game-type"][value="${account.gameType || 'valorant'}"]`).checked = true;
+    inputNote.value = account.note || '';
+    modalAddAccount.classList.add('show');
+    inputName.focus();
+}
+
+async function deleteAccount(id) {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer ce compte ?')) {
+        return;
+    }
+    try {
+        await ipcRenderer.invoke('delete-account', id);
+        log('Compte supprimé.');
+        loadAccounts();
+    } catch (err) {
+        log(`Erreur lors de la suppression: ${err.message}`);
     }
 }
 

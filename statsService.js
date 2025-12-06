@@ -134,10 +134,10 @@ async function fetchLeagueStats(riotId) {
             game: 'league',
             riotId: riotId,
             level: metadata.accountLevel || 0,
-            rank: stats.tier?.metadata?.tierName || 'Unranked',
+            rank: stats.tier?.metadata?.rankName || 'Unranked',
             rankIcon: stats.tier?.metadata?.iconUrl || 'https://trackercdn.com/cdn/tracker.gg/lol/ranks/s14/unranked.png',
-            peakRank: stats.tier?.metadata?.tierName || 'Unranked', // League doesn't have peak rank in same way
-            peakRankIcon: stats.tier?.metadata?.iconUrl || 'https://trackercdn.com/cdn/tracker.gg/lol/ranks/s14/unranked.png',
+            peakRank: stats.peakTiers?.metadata?.rankName || 'Unranked', // League doesn't have peak rank in same way
+            peakRankIcon: stats.peakTiers?.metadata?.iconUrl || 'https://trackercdn.com/cdn/tracker.gg/lol/ranks/s14/unranked.png',
             playtime: stats.matchesPlayed?.displayValue || '0 games',
             banner: data.data.platformInfo?.avatarUrl || null,
             shard: metadata.platformSlug || 'unknown'
