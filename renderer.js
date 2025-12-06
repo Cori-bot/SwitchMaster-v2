@@ -78,7 +78,7 @@ function renderAccounts() {
         card.className = 'account-card';
 
         const gameTypeLabel = acc.gameType === 'league' ? 'League of Legends' : 'Valorant';
-        
+
         // Build rank display HTML
         let rankHTML = '';
         if (acc.stats && acc.stats.rank) {
@@ -159,12 +159,12 @@ function renderAccounts() {
             e.stopPropagation();
             const accountId = e.currentTarget.dataset.id;
             const menu = e.currentTarget.nextElementSibling;
-            
+
             // Close all other menus
             document.querySelectorAll('.settings-menu').forEach(m => {
                 if (m !== menu) m.style.display = 'none';
             });
-            
+
             // Toggle current menu
             menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
         });
@@ -177,10 +177,10 @@ function renderAccounts() {
             const menu = e.currentTarget.closest('.settings-menu');
             const accountId = menu.dataset.id;
             const action = e.currentTarget.dataset.action;
-            
+
             // Close menu
             menu.style.display = 'none';
-            
+
             if (action === 'edit') {
                 openEditModal(accountId);
             } else if (action === 'delete') {
@@ -206,7 +206,7 @@ async function loadAccounts() {
         renderAccounts();
         log('Accounts loaded.');
         checkStatus();
-        
+
         // Load stats for accounts with Riot ID (async, don't block)
         for (const acc of accounts) {
             if (acc.riotId && (!acc.stats || !acc.stats.rank)) {
@@ -462,7 +462,7 @@ async function checkStatus() {
             }
         }
         statusText.textContent = res.status;
-        statusDot.classList.remove('active');
+        statusDot.classList.add('active'); // Green dot for Ready
         document.querySelectorAll('.account-card').forEach(card => card.classList.remove('active-account'));
     } catch (err) {
         console.error(err);
@@ -585,6 +585,19 @@ btnLaunchLoL.addEventListener('click', async () => {
     catch (err) { log(`Error: ${err.message}`); }
 });
 
+// Password visibility toggle
+const togglePasswordBtn = document.getElementById('toggle-password');
+const passwordInput = document.getElementById('input-password');
+const eyeIcon = togglePasswordBtn.querySelector('.eye-icon');
+const eyeOffIcon = togglePasswordBtn.querySelector('.eye-off-icon');
+
+togglePasswordBtn.addEventListener('click', () => {
+    const isPassword = passwordInput.type === 'password';
+    passwordInput.type = isPassword ? 'text' : 'password';
+    eyeIcon.style.display = isPassword ? 'none' : 'block';
+    eyeOffIcon.style.display = isPassword ? 'block' : 'none';
+});
+
 // Navigation
 function switchView(viewName) {
     if (viewName === 'dashboard') {
@@ -607,3 +620,17 @@ navSettings.addEventListener('click', () => switchView('settings'));
 loadSettings();
 loadAccounts();
 log('Application started.');
+
+// Poll status
+setInterval(checkStatus, 2000);
+
+// Auto-refresh stats (every 5 minutes)
+async function refreshAllStats() {
+    log('Autorefresh: Updating account stats...');
+    for (const acc of accounts) {
+        if (acc.riotId) {
+            loadAccountStats(acc.id).catch(err => console.error(err));
+        }
+    }
+}
+setInterval(refreshAllStats, 5 * 60 * 1000);

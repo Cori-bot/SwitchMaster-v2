@@ -113,9 +113,30 @@ function createWindow() {
 }
 
 // --- App Lifecycle ---
+// --- Process Monitoring ---
+function monitorRiotProcess() {
+    setInterval(() => {
+        if (!activeAccountId) return;
+
+        exec('tasklist /FI "IMAGENAME eq RiotClientServices.exe" /FO CSV', (err, stdout) => {
+            if (err) return;
+            // stdout will contain "No tasks are running" or similar if not found, 
+            // or the CSV header + process line if found.
+            // Simplest check: does it include the exe name in a data line?
+            // "INFO: No tasks are running"
+
+            if (!stdout.includes('RiotClientServices.exe')) {
+                console.log('Riot Client closed. Resetting active status.');
+                activeAccountId = null;
+            }
+        });
+    }, 5000); // Check every 5 seconds
+}
+
 app.whenReady().then(async () => {
     await loadConfig();
     createWindow();
+    monitorRiotProcess();
 
     const settingsPath = path.join(riotDataPath, PRIVATE_SETTINGS_FILE);
     if (fs.existsSync(riotDataPath)) {
@@ -140,16 +161,16 @@ ipcMain.handle('get-accounts', async () => {
 ipcMain.handle('get-account-credentials', async (event, accountId) => {
     const accounts = await loadAccountsMeta();
     const account = accounts.find(a => a.id === accountId);
-    
+
     if (!account) throw new Error('Account not found.');
-    
+
     // Decrypt credentials
     const decryptedAccount = {
         ...account,
         username: decryptData(account.username),
         password: decryptData(account.password)
     };
-    
+
     return decryptedAccount;
 });
 
@@ -383,21 +404,21 @@ ipcMain.handle('fetch-account-stats', async (event, accountId) => {
     try {
         const accounts = await loadAccountsMeta();
         const account = accounts.find(a => a.id === accountId);
-        
+
         if (!account) {
             throw new Error('Account not found');
         }
-        
+
         if (!account.riotId) {
             throw new Error('Riot ID is required to fetch stats');
         }
-        
+
         const stats = await fetchAccountStats(account.riotId, account.gameType);
-        
+
         // Update account with stats
         account.stats = stats;
         await saveAccountsMeta(accounts);
-        
+
         return stats;
     } catch (error) {
         console.error('Error fetching account stats:', error);
@@ -409,14 +430,14 @@ ipcMain.handle('update-account-stats', async (event, accountId, stats) => {
     try {
         const accounts = await loadAccountsMeta();
         const account = accounts.find(a => a.id === accountId);
-        
+
         if (!account) {
             throw new Error('Account not found');
         }
-        
+
         account.stats = stats;
         await saveAccountsMeta(accounts);
-        
+
         return true;
     } catch (error) {
         console.error('Error updating account stats:', error);

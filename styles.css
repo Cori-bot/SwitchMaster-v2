@@ -216,20 +216,21 @@ body {
 .btn-primary {
     background-color: var(--primary);
     color: white;
-    border: none;
+    border: 1px solid var(--primary);
     padding: 10px 24px;
     border-radius: 8px;
     cursor: pointer;
     font-weight: 600;
     font-size: 14px;
-    transition: background 0.2s;
+    transition: all 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
 .btn-primary:hover {
-    background-color: var(--primary-hover);
+    background-color: var(--primary);
+    border-color: var(--text-main);
 }
 
 .content-area {
@@ -291,17 +292,6 @@ body {
     font-size: 13px;
     color: var(--text-muted);
     font-weight: 500;
-}
-
-.account-riot-id {
-    font-size: 11px;
-    color: var(--text-muted);
-    opacity: 0.7;
-    margin-top: 4px;
-    font-family: 'Consolas', monospace;
-    background: rgba(255, 255, 255, 0.05);
-    padding: 2px 6px;
-    border-radius: 4px;
     display: inline-block;
 }
 
@@ -410,6 +400,7 @@ body {
         opacity: 0;
         transform: translateY(-4px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -689,6 +680,41 @@ body {
 .close-modal:hover {
     background: var(--bg-hover);
     color: var(--text-main);
+}
+
+/* Password Toggle */
+.password-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-input-wrapper input {
+    padding-right: 45px;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+    border-radius: 4px;
+}
+
+.password-toggle:hover {
+    color: var(--text-main);
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.password-toggle:focus {
+    outline: none;
 }
 
 .form-group {
