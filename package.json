@@ -1,0 +1,21 @@
+{
+    "name": "switchmaster",
+    "version": "1.0.0",
+    "description": "Riot Games Account Switcher",
+    "main": "index.js",
+    "scripts": {
+        "start": "electron ."
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "chokidar": "^3.5.3",
+        "fs-extra": "^11.1.1",
+        "uuid": "^9.0.0",
+        "yaml": "^2.3.1"
+    },
+    "devDependencies": {
+        "electron": "^39.2.4"
+    }
+}

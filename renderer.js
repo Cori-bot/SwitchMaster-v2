@@ -1,0 +1,422 @@
+const { ipcRenderer } = require('electron');
+
+// DOM Elements
+const accountsList = document.getElementById('accounts-list');
+const btnAddAccount = document.getElementById('btn-add-account');
+const modalAddAccount = document.getElementById('add-account-modal');
+const modalTitle = document.getElementById('modal-title');
+const btnSaveAccount = document.getElementById('btn-save-account');
+const btnCloseModal = document.querySelectorAll('.close-modal');
+const inputEditId = document.getElementById('input-edit-id');
+
+const inputName = document.getElementById('input-name');
+const inputUsername = document.getElementById('input-username');
+const inputPassword = document.getElementById('input-password');
+const inputRiotId = document.getElementById('input-riot-id');
+const inputNote = document.getElementById('input-note');
+
+const logsContainer = document.getElementById('logs-container');
+const logsPanel = document.querySelector('.logs-panel');
+const btnClearLogs = document.getElementById('clear-logs');
+
+const statusDot = document.getElementById('status-dot');
+const statusText = document.getElementById('status-text');
+
+const btnLaunchVal = document.getElementById('launch-val');
+const btnLaunchLoL = document.getElementById('launch-lol');
+
+// Settings Elements
+const settingLogs = document.getElementById('setting-logs');
+const settingRiotPath = document.getElementById('setting-riot-path');
+const settingsSaveStatus = document.getElementById('settings-save-status');
+
+// Navigation Elements
+const navDashboard = document.getElementById('nav-dashboard');
+const navSettings = document.getElementById('nav-settings');
+const viewDashboard = document.getElementById('view-dashboard');
+const viewSettings = document.getElementById('view-settings');
+
+// Launch Modal Elements
+const modalLaunchGame = document.getElementById('launch-game-modal');
+const btnConfirmLaunch = document.getElementById('btn-confirm-launch');
+const btnCloseLaunchModal = document.querySelectorAll('.close-launch-modal');
+let pendingGameType = null;
+let pendingAccountId = null;
+
+// State
+let accounts = [];
+let appConfig = {};
+
+// --- Logging ---
+function log(message) {
+    const time = new Date().toLocaleTimeString();
+    const div = document.createElement('div');
+    div.className = 'log-entry';
+    div.textContent = `[${time}] ${message}`;
+    logsContainer.appendChild(div);
+    logsContainer.scrollTop = logsContainer.scrollHeight;
+}
+
+// --- UI Rendering ---
+function renderAccounts() {
+    accountsList.innerHTML = '';
+
+    if (accounts.length === 0) {
+        accountsList.innerHTML = '<div style="color: var(--text-muted); grid-column: 1/-1; text-align: center; padding: 40px;">Aucun compte sauvegardé. Ajoutez un compte pour commencer.</div>';
+        return;
+    }
+
+    accounts.forEach(acc => {
+        const card = document.createElement('div');
+        card.className = 'account-card';
+
+        const gameTypeLabel = acc.gameType === 'league' ? 'League of Legends' : 'Valorant';
+
+        card.innerHTML = `
+            <div class="card-top-section" style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 16px;">
+                <div class="card-info" style="flex: 1;">
+                    <div class="account-name">${acc.name}</div>
+                    <div class="account-note">${acc.note || ''}</div>
+                    ${acc.riotId ? `<div class="account-riot-id">${acc.riotId}</div>` : ''}
+                </div>
+                <div class="card-right-side" style="display: flex; flex-direction: column; align-items: flex-end; gap: 12px;">
+                    <div class="card-controls" style="display: flex; gap: 8px;">
+                         <button class="btn-delete btn-edit" data-id="${acc.id}" title="Edit Account">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        </button>
+                        <button class="btn-delete" data-id="${acc.id}" title="Delete Account">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </button>
+                    </div>
+                    <div class="card-display-image">
+                        <img src="assets/${acc.gameType === 'league' ? 'league' : 'valorant'}.png" alt="${acc.gameType}">
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-actions">
+                <button class="btn-switch" data-id="${acc.id}" data-game="${acc.gameType}">CONNECTER</button>
+            </div>
+        `;
+        accountsList.appendChild(card);
+    });
+
+    // Add event listeners
+    document.querySelectorAll('.btn-switch').forEach(btn => {
+        btn.addEventListener('click', (e) => switchAccount(e.target.dataset.id, e.target.dataset.game));
+    });
+
+    document.querySelectorAll('.btn-delete:not(.btn-edit)').forEach(btn => {
+        btn.addEventListener('click', (e) => deleteAccount(e.target.closest('.btn-delete').dataset.id));
+    });
+
+    document.querySelectorAll('.btn-edit').forEach(btn => {
+        btn.addEventListener('click', (e) => openEditModal(e.target.closest('.btn-edit').dataset.id));
+    });
+}
+
+// --- Actions ---
+async function loadAccounts() {
+    try {
+        accounts = await ipcRenderer.invoke('get-accounts');
+        renderAccounts();
+        log('Accounts loaded.');
+        checkStatus();
+    } catch (err) {
+        log(`Error loading accounts: ${err.message}`);
+    }
+}
+
+async function saveAccount() {
+    const id = inputEditId.value;
+    const name = inputName.value.trim();
+    const username = inputUsername.value.trim();
+    const password = inputPassword.value.trim();
+    const note = inputNote.value.trim();
+    const riotId = inputRiotId.value.trim();
+    const gameType = document.querySelector('input[name="game-type"]:checked')?.value || 'valorant';
+
+    if (!name || !username || !password) {
+        alert('Nom, Username et Mot de passe sont requis.');
+        return;
+    }
+
+    try {
+        if (id) {
+            // Edit existing
+            log(`Modification du compte "${name}"...`);
+            // We reuse add-account because logic is likely basically "save account"
+            // But main process add-account generates ID. Need "update-account" or modify "add-account" to handle ID?
+            // User didn't ask us to implement "update-account" IPC, but we can't Add with same ID. 
+            // We should ideally call delete then add, or implement update.
+            // As a quick fix for this session, we'll delete the old one and add new (simulating update)
+            // UNLESS user strictly needs ID persistence for stats (which we removed).
+            // Actually, deleting and adding gives a new ID, which is fine since no external dependencies on ID exist anymore.
+
+            await ipcRenderer.invoke('delete-account', id);
+        } else {
+            log('Ajout du compte...');
+        }
+
+        await ipcRenderer.invoke('add-account', {
+            name,
+            username,
+            password,
+            note,
+            riotId: riotId || null,
+            gameType
+        });
+
+        log(id ? `✓ Compte modifié avec succès.` : `✓ Compte ajouté avec succès.`);
+        closeModal();
+        loadAccounts();
+    } catch (err) {
+        log(`❌ Erreur: ${err.message}`);
+        alert(`Erreur: ${err.message}`);
+    }
+}
+
+
+
+async function switchAccount(id, gameType) {
+    const account = accounts.find(a => a.id === id);
+    if (!account) return;
+
+    // Store pending action
+    pendingAccountId = id;
+    pendingGameType = gameType;
+
+    // Update modal text
+    const title = document.getElementById('launch-game-title');
+    const body = document.querySelector('#launch-game-modal .modal-body p');
+    if (title) title.textContent = account.name;
+    if (body) body.textContent = "Voulez-vous lancer le jeu après la connexion ?";
+
+    // Show modal
+    modalLaunchGame.classList.add('show');
+}
+
+// Perform the actual switch (and optional launch)
+async function performSwitch(id, gameType, shouldLaunch) {
+    const account = accounts.find(a => a.id === id);
+    if (!account) return;
+
+    try {
+        log(`🔄 Connexion à ${account.name}...`);
+
+        // 1. Switch Account (Login Automation)
+        await ipcRenderer.invoke('switch-account', id);
+        log(`✓ Login terminé.`);
+
+        // 2. Launch Game (if requested)
+        if (shouldLaunch) {
+            log(`🚀 Lancement du jeu (${gameType})...`);
+            await ipcRenderer.invoke('launch-game', gameType);
+        }
+
+        checkStatus();
+    } catch (err) {
+        log(`❌ Erreur: ${err.message}`);
+        alert(`Erreur: ${err.message}`);
+    }
+}
+
+// Modal Listeners
+// "Oui, Lancer"
+btnConfirmLaunch.addEventListener('click', () => {
+    if (pendingAccountId && pendingGameType) {
+        modalLaunchGame.classList.remove('show');
+        performSwitch(pendingAccountId, pendingGameType, true);
+        pendingAccountId = null;
+        pendingGameType = null;
+    }
+});
+
+// "Non" (Just Connect) -> Using the close buttons class as "Non" trigger logic
+// effectively, but we might want to distinguish "Cancel" vs "No Launch".
+// User asked: "ask if we want to launch". Implicitly "Connect" is the main action.
+// So "Non" button should trigger performSwitch(..., false).
+// But "Close" (X or Overlay) might be Cancel.
+// Let's attach specific listener to the "Non" button if possible, or check class.
+// The HTML has `btn-secondary close-launch-modal` for "Non".
+// We will modify the "Non" button to be distinct if needed, or just attach to .close-launch-modal
+// BEWARE: .close-launch-modal might be used for "Cancel" intent.
+// I'll grab the specific "Non" button by text or order, or assume all .close-launch-modal means "Just Connect".
+// Actually, safer to treat "Non" as "Just Connect". Cancellation is tricky if I don't add a 3rd button.
+// For now, "Non" = Connect without launch.
+btnCloseLaunchModal.forEach(btn => {
+    btn.onclick = (e) => {
+        // Prevent default close if we want to handle logic
+        e.preventDefault();
+        modalLaunchGame.classList.remove('show');
+
+        if (pendingAccountId && pendingGameType) {
+            performSwitch(pendingAccountId, pendingGameType, false);
+            pendingAccountId = null;
+            pendingGameType = null;
+        }
+    };
+});
+
+async function checkStatus() {
+    try {
+        const res = await ipcRenderer.invoke('get-status');
+        if (res.status === 'Active' && res.accountId) {
+            const acc = accounts.find(a => a.id === res.accountId);
+            if (acc) {
+                statusText.textContent = `Active: ${acc.name}`;
+                statusDot.classList.add('active');
+
+                document.querySelectorAll('.account-card').forEach(card => card.classList.remove('active-account'));
+                const btn = document.querySelector(`.btn-switch[data-id="${acc.id}"]`);
+                if (btn) btn.closest('.account-card').classList.add('active-account');
+
+                return;
+            }
+        }
+        statusText.textContent = res.status;
+        statusDot.classList.remove('active');
+        document.querySelectorAll('.account-card').forEach(card => card.classList.remove('active-account'));
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+// --- Settings Logic ---
+async function loadSettings() {
+    try {
+        appConfig = await ipcRenderer.invoke('get-config');
+        settingLogs.checked = appConfig.showLogs !== false;
+
+        let currentPath = appConfig.riotPath || "";
+        const defaultPath = "C:\\Riot Games\\Riot Client\\RiotClientServices.exe";
+
+        // Auto-detect if using default or empty
+        if (!currentPath || currentPath === defaultPath) {
+            log("🔍 Recherche automatique du client Riot...");
+            const detected = await ipcRenderer.invoke('auto-detect-paths');
+            if (detected && detected.riotPath) {
+                currentPath = detected.riotPath;
+                appConfig.riotPath = currentPath;
+                await ipcRenderer.invoke('save-config', appConfig);
+                log(`✓ Client Riot détecté: ${currentPath}`);
+            } else {
+                currentPath = defaultPath; // Fallback
+            }
+        }
+
+        settingRiotPath.value = currentPath;
+        toggleLogs(appConfig.showLogs !== false);
+    } catch (err) {
+        console.error("Error loading settings:", err);
+    }
+}
+
+async function saveSettings() {
+    appConfig = {
+        theme: 'dark', // Force dark
+        showLogs: settingLogs.checked,
+        riotPath: settingRiotPath.value.trim()
+    };
+    await ipcRenderer.invoke('save-config', appConfig);
+
+    // Visual feedback
+    settingsSaveStatus.textContent = '✓ Paramètres sauvegardés!';
+    settingsSaveStatus.style.opacity = '1';
+    setTimeout(() => { settingsSaveStatus.style.opacity = '0'; }, 2000);
+}
+
+// Auto-save listeners
+settingLogs.addEventListener('change', () => {
+    toggleLogs(settingLogs.checked);
+    saveSettings();
+});
+
+settingRiotPath.addEventListener('input', () => {
+    // Debounce basic
+    clearTimeout(window.saveTimeout);
+    window.saveTimeout = setTimeout(saveSettings, 500);
+});
+
+// Browse Button Logic
+const btnBrowsePath = document.getElementById('btn-browse-path');
+if (btnBrowsePath) {
+    btnBrowsePath.addEventListener('click', async () => {
+        const path = await ipcRenderer.invoke('select-riot-path');
+        if (path) {
+            settingRiotPath.value = path;
+            saveSettings();
+        }
+    });
+}
+
+function toggleLogs(show) {
+    logsPanel.style.display = show ? 'flex' : 'none';
+}
+
+// --- Event Listeners ---
+btnAddAccount.addEventListener('click', () => {
+    modalTitle.textContent = "Ajouter un Compte";
+    inputEditId.value = "";
+    inputName.value = '';
+    inputUsername.value = '';
+    inputUsername.setAttribute('placeholder', "Votre username Riot");
+    inputPassword.value = '';
+    inputPassword.setAttribute('placeholder', "Votre mot de passe");
+    inputRiotId.value = '';
+    document.querySelector('input[name="game-type"][value="valorant"]').checked = true;
+    inputNote.value = '';
+    modalAddAccount.classList.add('show');
+    inputName.focus();
+});
+
+function closeModal() {
+    modalAddAccount.classList.remove('show');
+}
+
+btnCloseModal.forEach(btn => btn.addEventListener('click', closeModal));
+btnSaveAccount.addEventListener('click', saveAccount);
+
+modalAddAccount.addEventListener('click', (e) => {
+    if (e.target === modalAddAccount) closeModal();
+});
+
+btnClearLogs.addEventListener('click', () => {
+    logsContainer.innerHTML = '';
+    log('Logs cleared.');
+});
+
+btnLaunchVal.addEventListener('click', async () => {
+    log('Launching Valorant...');
+    try { await ipcRenderer.invoke('launch-game', 'valorant'); }
+    catch (err) { log(`Error: ${err.message}`); }
+});
+
+btnLaunchLoL.addEventListener('click', async () => {
+    log('Launching League of Legends...');
+    try { await ipcRenderer.invoke('launch-game', 'league'); }
+    catch (err) { log(`Error: ${err.message}`); }
+});
+
+// Navigation
+function switchView(viewName) {
+    if (viewName === 'dashboard') {
+        viewDashboard.style.display = 'block';
+        viewSettings.style.display = 'none';
+        navDashboard.classList.add('active');
+        navSettings.classList.remove('active');
+    } else if (viewName === 'settings') {
+        viewDashboard.style.display = 'none';
+        viewSettings.style.display = 'block';
+        navDashboard.classList.remove('active');
+        navSettings.classList.add('active');
+    }
+}
+
+navDashboard.addEventListener('click', () => switchView('dashboard'));
+navSettings.addEventListener('click', () => switchView('settings'));
+
+// Initialize
+loadSettings();
+loadAccounts();
+log('Application started.');
