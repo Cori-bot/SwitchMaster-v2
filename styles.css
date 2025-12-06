@@ -745,6 +745,10 @@ body {
     color: var(--text-main);
 }
 
+.btn-primary[style*="background-color: #ff4655"]:hover {
+    background-color: #d93b48 !important;
+}
+
 /* Game Selector (Radio Buttons) */
 .game-selector {
     display: grid;

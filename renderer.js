@@ -43,6 +43,13 @@ const btnCloseLaunchModal = document.querySelectorAll('.close-launch-modal');
 let pendingGameType = null;
 let pendingAccountId = null;
 
+// Delete Account Modal Elements
+const modalDeleteAccount = document.getElementById('delete-account-modal');
+const btnConfirmDelete = document.getElementById('btn-confirm-delete');
+const btnCloseDeleteModal = document.querySelectorAll('.close-delete-modal');
+const deleteAccountTitle = document.getElementById('delete-account-title');
+let pendingDeleteAccountId = null;
+
 // State
 let accounts = [];
 let appConfig = {};
@@ -254,15 +261,30 @@ async function openEditModal(id) {
 }
 
 async function deleteAccount(id) {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer ce compte ?')) {
-        return;
+    const account = accounts.find(a => a.id === id);
+    if (!account) return;
+
+    // Store pending action
+    pendingDeleteAccountId = id;
+
+    // Update modal text
+    if (deleteAccountTitle) {
+        deleteAccountTitle.textContent = `Supprimer "${account.name}" ?`;
     }
+
+    // Show modal
+    modalDeleteAccount.classList.add('show');
+}
+
+// Perform the actual deletion
+async function performDelete(id) {
     try {
         await ipcRenderer.invoke('delete-account', id);
         log('Compte supprimé.');
         loadAccounts();
     } catch (err) {
         log(`Erreur lors de la suppression: ${err.message}`);
+        alert(`Erreur: ${err.message}`);
     }
 }
 
@@ -395,6 +417,32 @@ btnCloseLaunchModal.forEach(btn => {
             pendingGameType = null;
         }
     };
+});
+
+// Delete Account Modal Listeners
+// "Supprimer"
+btnConfirmDelete.addEventListener('click', () => {
+    if (pendingDeleteAccountId) {
+        modalDeleteAccount.classList.remove('show');
+        performDelete(pendingDeleteAccountId);
+        pendingDeleteAccountId = null;
+    }
+});
+
+// "Annuler" or Close
+btnCloseDeleteModal.forEach(btn => {
+    btn.addEventListener('click', () => {
+        modalDeleteAccount.classList.remove('show');
+        pendingDeleteAccountId = null;
+    });
+});
+
+// Close delete modal when clicking outside
+modalDeleteAccount.addEventListener('click', (e) => {
+    if (e.target === modalDeleteAccount) {
+        modalDeleteAccount.classList.remove('show');
+        pendingDeleteAccountId = null;
+    }
 });
 
 async function checkStatus() {

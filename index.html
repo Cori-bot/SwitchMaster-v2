@@ -216,6 +216,22 @@
         </div>
     </div>
 
+    <!-- Delete Account Confirmation Modal -->
+    <div class="modal-overlay" id="delete-account-modal">
+        <div class="modal" style="width: 400px; text-align: center;">
+            <div class="modal-header" style="justify-content: center; margin-bottom: 10px;">
+                <h3 id="delete-account-title" style="font-size: 20px;">Supprimer le compte</h3>
+            </div>
+            <div class="modal-body">
+                <p style="color: var(--text-muted); margin-bottom: 24px;">Êtes-vous sûr de vouloir supprimer ce compte ? Cette action est irréversible.</p>
+                <div class="modal-footer" style="justify-content: center; margin-top: 0;">
+                    <button class="btn-secondary close-delete-modal" style="width: 120px;">Annuler</button>
+                    <button id="btn-confirm-delete" class="btn-primary" style="width: 120px; background-color: #ff4655;">Supprimer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="renderer.js"></script>
 </body>
 
