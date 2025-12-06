@@ -108,18 +108,10 @@ function renderAccounts() {
             <div class="card-top-section" style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 8px;">
                 <div class="card-info" style="flex: 1;">
                     <div class="account-name">${acc.name}</div>
-                    <div class="account-note">${acc.note || ''}</div>
+                    <div class="account-note">${acc.note || '<span style="font-style: italic; opacity: 0.6;">N/A</span>'}</div>
                     ${acc.riotId ? `<div class="account-riot-id">${acc.riotId}</div>` : ''}
                 </div>
                 <div class="card-right-side" style="display: flex; flex-direction: column; align-items: flex-end; gap: 12px;">
-                    <div class="card-controls" style="display: flex; gap: 8px;">
-                         <button class="btn-delete btn-edit" data-id="${acc.id}" title="Edit Account">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                        </button>
-                        <button class="btn-delete" data-id="${acc.id}" title="Delete Account">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                        </button>
-                    </div>
                     <div class="card-display-image">
                         <img src="assets/${acc.gameType === 'league' ? 'league' : 'valorant'}.png" alt="${acc.gameType}">
                     </div>
@@ -128,8 +120,23 @@ function renderAccounts() {
 
             ${rankHTML}
 
-            <div class="card-actions">
-                <button class="btn-switch" data-id="${acc.id}" data-game="${acc.gameType}">CONNECTER</button>
+            <div class="card-actions" style="display: flex; gap: 8px; position: relative;">
+                <button class="btn-switch" data-id="${acc.id}" data-game="${acc.gameType}" style="flex: 1;">CONNECTER</button>
+                <div class="settings-wrapper" style="position: relative;">
+                    <button class="btn-settings" data-id="${acc.id}" title="Paramètres du compte">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-settings-icon lucide-settings"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                    <div class="settings-menu" data-id="${acc.id}" style="display: none;">
+                        <button class="menu-item" data-action="edit">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                            Modifier le compte
+                        </button>
+                        <button class="menu-item menu-item-danger" data-action="delete">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            Supprimer le compte
+                        </button>
+                    </div>
+                </div>
             </div>
         `;
         accountsList.appendChild(card);
@@ -140,12 +147,48 @@ function renderAccounts() {
         btn.addEventListener('click', (e) => switchAccount(e.target.dataset.id, e.target.dataset.game));
     });
 
-    document.querySelectorAll('.btn-delete:not(.btn-edit)').forEach(btn => {
-        btn.addEventListener('click', (e) => deleteAccount(e.target.closest('.btn-delete').dataset.id));
+    document.querySelectorAll('.btn-settings').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const accountId = e.currentTarget.dataset.id;
+            const menu = e.currentTarget.nextElementSibling;
+            
+            // Close all other menus
+            document.querySelectorAll('.settings-menu').forEach(m => {
+                if (m !== menu) m.style.display = 'none';
+            });
+            
+            // Toggle current menu
+            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+        });
     });
 
-    document.querySelectorAll('.btn-edit').forEach(btn => {
-        btn.addEventListener('click', (e) => openEditModal(e.target.closest('.btn-edit').dataset.id));
+    // Handle menu item clicks
+    document.querySelectorAll('.menu-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const menu = e.currentTarget.closest('.settings-menu');
+            const accountId = menu.dataset.id;
+            const action = e.currentTarget.dataset.action;
+            
+            // Close menu
+            menu.style.display = 'none';
+            
+            if (action === 'edit') {
+                openEditModal(accountId);
+            } else if (action === 'delete') {
+                deleteAccount(accountId);
+            }
+        });
+    });
+
+    // Close menu when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.settings-wrapper')) {
+            document.querySelectorAll('.settings-menu').forEach(menu => {
+                menu.style.display = 'none';
+            });
+        }
     });
 }
 
@@ -187,21 +230,27 @@ async function loadAccountStats(accountId) {
 }
 
 async function openEditModal(id) {
-    const account = accounts.find(a => a.id === id);
-    if (!account) return;
+    try {
+        // Get account with decrypted credentials
+        const account = await ipcRenderer.invoke('get-account-credentials', id);
+        if (!account) return;
 
-    modalTitle.textContent = "Modifier un Compte";
-    inputEditId.value = account.id;
-    inputName.value = account.name;
-    inputUsername.value = '';
-    inputUsername.setAttribute('placeholder', '••••••••');
-    inputPassword.value = '';
-    inputPassword.setAttribute('placeholder', '••••••••');
-    inputRiotId.value = account.riotId || '';
-    document.querySelector(`input[name="game-type"][value="${account.gameType || 'valorant'}"]`).checked = true;
-    inputNote.value = account.note || '';
-    modalAddAccount.classList.add('show');
-    inputName.focus();
+        modalTitle.textContent = "Modifier un Compte";
+        inputEditId.value = account.id;
+        inputName.value = account.name;
+        inputUsername.value = account.username || '';
+        inputUsername.setAttribute('placeholder', 'Votre username Riot');
+        inputPassword.value = account.password || '';
+        inputPassword.setAttribute('placeholder', 'Votre mot de passe');
+        inputRiotId.value = account.riotId || '';
+        document.querySelector(`input[name="game-type"][value="${account.gameType || 'valorant'}"]`).checked = true;
+        inputNote.value = account.note || '';
+        modalAddAccount.classList.add('show');
+        inputName.focus();
+    } catch (err) {
+        log(`Erreur lors du chargement du compte: ${err.message}`);
+        alert(`Erreur: ${err.message}`);
+    }
 }
 
 async function deleteAccount(id) {

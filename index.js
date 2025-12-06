@@ -136,6 +136,23 @@ ipcMain.handle('get-accounts', async () => {
     return await loadAccountsMeta();
 });
 
+// Get account with decrypted credentials (for editing)
+ipcMain.handle('get-account-credentials', async (event, accountId) => {
+    const accounts = await loadAccountsMeta();
+    const account = accounts.find(a => a.id === accountId);
+    
+    if (!account) throw new Error('Account not found.');
+    
+    // Decrypt credentials
+    const decryptedAccount = {
+        ...account,
+        username: decryptData(account.username),
+        password: decryptData(account.password)
+    };
+    
+    return decryptedAccount;
+});
+
 // 2. Add Account (with credentials)
 ipcMain.handle('add-account', async (event, { name, username, password, note, riotId, gameType }) => {
     const id = uuidv4();
