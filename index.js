@@ -175,7 +175,7 @@ ipcMain.handle('get-account-credentials', async (event, accountId) => {
 });
 
 // 2. Add Account (with credentials)
-ipcMain.handle('add-account', async (event, { name, username, password, note, riotId, gameType }) => {
+ipcMain.handle('add-account', async (event, { name, username, password, riotId, gameType }) => {
     const id = uuidv4();
 
     // Encrypt credentials
@@ -187,7 +187,6 @@ ipcMain.handle('add-account', async (event, { name, username, password, note, ri
         name,
         username: encryptedUsername,
         password: encryptedPassword,
-        note,
         riotId: riotId || null,
         gameType: gameType || 'valorant',
         timestamp: Date.now(),

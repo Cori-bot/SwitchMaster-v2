@@ -13,7 +13,6 @@ const inputName = document.getElementById('input-name');
 const inputUsername = document.getElementById('input-username');
 const inputPassword = document.getElementById('input-password');
 const inputRiotId = document.getElementById('input-riot-id');
-const inputNote = document.getElementById('input-note');
 
 const logsContainer = document.getElementById('logs-container');
 const logsPanel = document.querySelector('.logs-panel');
@@ -49,6 +48,10 @@ const btnConfirmDelete = document.getElementById('btn-confirm-delete');
 const btnCloseDeleteModal = document.querySelectorAll('.close-delete-modal');
 const deleteAccountTitle = document.getElementById('delete-account-title');
 let pendingDeleteAccountId = null;
+
+// Error Modal Elements
+const modalError = document.getElementById('error-modal');
+const btnCloseError = document.getElementById('btn-close-error');
 
 // State
 let accounts = [];
@@ -115,8 +118,7 @@ function renderAccounts() {
             <div class="card-top-section" style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 8px;">
                 <div class="card-info" style="flex: 1;">
                     <div class="account-name">${acc.name}</div>
-                    <div class="account-note">${acc.note || '<span style="font-style: italic; opacity: 0.6;">N/A</span>'}</div>
-                    ${acc.riotId ? `<div class="account-riot-id">${acc.riotId}</div>` : ''}
+                    ${acc.riotId ? `<div class="account-riot-id" style="font-size: 12px; color: var(--text-muted); opacity: 0.8; margin-top: 4px;">${acc.riotId}</div>` : ''}
                 </div>
                 <div class="card-right-side" style="display: flex; flex-direction: column; align-items: flex-end; gap: 12px;">
                     <div class="card-display-image">
@@ -251,7 +253,6 @@ async function openEditModal(id) {
         inputPassword.setAttribute('placeholder', 'Votre mot de passe');
         inputRiotId.value = account.riotId || '';
         document.querySelector(`input[name="game-type"][value="${account.gameType || 'valorant'}"]`).checked = true;
-        inputNote.value = account.note || '';
         modalAddAccount.classList.add('show');
         inputName.focus();
     } catch (err) {
@@ -293,12 +294,21 @@ async function saveAccount() {
     const name = inputName.value.trim();
     const username = inputUsername.value.trim();
     const password = inputPassword.value.trim();
-    const note = inputNote.value.trim();
     const riotId = inputRiotId.value.trim();
     const gameType = document.querySelector('input[name="game-type"]:checked')?.value || 'valorant';
 
     if (!name || !username || !password) {
         alert('Nom, Username et Mot de passe sont requis.');
+        return;
+    }
+
+    if (!riotId) {
+        showErrorModal('Le Riot ID est obligatoire.');
+        return;
+    }
+
+    if (!riotId.includes('#')) {
+        showErrorModal('Format de Riot ID invalide. Format attendu: Username#TAG');
         return;
     }
 
@@ -323,8 +333,7 @@ async function saveAccount() {
             name,
             username,
             password,
-            note,
-            riotId: riotId || null,
+            riotId: riotId,
             gameType
         });
 
@@ -445,6 +454,35 @@ modalDeleteAccount.addEventListener('click', (e) => {
     }
 });
 
+// Error Modal Functions
+function showErrorModal(message) {
+    const errorMessage = document.getElementById('error-modal-message');
+    if (errorMessage && modalError) {
+        errorMessage.textContent = message || 'Erreur, les identifiants renseignés ne sont pas corrects.';
+        modalError.classList.add('show');
+    }
+}
+
+function closeErrorModal() {
+    if (modalError) {
+        modalError.classList.remove('show');
+    }
+}
+
+// Error Modal Listeners
+if (btnCloseError) {
+    btnCloseError.addEventListener('click', closeErrorModal);
+}
+
+// Close error modal when clicking outside
+if (modalError) {
+    modalError.addEventListener('click', (e) => {
+        if (e.target === modalError) {
+            closeErrorModal();
+        }
+    });
+}
+
 async function checkStatus() {
     try {
         const res = await ipcRenderer.invoke('get-status');
@@ -552,7 +590,6 @@ btnAddAccount.addEventListener('click', () => {
     inputPassword.setAttribute('placeholder', "Votre mot de passe");
     inputRiotId.value = '';
     document.querySelector('input[name="game-type"][value="valorant"]').checked = true;
-    inputNote.value = '';
     modalAddAccount.classList.add('show');
     inputName.focus();
 });
