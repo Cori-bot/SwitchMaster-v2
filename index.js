@@ -72,6 +72,18 @@ ipcMain.handle('disable-pin', async (event) => {
     return true;
 });
 
+ipcMain.handle('select-image', async () => {
+    const result = await dialog.showOpenDialog(mainWindow, {
+        properties: ['openFile'],
+        filters: [
+            { name: 'Images', extensions: ['jpg', 'png', 'gif', 'jpeg', 'webp'] }
+        ]
+    });
+    if (result.canceled || result.filePaths.length === 0) return null;
+    return result.filePaths[0];
+});
+
+// 9. Check Security Enabled
 ipcMain.handle('check-security-enabled', () => {
     return appConfig.security && appConfig.security.enabled;
 });
@@ -338,7 +350,7 @@ ipcMain.handle('get-account-credentials', async (event, accountId) => {
 });
 
 // 2. Add Account (with credentials)
-ipcMain.handle('add-account', async (event, { name, username, password, riotId, gameType }) => {
+ipcMain.handle('add-account', async (event, { name, username, password, riotId, gameType, cardImage }) => {
     const id = uuidv4();
 
     // Encrypt credentials
@@ -352,6 +364,7 @@ ipcMain.handle('add-account', async (event, { name, username, password, riotId, 
         password: encryptedPassword,
         riotId: riotId || null,
         gameType: gameType || 'valorant',
+        cardImage: cardImage || null, // Save the image path
         timestamp: Date.now(),
         stats: null
     };
