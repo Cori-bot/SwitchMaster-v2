@@ -124,6 +124,17 @@ function showNotification(message, type = 'info') {
     }, 3000);
 }
 
+// XSS Protection
+function escapeHtml(unsafe) {
+    if (!unsafe) return '';
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
 // --- UI Rendering ---
 function renderAccounts() {
     accountsList.innerHTML = '';
@@ -140,7 +151,10 @@ function renderAccounts() {
         // Apply background image if exists
         if (acc.cardImage) {
             // Use linear gradient to darken image for readability
-            card.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.9)), url('${acc.cardImage.replace(/\\/g, '/')}')`;
+            // Path needs to be CSS escaped effectively, but simple replace usually works for paths. 
+            // Better to use CSS.escape if we were passing weird chars, but here replace is okay for quotes.
+            const safePath = acc.cardImage.replace(/\\/g, '/').replace(/'/g, "\\'");
+            card.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.9)), url('${safePath}')`;
             card.style.backgroundSize = 'cover';
             card.style.backgroundPosition = 'center';
             card.classList.add('has-bg');
@@ -156,16 +170,16 @@ function renderAccounts() {
                     <div class="rank-current">
                         <div class="rank-header">Rank Actuel</div>
                         <div class="rank-display">
-                            <img src="${acc.stats.rankIcon}" alt="${acc.stats.rank}" class="rank-icon" onerror="this.style.display='none'">
-                            <span class="rank-name">${acc.stats.rank}</span>
+                            <img src="${acc.stats.rankIcon}" alt="${escapeHtml(acc.stats.rank)}" class="rank-icon" onerror="this.style.display='none'">
+                            <span class="rank-name">${escapeHtml(acc.stats.rank)}</span>
                         </div>
                     </div>
                     ${isUnranked && acc.stats.peakRank && acc.stats.peakRank !== 'Unranked' ? `
                     <div class="rank-peak">
                         <div class="rank-header">Peak Rank</div>
                         <div class="rank-display">
-                            <img src="${acc.stats.peakRankIcon}" alt="${acc.stats.peakRank}" class="rank-icon" onerror="this.style.display='none'">
-                            <span class="rank-name">${acc.stats.peakRank}</span>
+                            <img src="${acc.stats.peakRankIcon}" alt="${escapeHtml(acc.stats.peakRank)}" class="rank-icon" onerror="this.style.display='none'">
+                            <span class="rank-name">${escapeHtml(acc.stats.peakRank)}</span>
                         </div>
                     </div>
                     ` : ''}
@@ -184,12 +198,12 @@ function renderAccounts() {
             <div class="card-content" style="position: relative; z-index: 2;">
                 <div class="card-top-section" style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 8px;">
                     <div class="card-info" style="flex: 1;">
-                        <div class="account-name">${acc.name}</div>
-                        ${acc.riotId ? `<div class="account-riot-id" style="font-size: 12px; color: var(--text-muted); opacity: 0.8; margin-top: 4px;">${acc.riotId}</div>` : ''}
+                        <div class="account-name">${escapeHtml(acc.name)}</div>
+                        ${acc.riotId ? `<div class="account-riot-id" style="font-size: 12px; color: var(--text-muted); opacity: 0.8; margin-top: 4px;">${escapeHtml(acc.riotId)}</div>` : ''}
                     </div>
                     <div class="card-right-side" style="display: flex; flex-direction: column; align-items: flex-end; gap: 12px;">
                         <div class="card-display-image">
-                            <img src="assets/${acc.gameType === 'league' ? 'league' : 'valorant'}.png" alt="${acc.gameType}">
+                            <img src="assets/${acc.gameType === 'league' ? 'league' : 'valorant'}.png" alt="${escapeHtml(acc.gameType)}">
                         </div>
                     </div>
                 </div>
