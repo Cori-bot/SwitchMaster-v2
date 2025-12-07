@@ -374,7 +374,8 @@ async function saveAccount() {
         return;
     }
 
-    if (!riotId.includes('#')) {
+    const riotIdRegex = /^([^#]+)#([^#]+)$/;
+    if (!riotIdRegex.test(riotId)) {
         showErrorModal('Format de Riot ID invalide. Format attendu: Username#TAG');
         return;
     }
