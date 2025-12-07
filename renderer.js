@@ -660,6 +660,20 @@ async function checkStatus() {
     }
 }
 
+// Quand le client Riot est détecté comme fermé côté main process,
+// on réinitialise immédiatement l'état visuel du compte actif
+ipcRenderer.on('riot-client-closed', () => {
+    // Réinitialise le status texte
+    statusText.textContent = 'Ready';
+    statusDot.classList.add('active');
+
+    // Enlève la bordure verte de toutes les cartes
+    document.querySelectorAll('.account-card').forEach(card => card.classList.remove('active-account'));
+
+    // Et synchronise l'état avec le main process (au cas où)
+    checkStatus();
+});
+
 // --- Settings ---
 async function loadSettings() {
     try {
@@ -888,10 +902,6 @@ btnSaveAccount.addEventListener('click', saveAccount);
 
 btnCloseModal.forEach(btn => {
     btn.addEventListener('click', closeModal);
-});
-
-modalAddAccount.addEventListener('click', (e) => {
-    if (e.target === modalAddAccount) closeModal();
 });
 
 const passwordToggle = document.getElementById('toggle-password');

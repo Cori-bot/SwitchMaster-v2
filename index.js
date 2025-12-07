@@ -110,6 +110,20 @@ let activeAccountId = null;
 
 // --- Helper Functions ---
 
+// Ouvrir un lien externe de manière sécurisée (HTTP/HTTPS uniquement)
+function openExternalSafe(url) {
+    try {
+        const parsed = new URL(url);
+        if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+            shell.openExternal(url);
+        } else {
+            console.warn('Blocked external URL with invalid protocol:', url);
+        }
+    } catch (e) {
+        console.error('Invalid external URL:', url, e);
+    }
+}
+
 async function loadConfig() {
     try {
         if (await fs.pathExists(CONFIG_FILE)) {
@@ -182,16 +196,35 @@ function createWindow() {
         minWidth: 600,
         minHeight: 600,
         webPreferences: {
+            // Renderer actuel utilise require('electron'), donc on garde nodeIntegration pour l'instant
             nodeIntegration: true,
+            // À moyen terme : passer à true + preload sécurisé
             contextIsolation: false,
+            // Bonnes pratiques sécurité : remote est désactivé explicitement
+            enableRemoteModule: false,
         },
         backgroundColor: '#121212',
         frame: true,
         autoHideMenuBar: true,
+        devTools: isDev,
         icon: path.join(__dirname, 'assets', 'logo.png')
     });
 
     mainWindow.loadFile('index.html');
+
+    // Sécuriser la navigation : empêcher les navigations internes vers des URLs externes
+    mainWindow.webContents.on('will-navigate', (event, url) => {
+        if (url !== mainWindow.webContents.getURL()) {
+            event.preventDefault();
+            openExternalSafe(url);
+        }
+    });
+
+    // Empêcher l'ouverture de nouvelles fenêtres non contrôlées
+    mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+        openExternalSafe(url);
+        return { action: 'deny' };
+    });
 
     // Handle window close event
     mainWindow.on('close', (event) => {
@@ -308,6 +341,11 @@ function monitorRiotProcess() {
             if (!stdout.includes('RiotClientServices.exe')) {
                 console.log('Riot Client closed. Resetting active status.');
                 activeAccountId = null;
+
+                // Notifier le renderer pour qu'il enlève la bordure verte / statut actif
+                if (mainWindow) {
+                    mainWindow.webContents.send('riot-client-closed');
+                }
             }
         });
     }, 5000); // Check every 5 seconds
@@ -504,6 +542,17 @@ ipcMain.handle('add-account', async (event, { name, username, password, riotId, 
 
     const accounts = await loadAccountsMeta();
     accounts.push(newAccount);
+
+    // Rafraîchir immédiatement les stats (rank) si un Riot ID est présent
+    if (newAccount.riotId) {
+        try {
+            const stats = await fetchAccountStats(newAccount.riotId, newAccount.gameType);
+            newAccount.stats = stats;
+        } catch (err) {
+            console.error('Error fetching stats on add-account:', err);
+        }
+    }
+
     await saveAccountsMeta(accounts);
 
     return newAccount;
@@ -516,16 +565,14 @@ ipcMain.handle('update-account', async (event, { id, name, username, password, r
 
     if (index === -1) throw new Error("Compte introuvable");
 
-    // Keep existing timestamp/stats if not provided (though usually we just update the specific fields)
+    // Keep existing timestamp/stats si non modifiés
     const existing = accounts[index];
 
-    // Encrypt credentials if they changed (simple check: if it looks like a hash? No, we always send plain from UI for now)
-    // The UI sends plain text for edit currently based on my read of renderer.js openEditModal (it decrypts then sends potentially modified plain).
-    // So we basically always re-encrypt.
+    // Encrypt credentials (le renderer envoie du texte en clair)
     const encryptedUsername = encryptData(username);
     const encryptedPassword = encryptData(password);
 
-    accounts[index] = {
+    const updatedAccount = {
         ...existing,
         name,
         username: encryptedUsername,
@@ -535,8 +582,19 @@ ipcMain.handle('update-account', async (event, { id, name, username, password, r
         cardImage: cardImage || existing.cardImage // Preserve if not sent, or update
     };
 
+    // Rafraîchir immédiatement les stats (rank) si un Riot ID est présent
+    if (updatedAccount.riotId) {
+        try {
+            const stats = await fetchAccountStats(updatedAccount.riotId, updatedAccount.gameType);
+            updatedAccount.stats = stats;
+        } catch (err) {
+            console.error('Error fetching stats on update-account:', err);
+        }
+    }
+
+    accounts[index] = updatedAccount;
     await saveAccountsMeta(accounts);
-    return accounts[index];
+    return updatedAccount;
 });
 
 // 2c. Reorder Accounts

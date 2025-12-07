@@ -119,26 +119,47 @@ async function fetchLeagueStats(riotId) {
         const segments = data.data.segments;
         const metadata = data.data.metadata || {};
 
-        // Find ranked solo segment
+        // 1) On cherche d'abord le segment "playlist" Ranked Solo (RANKED_SOLO_5x5)
         let rankedSegment = segments.find(s =>
-            s.metadata && s.metadata.queueType === 'RANKED_SOLO_5x5'
+            s.type === 'playlist' &&
+            s.attributes && s.attributes.queueType === 'RANKED_SOLO_5x5'
         );
 
+        // 2) Fallback : si non trouvé, on cherche un segment queue Ranked Solo
         if (!rankedSegment) {
-            rankedSegment = segments[0]; // Fallback
+            rankedSegment = segments.find(s =>
+                s.type === 'queue' &&
+                s.attributes && s.attributes.queueType === 'RANKED_SOLO_5x5'
+            );
+        }
+
+        // 3) Fallback final : on prend le premier segment disponible
+        if (!rankedSegment) {
+            rankedSegment = segments[0];
         }
 
         const stats = rankedSegment?.stats || {};
 
+        // Rang actuel (tier)
+        const tierMeta = stats.tier?.metadata || {};
+        const currentRankName = tierMeta.rankName || stats.tier?.displayValue || 'Unranked';
+        const currentRankIcon = tierMeta.iconUrl || tierMeta.imageUrl || '';
+
+        // Playtime : on privilégie timePlayed.displayValue si dispo, sinon matchesPlayed
+        const playtime = stats.timePlayed?.displayValue ||
+            stats.matchesPlayed?.displayValue ||
+            '0 games';
+
         return {
             game: 'league',
             riotId: riotId,
-            level: metadata.accountLevel || 0,
-            rank: stats.tier?.metadata?.rankName || 'Unranked',
-            rankIcon: stats.tier?.metadata?.iconUrl || 'https://trackercdn.com/cdn/tracker.gg/lol/ranks/s14/unranked.png',
-            peakRank: stats.peakTiers?.metadata?.rankName || 'Unranked', // League doesn't have peak rank in same way
-            peakRankIcon: stats.peakTiers?.metadata?.iconUrl || 'https://trackercdn.com/cdn/tracker.gg/lol/ranks/s14/unranked.png',
-            playtime: stats.matchesPlayed?.displayValue || '0 games',
+            level: metadata.accountLevel || 0, // l’API ne renvoie pas toujours level, on laisse 0 si manquant
+            rank: currentRankName,
+            rankIcon: currentRankIcon,
+            // On neutralise le peak rank : on ne l'utilise pas dans l'app
+            peakRank: 'Unranked',
+            peakRankIcon: '',
+            playtime,
             banner: data.data.platformInfo?.avatarUrl || null,
             shard: metadata.platformSlug || 'unknown'
         };
