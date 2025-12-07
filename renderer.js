@@ -65,6 +65,12 @@ const btnQuitMinimize = document.getElementById('btn-quit-minimize');
 const btnQuitCancel = document.getElementById('btn-quit-cancel');
 const quitDontShowAgain = document.getElementById('quit-dont-show-again');
 
+// Update Modal Elements
+const modalUpdate = document.getElementById('update-modal');
+const btnUpdateDownload = document.getElementById('btn-update-download');
+const btnUpdateLater = document.getElementById('btn-update-later');
+const btnCheckUpdates = document.getElementById('btn-check-updates');
+
 // Security Elements
 const lockScreen = document.getElementById('lock-screen');
 const lockPinDisplay = document.getElementById('lock-pin-display');
@@ -941,6 +947,124 @@ if (modalQuit) {
     modalQuit.addEventListener('click', (e) => {
         if (e.target === modalQuit) {
             modalQuit.classList.remove('show');
+        }
+    });
+}
+
+// Update Modal Functions
+function showUpdateModal(updateInfo) {
+    const latestVersionEl = document.getElementById('update-latest-version');
+    const currentVersionEl = document.getElementById('update-current-version');
+    const releaseNotesEl = document.getElementById('update-release-notes');
+    
+    if (latestVersionEl) latestVersionEl.textContent = `v${updateInfo.latestVersion}`;
+    if (currentVersionEl) currentVersionEl.textContent = `v${updateInfo.currentVersion}`;
+    if (releaseNotesEl) {
+        // Convert markdown-like release notes to HTML
+        const htmlNotes = updateInfo.releaseNotes
+            .replace(/\n/g, '<br>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>');
+        releaseNotesEl.innerHTML = htmlNotes;
+    }
+    
+    modalUpdate.classList.add('show');
+}
+
+function hideUpdateModal() {
+    modalUpdate.classList.remove('show');
+}
+
+// Listen for update notifications from main process
+ipcRenderer.on('update-status', (event, updateInfo) => {
+    if (updateInfo.status === 'available') {
+        showUpdateModal({
+            available: true,
+            latestVersion: updateInfo.version,
+            currentVersion: app.getVersion(),
+            releaseNotes: updateInfo.releaseNotes || ''
+        });
+    }
+});
+
+ipcRenderer.on('update-progress', (event, progress) => {
+    if (btnUpdateDownload) {
+        btnUpdateDownload.textContent = `Téléchargement... ${progress.percent}%`;
+        btnUpdateDownload.disabled = true;
+    }
+});
+
+ipcRenderer.on('update-downloaded', () => {
+    if (btnUpdateDownload) {
+        btnUpdateDownload.textContent = 'Installer maintenant';
+        btnUpdateDownload.disabled = false;
+    }
+    showNotification('Mise à jour téléchargée ! Cliquez pour installer.', 'success');
+});
+
+// Update Modal Listeners
+if (btnUpdateDownload) {
+    btnUpdateDownload.addEventListener('click', async () => {
+        try {
+            btnUpdateDownload.textContent = 'Téléchargement...';
+            btnUpdateDownload.disabled = true;
+            
+            // Start download
+            await ipcRenderer.invoke('check-for-updates');
+        } catch (error) {
+            console.error('Update download failed:', error);
+            showNotification('Échec du téléchargement de la mise à jour', 'error');
+            btnUpdateDownload.textContent = 'Télécharger';
+            btnUpdateDownload.disabled = false;
+        }
+    });
+}
+
+if (btnUpdateLater) {
+    btnUpdateLater.addEventListener('click', hideUpdateModal);
+}
+
+if (btnCheckUpdates) {
+    btnCheckUpdates.addEventListener('click', async () => {
+        try {
+            btnCheckUpdates.disabled = true;
+            btnCheckUpdates.textContent = 'Vérification...';
+            
+            await ipcRenderer.invoke('check-for-updates');
+            showNotification('Vérification des mises à jour en cours...', 'info');
+        } catch (error) {
+            console.error('Update check failed:', error);
+            showNotification('Impossible de vérifier les mises à jour', 'error');
+        } finally {
+            btnCheckUpdates.disabled = false;
+            btnCheckUpdates.textContent = 'Vérifier les mises à jour';
+        }
+    });
+}
+
+// Handle update installation
+let updateDownloaded = false;
+ipcRenderer.on('update-downloaded', () => {
+    updateDownloaded = true;
+    if (btnUpdateDownload) {
+        btnUpdateDownload.textContent = 'Installer maintenant';
+        btnUpdateDownload.disabled = false;
+        btnUpdateDownload.onclick = async () => {
+            try {
+                await ipcRenderer.invoke('install-update');
+                // App will restart automatically
+            } catch (error) {
+                console.error('Update install failed:', error);
+                showNotification('Échec de l\'installation de la mise à jour', 'error');
+            }
+        };
+    }
+});
+
+if (modalUpdate) {
+    modalUpdate.addEventListener('click', (e) => {
+        if (e.target === modalUpdate) {
+            hideUpdateModal();
         }
     });
 }

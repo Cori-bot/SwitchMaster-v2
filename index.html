@@ -157,7 +157,12 @@
 
                         <div class="setting-item">
                             <label>Version</label>
-                            <p style="color: var(--text-muted); font-size: 13px;">v2.2.0</p>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <p style="color: var(--text-muted); font-size: 13px;">v2.2.0</p>
+                                <button id="btn-check-updates" class="btn-secondary" style="font-size: 12px; padding: 4px 8px;">
+                                    Vérifier les mises à jour
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -340,6 +345,28 @@
                     <button id="btn-quit-minimize" class="btn-primary" style="width: 140px;">Réduire</button>
                     <button id="btn-quit-app" class="btn-primary"
                         style="width: 120px; background-color: #ff4655;">Quitter</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Update Available Modal -->
+    <div class="modal-overlay" id="update-modal">
+        <div class="modal" style="width: 450px;">
+            <div class="modal-header">
+                <h3>Mise à jour disponible !</h3>
+            </div>
+            <div class="modal-body">
+                <p style="color: var(--text-muted); margin-bottom: 16px;">
+                    Une nouvelle version <strong id="update-latest-version">vX.X.X</strong> est disponible.
+                    Vous avez actuellement la version <strong id="update-current-version">vX.X.X</strong>.
+                </p>
+                <div id="update-release-notes" style="max-height: 150px; overflow-y: auto; margin-bottom: 20px; padding: 12px; background: var(--bg-secondary); border-radius: 8px; font-size: 13px; line-height: 1.4;">
+                    <!-- Release notes will be injected here -->
+                </div>
+                <div class="modal-footer" style="justify-content: center; gap: 10px;">
+                    <button id="btn-update-later" class="btn-secondary" style="width: 120px;">Plus tard</button>
+                    <button id="btn-update-download" class="btn-primary" style="width: 140px;">Télécharger</button>
                 </div>
             </div>
         </div>

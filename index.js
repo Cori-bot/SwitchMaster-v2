@@ -1,4 +1,5 @@
 const { app, BrowserWindow, ipcMain, safeStorage, shell, dialog, clipboard, Tray, Menu } = require('electron');
+const { autoUpdater } = require('electron-updater');
 const path = require('path');
 const fs = require('fs-extra');
 const yaml = require('yaml');
@@ -292,7 +293,7 @@ async function updateTrayMenu() {
     tray.setContextMenu(Menu.buildFromTemplate(menuItems));
 }
 
-// Auto-start functionality
+// --- Auto-start functionality
 function setAutoStart(enable) {
     try {
         // For electron-builder, we need to handle both dev and production cases
@@ -320,26 +321,62 @@ function setAutoStart(enable) {
     }
 }
 
-// --- App Lifecycle ---
-// --- Process Monitoring ---
-function monitorRiotProcess() {
-    setInterval(() => {
-        if (!activeAccountId) return;
+// --- Auto Updater ---
+autoUpdater.logger = require('electron-log');
+autoUpdater.logger.transports.file.level = 'info';
 
-        exec('tasklist /FI "IMAGENAME eq RiotClientServices.exe" /FO CSV', (err, stdout) => {
-            if (err) return;
-            // stdout will contain "No tasks are running" or similar if not found, 
-            // or the CSV header + process line if found.
-            // Simplest check: does it include the exe name in a data line?
-            // "INFO: No tasks are running"
+autoUpdater.on('checking-for-update', () => {
+    console.log('Checking for update...');
+    if (mainWindow) {
+        mainWindow.webContents.send('update-status', { status: 'checking' });
+    }
+});
 
-            if (!stdout.includes('RiotClientServices.exe')) {
-                console.log('Riot Client closed. Resetting active status.');
-                activeAccountId = null;
-            }
+autoUpdater.on('update-available', (info) => {
+    console.log('Update available:', info);
+    if (mainWindow) {
+        mainWindow.webContents.send('update-status', { 
+            status: 'available', 
+            version: info.version,
+            releaseNotes: info.releaseNotes 
         });
-    }, 5000); // Check every 5 seconds
-}
+    }
+});
+
+autoUpdater.on('update-not-available', (info) => {
+    console.log('Update not available:', info);
+    if (mainWindow) {
+        mainWindow.webContents.send('update-status', { status: 'not-available' });
+    }
+});
+
+autoUpdater.on('error', (err) => {
+    console.error('Update error:', err);
+    if (mainWindow) {
+        mainWindow.webContents.send('update-status', { status: 'error', error: err.message });
+    }
+});
+
+autoUpdater.on('download-progress', (progressObj) => {
+    let log_message = "Download speed: " + progressObj.bytesPerSecond;
+    log_message = log_message + ' - Downloaded ' + progressObj.percent + '%';
+    log_message = log_message + ' (' + progressObj.transferred + "/" + progressObj.total + ')';
+    console.log(log_message);
+    if (mainWindow) {
+        mainWindow.webContents.send('update-progress', {
+            percent: Math.round(progressObj.percent),
+            transferred: progressObj.transferred,
+            total: progressObj.total
+        });
+    }
+});
+
+autoUpdater.on('update-downloaded', (info) => {
+    console.log('Update downloaded');
+    if (mainWindow) {
+        mainWindow.webContents.send('update-downloaded');
+    }
+});
 
 app.whenReady().then(async () => {
     await loadConfig();
@@ -352,6 +389,13 @@ app.whenReady().then(async () => {
         chokidar.watch(settingsPath).on('change', () => {
             // Optional: Notify renderer
         });
+    }
+
+    // Check for updates on startup
+    if (!app.isPackaged) {
+        console.log('Running in development mode - update checking disabled');
+    } else {
+        autoUpdater.checkForUpdatesAndNotify();
     }
 });
 
@@ -759,5 +803,30 @@ ipcMain.handle('get-auto-start-status', () => {
     } catch (error) {
         console.error('Error getting auto-start status:', error);
         return { enabled: false, wasOpenedAtLogin: false };
+    }
+});
+
+// 13. Check for Updates
+ipcMain.handle('check-for-updates', async () => {
+    try {
+        if (!app.isPackaged) {
+            throw new Error('Update checking is disabled in development mode');
+        }
+        await autoUpdater.checkForUpdatesAndNotify();
+        return { status: 'checking' };
+    } catch (error) {
+        console.error('Update check failed:', error);
+        throw error;
+    }
+});
+
+// 14. Install Update
+ipcMain.handle('install-update', async () => {
+    try {
+        autoUpdater.quitAndInstall();
+        return true;
+    } catch (error) {
+        console.error('Install update failed:', error);
+        throw error;
     }
 });
