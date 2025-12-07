@@ -4,7 +4,8 @@
     "description": "Riot Games Account Switcher",
     "main": "index.js",
     "scripts": {
-        "start": "electron ."
+        "start": "electron .",
+        "test": "node tests/validate-riot-id.test.js"
     },
     "keywords": [],
     "author": "",
