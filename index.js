@@ -293,6 +293,26 @@ async function updateTrayMenu() {
     tray.setContextMenu(Menu.buildFromTemplate(menuItems));
 }
 
+// --- Process Monitoring ---
+function monitorRiotProcess() {
+    setInterval(() => {
+        if (!activeAccountId) return;
+
+        exec('tasklist /FI "IMAGENAME eq RiotClientServices.exe" /FO CSV', (err, stdout) => {
+            if (err) return;
+            // stdout will contain "No tasks are running" or similar if not found, 
+            // or the CSV header + process line if found.
+            // Simplest check: does it include the exe name in a data line?
+            // "INFO: No tasks are running"
+
+            if (!stdout.includes('RiotClientServices.exe')) {
+                console.log('Riot Client closed. Resetting active status.');
+                activeAccountId = null;
+            }
+        });
+    }, 5000); // Check every 5 seconds
+}
+
 // --- Auto-start functionality
 function setAutoStart(enable) {
     try {
@@ -382,7 +402,13 @@ app.whenReady().then(async () => {
     await loadConfig();
     createWindow();
     updateTrayMenu();
-    monitorRiotProcess();
+    
+    // Start process monitoring if function exists
+    if (typeof monitorRiotProcess === 'function') {
+        monitorRiotProcess();
+    } else {
+        console.warn('monitorRiotProcess function not found');
+    }
 
     const settingsPath = path.join(riotDataPath, PRIVATE_SETTINGS_FILE);
     if (fs.existsSync(riotDataPath)) {
@@ -810,7 +836,10 @@ ipcMain.handle('get-auto-start-status', () => {
 ipcMain.handle('check-for-updates', async () => {
     try {
         if (!app.isPackaged) {
-            throw new Error('Update checking is disabled in development mode');
+            // In development, simulate update check
+            console.log('Development mode - simulating update check');
+            mainWindow.webContents.send('update-status', { status: 'not-available' });
+            return { status: 'not-available', message: 'Development mode - update checking simulated' };
         }
         await autoUpdater.checkForUpdatesAndNotify();
         return { status: 'checking' };

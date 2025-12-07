@@ -981,9 +981,21 @@ ipcRenderer.on('update-status', (event, updateInfo) => {
         showUpdateModal({
             available: true,
             latestVersion: updateInfo.version,
-            currentVersion: app.getVersion(),
+            currentVersion: '2.3.0', // Hardcoded for now
             releaseNotes: updateInfo.releaseNotes || ''
         });
+    } else if (updateInfo.status === 'not-available') {
+        showNotification('Votre version est à jour !', 'success');
+        if (btnCheckUpdates) {
+            btnCheckUpdates.disabled = false;
+            btnCheckUpdates.textContent = 'Vérifier les mises à jour';
+        }
+    } else if (updateInfo.status === 'error') {
+        showNotification('Erreur lors de la vérification des mises à jour', 'error');
+        if (btnCheckUpdates) {
+            btnCheckUpdates.disabled = false;
+            btnCheckUpdates.textContent = 'Vérifier les mises à jour';
+        }
     }
 });
 
@@ -1030,12 +1042,18 @@ if (btnCheckUpdates) {
             btnCheckUpdates.disabled = true;
             btnCheckUpdates.textContent = 'Vérification...';
             
-            await ipcRenderer.invoke('check-for-updates');
-            showNotification('Vérification des mises à jour en cours...', 'info');
+            const result = await ipcRenderer.invoke('check-for-updates');
+            
+            if (result.status === 'not-available' && result.message) {
+                // Development mode - show message
+                showNotification('Mode développement : simulation de vérification', 'info');
+                btnCheckUpdates.disabled = false;
+                btnCheckUpdates.textContent = 'Vérifier les mises à jour';
+            }
+            // Other cases are handled by the update-status event listener
         } catch (error) {
             console.error('Update check failed:', error);
             showNotification('Impossible de vérifier les mises à jour', 'error');
-        } finally {
             btnCheckUpdates.disabled = false;
             btnCheckUpdates.textContent = 'Vérifier les mises à jour';
         }
