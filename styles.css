@@ -624,6 +624,42 @@ body {
     padding: 8px 0;
 }
 
+/* Empty State */
+.btn-empty-state {
+    background: rgba(255, 255, 255, 0.03);
+    border: 2px dashed var(--border);
+    border-radius: 16px;
+    padding: 40px;
+    width: 100%;
+    max-width: 300px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    color: var(--text-muted);
+}
+
+.btn-empty-state:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.empty-icon {
+    font-size: 48px;
+    font-weight: 300;
+    line-height: 1;
+}
+
+.empty-text {
+    font-size: 14px;
+    font-weight: 600;
+}
+
 /* Logs Panel */
 .logs-panel {
     height: 150px;
