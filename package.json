@@ -15,7 +15,7 @@
             "output": "build"
         },
         "win": {
-            "target": "portable",
+            "target": "nsis",
             "icon": "assets/logo.ico"
         },
         "extraResources": [

@@ -643,6 +643,9 @@ async function launchGame(gameId) {
         throw new Error("Riot Client Executable not found.");
     }
 
+    // Wait 10 seconds before launching the game (let the client fully connect)
+    await new Promise(resolve => setTimeout(resolve, 10000));
+
     let args = [];
     if (gameId === 'valorant') {
         args = ['--launch-product=valorant', '--launch-patchline=live'];

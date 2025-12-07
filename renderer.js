@@ -338,6 +338,23 @@ async function openEditModal(id) {
     }
 }
 
+function openModal(mode) {
+    if (mode === 'add') {
+        modalTitle.textContent = "Ajouter un Compte";
+        inputEditId.value = '';
+        inputName.value = '';
+        inputUsername.value = '';
+        inputPassword.value = '';
+        inputRiotId.value = '';
+        inputCardImage.value = '';
+        const defaultGameRadio = document.querySelector('input[name="game-type"][value="valorant"]');
+        if (defaultGameRadio) defaultGameRadio.checked = true;
+    }
+
+    modalAddAccount.classList.add('show');
+    inputName.focus();
+}
+
 async function deleteAccount(id) {
     const account = accounts.find(a => a.id === id);
     if (!account) return;
@@ -858,15 +875,7 @@ function toggleLogs(show) {
 }
 
 btnAddAccount.addEventListener('click', () => {
-    modalTitle.textContent = "Ajouter un Compte";
-    inputEditId.value = '';
-    inputName.value = '';
-    inputUsername.value = '';
-    inputPassword.value = '';
-    inputRiotId.value = '';
-    inputCardImage.value = '';
-    modalAddAccount.classList.add('show');
-    inputName.focus();
+    openModal('add');
 });
 
 btnSaveAccount.addEventListener('click', saveAccount);
