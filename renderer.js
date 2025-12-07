@@ -575,7 +575,7 @@ async function loadSettings() {
             }
         }
 
-        settingRiotPath.value = currentPath;
+        settingRiotPath.value = currentPath.replace(/\\\\/g, '\\');
         toggleLogs(appConfig.showLogs !== false);
     } catch (err) {
         console.error("Error loading settings:", err);
