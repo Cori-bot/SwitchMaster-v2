@@ -216,6 +216,8 @@ function renderAccounts() {
                 </div>
             </div>
         `;
+
+        addDragHandlers(card, acc.id);
         accountsList.appendChild(card);
     });
 
@@ -357,17 +359,29 @@ async function saveAccount() {
 
     try {
         if (id) {
-            await ipcRenderer.invoke('delete-account', id);
+            // Edit existing (In-place update)
+            log(`Modification du compte "${name}"...`);
+            await ipcRenderer.invoke('update-account', {
+                id,
+                name,
+                username,
+                password,
+                riotId,
+                gameType,
+                cardImage
+            });
+        } else {
+            // Add new
+            log('Ajout du compte...');
+            await ipcRenderer.invoke('add-account', {
+                name,
+                username,
+                password,
+                riotId,
+                gameType,
+                cardImage
+            });
         }
-
-        await ipcRenderer.invoke('add-account', {
-            name,
-            username,
-            password,
-            riotId,
-            gameType,
-            cardImage
-        });
 
         log(id ? `✓ Compte modifié.` : `✓ Compte ajouté.`);
         closeModal();
@@ -375,6 +389,94 @@ async function saveAccount() {
     } catch (err) {
         alert(`Erreur: ${err.message}`);
     }
+}
+
+// --- Drag and Drop Logic ---
+let dragSrcEl = null;
+
+function addDragHandlers(card, id) {
+    card.setAttribute('draggable', 'true');
+
+    card.addEventListener('dragstart', (e) => {
+        dragSrcEl = card;
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', id);
+        card.classList.add('dragging');
+    });
+
+    card.addEventListener('dragend', (e) => {
+        card.classList.remove('dragging');
+        document.querySelectorAll('.account-card').forEach(c => c.classList.remove('drag-over'));
+    });
+
+    card.addEventListener('dragover', (e) => {
+        if (e.preventDefault) e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        return false;
+    });
+
+    card.addEventListener('dragenter', (e) => {
+        // Find closest card to style
+        const targetCard = e.target.closest('.account-card');
+        if (targetCard && targetCard !== dragSrcEl) {
+            targetCard.classList.add('drag-over');
+        }
+    });
+
+    card.addEventListener('dragleave', (e) => {
+        const targetCard = e.target.closest('.account-card');
+        if (targetCard) {
+            targetCard.classList.remove('drag-over');
+        }
+    });
+
+    card.addEventListener('drop', handleDrop);
+}
+
+async function handleDrop(e) {
+    e.stopPropagation();
+    const targetCard = e.target.closest('.account-card');
+
+    if (dragSrcEl !== targetCard) {
+        // Reorder in DOM
+        const container = accountsList;
+        // Get all cards as array
+        const cards = [...container.querySelectorAll('.account-card')];
+        const srcIndex = cards.indexOf(dragSrcEl);
+        const targetIndex = cards.indexOf(targetCard);
+
+        if (srcIndex < targetIndex) {
+            targetCard.after(dragSrcEl);
+        } else {
+            targetCard.before(dragSrcEl);
+        }
+
+        // Reorder data array
+        const reorderedIds = [...container.querySelectorAll('.account-card')].map(c => {
+            // We need to extract ID. 
+            // We can find the ID from the "Settings" button inside the card which has data-id
+            return c.querySelector('.btn-settings').dataset.id;
+        });
+
+        // Save new order
+        try {
+            await ipcRenderer.invoke('reorder-accounts', reorderedIds);
+
+            // Sync local state without full reload to avoid jitter
+            const newAccountsOrder = [];
+            for (const id of reorderedIds) {
+                const acc = accounts.find(a => a.id === id);
+                if (acc) newAccountsOrder.push(acc);
+            }
+            accounts = newAccountsOrder;
+
+        } catch (err) {
+            console.error("Failed to save reorder:", err);
+            // Revert on error? For now just log.
+        }
+    }
+
+    return false;
 }
 
 async function switchAccount(id, gameType) {

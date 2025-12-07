@@ -272,6 +272,24 @@ body {
     box-shadow: 0 0 24px rgba(255, 255, 255, 0.15);
 }
 
+.account-card {
+    cursor: grab;
+}
+
+.account-card.dragging {
+    opacity: 0.5;
+    transform: scale(0.98);
+    cursor: grabbing;
+    background: var(--bg-card);
+    border: 2px dashed var(--primary);
+}
+
+.account-card.drag-over {
+    transform: scale(1.02);
+    border-color: var(--primary);
+    box-shadow: 0 0 15px rgba(51, 145, 212, 0.3);
+}
+
 .account-card.active-account {
     border-color: var(--success);
     background: linear-gradient(145deg, rgba(76, 175, 80, 0.1), var(--bg-card));
@@ -310,9 +328,8 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--bg-hover);
-    border-radius: 8px;
-    padding: 8px;
+    background: transparent;
+    padding: 0;
 }
 
 .card-display-image img {

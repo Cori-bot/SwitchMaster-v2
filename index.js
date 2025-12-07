@@ -376,6 +376,62 @@ ipcMain.handle('add-account', async (event, { name, username, password, riotId, 
     return newAccount;
 });
 
+// 2b. Update Account (In-place to preserve order)
+ipcMain.handle('update-account', async (event, { id, name, username, password, riotId, gameType, cardImage }) => {
+    const accounts = await loadAccountsMeta();
+    const index = accounts.findIndex(a => a.id === id);
+
+    if (index === -1) throw new Error("Compte introuvable");
+
+    // Keep existing timestamp/stats if not provided (though usually we just update the specific fields)
+    const existing = accounts[index];
+
+    // Encrypt credentials if they changed (simple check: if it looks like a hash? No, we always send plain from UI for now)
+    // The UI sends plain text for edit currently based on my read of renderer.js openEditModal (it decrypts then sends potentially modified plain).
+    // So we basically always re-encrypt.
+    const encryptedUsername = encryptData(username);
+    const encryptedPassword = encryptData(password);
+
+    accounts[index] = {
+        ...existing,
+        name,
+        username: encryptedUsername,
+        password: encryptedPassword,
+        riotId: riotId || null,
+        gameType: gameType || 'valorant',
+        cardImage: cardImage || existing.cardImage // Preserve if not sent, or update
+    };
+
+    await saveAccountsMeta(accounts);
+    return accounts[index];
+});
+
+// 2c. Reorder Accounts
+ipcMain.handle('reorder-accounts', async (event, newOrderIds) => {
+    const accounts = await loadAccountsMeta();
+
+    // Sort accounts array based on the newOrderIds array
+    // newOrderIds should be an array of IDs in the desired order
+    const reorderedMap = new Map(accounts.map(a => [a.id, a]));
+    const reorderedAccounts = [];
+
+    // Add existing accounts in the new order
+    for (const id of newOrderIds) {
+        if (reorderedMap.has(id)) {
+            reorderedAccounts.push(reorderedMap.get(id));
+            reorderedMap.delete(id);
+        }
+    }
+
+    // Safety: append any accounts that might have been missing from the input list (shouldn't happen but good for safety)
+    for (const acc of reorderedMap.values()) {
+        reorderedAccounts.push(acc);
+    }
+
+    await saveAccountsMeta(reorderedAccounts);
+    return true;
+});
+
 // 3. Delete Account
 ipcMain.handle('delete-account', async (event, accountId) => {
     let accounts = await loadAccountsMeta();
