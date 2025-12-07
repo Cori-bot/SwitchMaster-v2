@@ -1,14 +1,26 @@
 {
     "name": "switchmaster",
-    "version": "1.0.0",
-    "description": "Riot Games Account Switcher",
+    "version": "2.1.0",
+    "description": "SwitchMaster : Multi-Account Switcher",
     "main": "index.js",
     "scripts": {
         "start": "electron .",
+        "build": "electron-builder",
         "test": "node tests/validate-riot-id.test.js"
     },
-    "keywords": [],
-    "author": "",
+    "build": {
+        "appId": "com.switchmaster.app",
+        "productName": "SwitchMaster",
+        "directories": {
+            "output": "build"
+        },
+        "win": {
+            "target": "portable",
+            "icon": "assets/logo.ico"
+        }
+    },
+    "keywords": ["riot","riot games","games","account","switcher","multi-account","switchmaster","riot-id","riot-switcher","riot-account-switcher","valorant","valorant switcher","valorant account switcher","league of legends","league of legends switcher","league of legends account switcher","league of legends switcher","league of legends account switcher","league of legends switcher","league of legends account switcher"],
+    "author": "Coridor",
     "license": "ISC",
     "dependencies": {
         "chokidar": "^3.5.3",
@@ -17,6 +29,7 @@
         "yaml": "^2.3.1"
     },
     "devDependencies": {
-        "electron": "^39.2.4"
+        "electron": "^39.2.4",
+        "electron-builder": "^26.0.12"
     }
 }
