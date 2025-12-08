@@ -50,8 +50,8 @@ function parseRiotId(riotId) {
         throw new Error('Invalid Riot ID format. Expected: Username#TAG');
     }
     return {
-        name: encodeURIComponent(parts[0]),
-        tag: encodeURIComponent(parts[1])
+        name: parts[0],
+        tag: parts[1]
     };
 }
 
@@ -189,5 +189,6 @@ async function fetchAccountStats(riotId, gameType) {
 module.exports = {
     fetchAccountStats,
     fetchValorantStats,
-    fetchLeagueStats
+    fetchLeagueStats,
+    parseRiotId
 };
