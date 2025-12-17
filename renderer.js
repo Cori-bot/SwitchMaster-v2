@@ -291,13 +291,18 @@ function renderAccounts() {
             const rankWrapper = document.createElement('div');
             rankWrapper.className = 'rank-wrapper';
             
-            // Création d'un élément temporaire pour parser le HTML sécurisé
-            const temp = document.createElement('div');
-            temp.innerHTML = rankHTML;
-            
-            // Ajout sécurisé des nœuds enfants
-            while (temp.firstChild) {
-                rankWrapper.appendChild(temp.firstChild);
+            // Utilisation de DOMParser pour parser le HTML de manière sécurisée
+            const parser = new DOMParser();
+            try {
+                const doc = parser.parseFromString(rankHTML, 'text/html');
+                const nodes = doc.body.childNodes;
+                
+                // Ajout sécurisé des nœuds enfants
+                while (nodes.length > 0) {
+                    rankWrapper.appendChild(document.importNode(nodes[0], true));
+                }
+            } catch (e) {
+                console.error('Erreur lors du parsing du HTML du rang:', e);
             }
             
             cardContent.appendChild(rankWrapper);
@@ -1167,14 +1172,33 @@ function showUpdateModal(updateInfo) {
 
         // Utilisation de DOMPurify pour sécuriser le contenu HTML
         if (typeof DOMPurify !== 'undefined') {
-            releaseNotesEl.innerHTML = DOMPurify.sanitize(htmlNotes);
-        } else {
-            // Fallback sécurisé si DOMPurify n'est pas disponible
-            releaseNotesEl.textContent = '';
+            // Création d'un conteneur temporaire avec le contenu nettoyé
             const temp = document.createElement('div');
-            temp.innerHTML = htmlNotes;
+            temp.innerHTML = DOMPurify.sanitize(htmlNotes);
+            
+            // Vidage sécurisé du conteneur
+            while (releaseNotesEl.firstChild) {
+                releaseNotesEl.removeChild(releaseNotesEl.firstChild);
+            }
+            
+            // Ajout sécurisé des nœuds enfants
             while (temp.firstChild) {
                 releaseNotesEl.appendChild(temp.firstChild);
+            }
+        } else {
+            // Fallback sécurisé sans innerHTML
+            releaseNotesEl.textContent = '';
+            const parser = new DOMParser();
+            try {
+                const doc = parser.parseFromString(htmlNotes, 'text/html');
+                const nodes = doc.body.childNodes;
+                
+                while (nodes.length > 0) {
+                    releaseNotesEl.appendChild(document.importNode(nodes[0], true));
+                }
+            } catch (e) {
+                console.error('Erreur lors du parsing des notes de version:', e);
+                releaseNotesEl.textContent = 'Impossible de charger les notes de version.';
             }
         }
     }

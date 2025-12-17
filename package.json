@@ -1,13 +1,12 @@
 {
     "name": "switchmaster",
-    "version": "2.4.0",
+    "version": "2.4.1",
     "description": "SwitchMaster : Multi-Account Switcher",
     "main": "index.js",
     "scripts": {
         "start": "electron .",
         "release": "electron-builder --publish=always",
         "build": "electron-builder",
-        "test": "node tests/validate-riot-id.test.js",
         "up-dep": "pnpm up --latest"
     },
     "build": {
