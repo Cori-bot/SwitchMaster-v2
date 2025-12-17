@@ -1,6 +1,6 @@
 LICENCE D'UTILISATION DU LOGICIEL
 
-Version 2.1, 7 décembre 2025
+Version 2.4.1, 17 décembre 2025
 
 1. DÉFINITIONS
 
