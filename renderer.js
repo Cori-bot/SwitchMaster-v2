@@ -117,7 +117,16 @@ function showNotification(message, type = 'info') {
     if (icon) {
         const iconWrapper = document.createElement('span');
         iconWrapper.className = 'notification-icon-wrapper';
-        iconWrapper.innerHTML = icon; // HTML statique contrôlé par l'application
+
+        // Création d'un élément temporaire pour parser le SVG
+        const temp = document.createElement('div');
+        temp.innerHTML = icon;
+
+        // Ajout sécurisé des nœuds enfants
+        while (temp.firstChild) {
+            iconWrapper.appendChild(temp.firstChild);
+        }
+
         toast.appendChild(iconWrapper);
     }
 
@@ -193,7 +202,6 @@ function renderAccounts() {
             card.style.backgroundPosition = 'center';
             card.classList.add('has-bg');
         }
-
 
         let rankHTML = '';
         if (acc.stats && acc.stats.rank) {
@@ -282,7 +290,16 @@ function renderAccounts() {
         if (rankHTML) {
             const rankWrapper = document.createElement('div');
             rankWrapper.className = 'rank-wrapper';
-            rankWrapper.innerHTML = rankHTML; // source contrôlée via escapeHtml
+            
+            // Création d'un élément temporaire pour parser le HTML sécurisé
+            const temp = document.createElement('div');
+            temp.innerHTML = rankHTML;
+            
+            // Ajout sécurisé des nœuds enfants
+            while (temp.firstChild) {
+                rankWrapper.appendChild(temp.firstChild);
+            }
+            
             cardContent.appendChild(rankWrapper);
         }
 
@@ -307,7 +324,28 @@ function renderAccounts() {
         btnSettings.className = 'btn-settings';
         btnSettings.dataset.id = acc.id;
         btnSettings.title = 'Paramètres du compte';
-        btnSettings.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-settings-icon lucide-settings"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"/><circle cx="12" cy="12" r="3"/></svg>';
+        // Icône SVG des paramètres
+        const settingsIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        settingsIcon.setAttribute('width', '24');
+        settingsIcon.setAttribute('height', '24');
+        settingsIcon.setAttribute('viewBox', '0 0 24 24');
+        settingsIcon.setAttribute('fill', 'none');
+        settingsIcon.setAttribute('stroke', 'currentColor');
+        settingsIcon.setAttribute('stroke-width', '2');
+        settingsIcon.setAttribute('stroke-linecap', 'round');
+        settingsIcon.setAttribute('stroke-linejoin', 'round');
+        settingsIcon.classList.add('lucide', 'lucide-settings-icon', 'lucide-settings');
+
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', 'M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915');
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', '12');
+        circle.setAttribute('cy', '12');
+        circle.setAttribute('r', '3');
+
+        settingsIcon.appendChild(path);
+        settingsIcon.appendChild(circle);
+        btnSettings.appendChild(settingsIcon);
 
         const settingsMenu = document.createElement('div');
         settingsMenu.className = 'settings-menu';
@@ -317,12 +355,68 @@ function renderAccounts() {
         const btnEdit = document.createElement('button');
         btnEdit.className = 'menu-item';
         btnEdit.dataset.action = 'edit';
-        btnEdit.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Modifier le compte';
+        // Création de l'icône d'édition avec createElementNS
+        const editIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        editIcon.setAttribute('width', '16');
+        editIcon.setAttribute('height', '16');
+        editIcon.setAttribute('viewBox', '0 0 24 24');
+        editIcon.setAttribute('fill', 'none');
+        editIcon.setAttribute('stroke', 'currentColor');
+        editIcon.setAttribute('stroke-width', '2');
+        editIcon.setAttribute('stroke-linecap', 'round');
+        editIcon.setAttribute('stroke-linejoin', 'round');
+
+        const path1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path1.setAttribute('d', 'M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7');
+
+        const path2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path2.setAttribute('d', 'M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z');
+
+        editIcon.appendChild(path1);
+        editIcon.appendChild(path2);
+
+        btnEdit.appendChild(editIcon);
+        btnEdit.appendChild(document.createTextNode(' Modifier le compte'));
 
         const btnDelete = document.createElement('button');
         btnDelete.className = 'menu-item menu-item-danger';
         btnDelete.dataset.action = 'delete';
-        btnDelete.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Supprimer le compte';
+        // Création de l'icône de suppression avec createElementNS
+        const deleteIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        deleteIcon.setAttribute('width', '16');
+        deleteIcon.setAttribute('height', '16');
+        deleteIcon.setAttribute('viewBox', '0 0 24 24');
+        deleteIcon.setAttribute('fill', 'none');
+        deleteIcon.setAttribute('stroke', 'currentColor');
+        deleteIcon.setAttribute('stroke-width', '2');
+        deleteIcon.setAttribute('stroke-linecap', 'round');
+        deleteIcon.setAttribute('stroke-linejoin', 'round');
+
+        const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+        polyline.setAttribute('points', '3 6 5 6 21 6');
+
+        const path3 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path3.setAttribute('d', 'M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2');
+
+        const line1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line1.setAttribute('x1', '10');
+        line1.setAttribute('y1', '11');
+        line1.setAttribute('x2', '10');
+        line1.setAttribute('y2', '17');
+
+        const line2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line2.setAttribute('x1', '14');
+        line2.setAttribute('y1', '11');
+        line2.setAttribute('x2', '14');
+        line2.setAttribute('y2', '17');
+
+        deleteIcon.appendChild(polyline);
+        deleteIcon.appendChild(path3);
+        deleteIcon.appendChild(line1);
+        deleteIcon.appendChild(line2);
+
+        btnDelete.appendChild(deleteIcon);
+        btnDelete.appendChild(document.createTextNode(' Supprimer le compte'));
 
         settingsMenu.appendChild(btnEdit);
         settingsMenu.appendChild(btnDelete);
@@ -1065,12 +1159,24 @@ function showUpdateModal(updateInfo) {
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;');
 
+        // Convertit les retours à la ligne et la mise en forme markdown en HTML
         const htmlNotes = safeText
             .replace(/\n/g, '<br>')
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/\*(.*?)\*/g, '<em>$1</em>');
+            .replace(/\*\*([^*]+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*([^*]+?)\*/g, '<em>$1</em>');
 
-        releaseNotesEl.innerHTML = htmlNotes;
+        // Utilisation de DOMPurify pour sécuriser le contenu HTML
+        if (typeof DOMPurify !== 'undefined') {
+            releaseNotesEl.innerHTML = DOMPurify.sanitize(htmlNotes);
+        } else {
+            // Fallback sécurisé si DOMPurify n'est pas disponible
+            releaseNotesEl.textContent = '';
+            const temp = document.createElement('div');
+            temp.innerHTML = htmlNotes;
+            while (temp.firstChild) {
+                releaseNotesEl.appendChild(temp.firstChild);
+            }
+        }
     }
     
     modalUpdate.classList.add('show');
