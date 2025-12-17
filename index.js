@@ -8,6 +8,10 @@ const crypto = require('crypto');
 const { fetchAccountStats } = require('./statsService');
 const { spawn, exec } = require('child_process');
 
+// Set user data path to a local directory to avoid permission issues
+const userDataPath = path.join(app.getAppPath(), '..\\app-data');
+app.setPath('userData', userDataPath);
+
 // --- Constants & Paths ---
 const WINDOW_DEFAULT_HEIGHT = 700;
 const WINDOW_DEFAULT_WIDTH = 1000;
@@ -476,6 +480,10 @@ app.whenReady().then(async () => {
         console.warn('monitorRiotProcess function not found');
     }
 
+    // Initial and periodic stats refresh
+    refreshAllAccountStats(); // Initial refresh
+    setInterval(refreshAllAccountStats, 60000); // Refresh every minute
+
     const settingsPath = path.join(riotDataPath, PRIVATE_SETTINGS_FILE);
     if (fs.existsSync(riotDataPath)) {
         chokidar.watch(settingsPath).on('change', () => {
@@ -635,6 +643,34 @@ ipcMain.handle('delete-account', async (event, accountId) => {
     await saveAccountsMeta(accounts);
     return true;
 });
+
+// --- Stats Refresh ---
+async function refreshAllAccountStats() {
+    const accounts = await loadAccountsMeta();
+    let changed = false;
+
+    for (const account of accounts) {
+        if (account.riotId) {
+            try {
+                const newStats = await fetchAccountStats(account.riotId, account.gameType);
+                // Check if stats have actually changed to avoid unnecessary writes
+                if (JSON.stringify(account.stats) !== JSON.stringify(newStats)) {
+                    account.stats = newStats;
+                    changed = true;
+                }
+            } catch (err) {
+                console.error(`Failed to refresh stats for ${account.name}:`, err.message);
+            }
+        }
+    }
+
+    if (changed) {
+        await saveAccountsMeta(accounts);
+        if (mainWindow) {
+            mainWindow.webContents.send('accounts-updated', accounts);
+        }
+    }
+}
 
 // 4. Select Riot Path
 ipcMain.handle('select-riot-path', async () => {

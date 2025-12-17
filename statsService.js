@@ -1,6 +1,6 @@
 const https = require('https');
 
-/**
+/*
  * Service for fetching account statistics from tracker.gg
  */
 
@@ -12,27 +12,27 @@ const HEADERS = {
     'Referer': 'https://tracker.gg/',
 };
 
-/**
+/*
  * Make HTTPS GET request
  */
 function httpsGet(url, headers) {
     return new Promise((resolve, reject) => {
         https.get(url, { headers }, (res) => {
-            let data = '';
+            let responseBody = '';
 
             res.on('data', (chunk) => {
-                data += chunk;
+                responseBody += chunk;
             });
 
             res.on('end', () => {
                 if (res.statusCode === 200) {
                     try {
-                        resolve(JSON.parse(data));
+                        resolve(JSON.parse(responseBody));
                     } catch (e) {
                         reject(new Error('Failed to parse JSON response'));
                     }
                 } else {
-                    reject(new Error(`HTTP ${res.statusCode}: ${data}`));
+                    reject(new Error(`HTTP ${res.statusCode}: ${responseBody}`));
                 }
             });
         }).on('error', (err) => {
@@ -41,7 +41,7 @@ function httpsGet(url, headers) {
     });
 }
 
-/**
+/*
  * Parse Riot ID (Username#TAG)
  */
 function parseRiotId(riotId) {
@@ -55,7 +55,7 @@ function parseRiotId(riotId) {
     };
 }
 
-/**
+/*
  * Fetch Valorant account statistics
  */
 async function fetchValorantStats(riotId) {
@@ -63,13 +63,13 @@ async function fetchValorantStats(riotId) {
     const url = `https://api.tracker.gg/api/v2/valorant/standard/profile/riot/${name}%23${tag}?source=web`;
 
     try {
-        const data = await httpsGet(url, HEADERS);
+        const apiResponse = await httpsGet(url, HEADERS);
 
-        if (!data.data || !data.data.segments) {
+        if (!apiResponse.data || !apiResponse.data.segments) {
             throw new Error('Invalid response structure from API');
         }
 
-        const segments = data.data.segments;
+        const segments = apiResponse.data.segments;
 
         // Find competitive segment
         let competitiveSegment = segments.find(s =>
@@ -82,7 +82,7 @@ async function fetchValorantStats(riotId) {
         }
 
         const stats = competitiveSegment.stats || {};
-        const metadata = data.data.metadata || {};
+        const metadata = apiResponse.data.metadata || {};
 
         return {
             game: 'valorant',
@@ -93,7 +93,7 @@ async function fetchValorantStats(riotId) {
             peakRank: stats.peakRank?.metadata?.tierName || 'Unranked',
             peakRankIcon: stats.peakRank?.metadata?.iconUrl || 'https://trackercdn.com/cdn/tracker.gg/valorant/icons/tiersv2/0.png',
             playtime: segments[0]?.stats?.timePlayed?.displayValue || '0h',
-            banner: data.data.platformInfo?.avatarUrl || null,
+            banner: apiResponse.data.platformInfo?.avatarUrl || null,
             shard: metadata.activeShard || 'unknown'
         };
     } catch (error) {
@@ -102,7 +102,7 @@ async function fetchValorantStats(riotId) {
     }
 }
 
-/**
+/*
  * Fetch League of Legends account statistics
  */
 async function fetchLeagueStats(riotId) {
@@ -110,14 +110,14 @@ async function fetchLeagueStats(riotId) {
     const url = `https://api.tracker.gg/api/v2/lol/standard/profile/riot/${name}%23${tag}?source=web`;
 
     try {
-        const data = await httpsGet(url, HEADERS);
+        const apiResponse = await httpsGet(url, HEADERS);
 
-        if (!data.data || !data.data.segments) {
+        if (!apiResponse.data || !apiResponse.data.segments) {
             throw new Error('Invalid response structure from API');
         }
 
-        const segments = data.data.segments;
-        const metadata = data.data.metadata || {};
+        const segments = apiResponse.data.segments;
+        const metadata = apiResponse.data.metadata || {};
 
         // 1) On cherche d'abord le segment "playlist" Ranked Solo (RANKED_SOLO_5x5)
         let rankedSegment = segments.find(s =>
@@ -160,7 +160,7 @@ async function fetchLeagueStats(riotId) {
             peakRank: 'Unranked',
             peakRankIcon: '',
             playtime,
-            banner: data.data.platformInfo?.avatarUrl || null,
+            banner: apiResponse.data.platformInfo?.avatarUrl || null,
             shard: metadata.platformSlug || 'unknown'
         };
     } catch (error) {
@@ -169,7 +169,7 @@ async function fetchLeagueStats(riotId) {
     }
 }
 
-/**
+/*
  * Main function to fetch stats based on game type
  */
 async function fetchAccountStats(riotId, gameType) {

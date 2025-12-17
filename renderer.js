@@ -119,12 +119,16 @@ function showNotification(message, type = 'info') {
         iconWrapper.className = 'notification-icon-wrapper';
 
         // Création d'un élément temporaire pour parser le SVG
-        const temp = document.createElement('div');
-        temp.innerHTML = icon;
+        const svgContainer = document.createElement('div');
+        
+        const parser = new DOMParser();
+        const svgNode = parser.parseFromString(icon, "image/svg+xml").documentElement;
+        svgContainer.appendChild(svgNode);
+
 
         // Ajout sécurisé des nœuds enfants
-        while (temp.firstChild) {
-            iconWrapper.appendChild(temp.firstChild);
+        while (svgContainer.firstChild) {
+            iconWrapper.appendChild(svgContainer.firstChild);
         }
 
         toast.appendChild(iconWrapper);
