@@ -11,3 +11,7 @@ contextBridge.exposeInMainWorld('ipc', {
     },
     removeAllListeners: (channel) => ipcRenderer.removeAllListeners(channel)
 });
+
+contextBridge.exposeInMainWorld('env', {
+    isDev: process.env.NODE_ENV === "development" || process.env.npm_lifecycle_event === "start"
+});

@@ -42,6 +42,26 @@ const PRIVATE_SETTINGS_FILE = "RiotClientPrivateSettings.yaml";
 
 // Get scripts path (works in both dev and production)
 const isDev = process.env.NODE_ENV === "development" || !app.isPackaged;
+
+// --- Logging ---
+function devLog(...args) {
+  if (isDev) {
+    console.log(...args);
+  }
+}
+
+function devError(...args) {
+  if (isDev) {
+    console.error(...args);
+  }
+}
+
+function devWarn(...args) {
+  if (isDev) {
+    console.warn(...args);
+  }
+}
+
 const SCRIPTS_PATH = isDev
   ? path.join(__dirname, "assets", "scripts")
   : path.join(process.resourcesPath, "scripts");
@@ -54,11 +74,11 @@ const automateLoginScript = path.join(SCRIPTS_PATH, "automate_login.ps1");
 const detectGamesScript = path.join(SCRIPTS_PATH, "detect_games.ps1");
 
 if (!fs.existsSync(automateLoginScript)) {
-  console.error(`Automation script not found: ${automateLoginScript}`);
-}
-if (!fs.existsSync(detectGamesScript)) {
-  console.error(`Detection script not found: ${detectGamesScript}`);
-}
+    devError(`Automation script not found: ${automateLoginScript}`);
+  }
+  if (!fs.existsSync(detectGamesScript)) {
+    devError(`Detection script not found: ${detectGamesScript}`);
+  }
 
 let mainWindow;
 let tray = null;
@@ -66,7 +86,6 @@ let riotDataPath = DEFAULT_RIOT_DATA_PATH;
 let appConfig = {
   riotPath: DEFAULT_RIOT_DATA_PATH,
   theme: "dark",
-  showLogs: true,
   minimizeToTray: true,
   showQuitModal: true,
   autoStart: false,
@@ -142,10 +161,10 @@ function openExternalSafe(url) {
     if (parsed.protocol === "http:" || parsed.protocol === "https:") {
       shell.openExternal(url);
     } else {
-      console.warn("Blocked external URL with invalid protocol:", url);
+      devWarn("Blocked external URL with invalid protocol:", url);
     }
   } catch (e) {
-    console.error("Invalid external URL:", url, e);
+    devError("Invalid external URL:", url, e);
   }
 }
 
@@ -157,7 +176,7 @@ async function loadConfig() {
       riotDataPath = appConfig.riotPath;
     }
   } catch (e) {
-    console.error("Error loading config:", e);
+    devError("Error loading config:", e);
   }
 }
 
@@ -167,7 +186,7 @@ async function saveConfig(newConfig) {
   try {
     await fs.outputJson(CONFIG_FILE, appConfig, { spaces: 2 });
   } catch (e) {
-    console.error("Error saving config:", e);
+    devError("Error saving config:", e);
   }
 }
 
@@ -185,7 +204,7 @@ function decryptData(encryptedData) {
     try {
       return safeStorage.decryptString(Buffer.from(encryptedData, "base64"));
     } catch (e) {
-      console.error("Decryption failed:", e);
+      devError("Decryption failed:", e);
       return null;
     }
   } else {
@@ -200,7 +219,7 @@ async function loadAccountsMeta() {
       return await fs.readJson(ACCOUNTS_FILE);
     }
   } catch (e) {
-    console.error("Error loading accounts:", e);
+    devError("Error loading accounts:", e);
   }
   return [];
 }
@@ -209,7 +228,7 @@ async function saveAccountsMeta(accounts) {
   try {
     await fs.outputJson(ACCOUNTS_FILE, accounts, { spaces: 2 });
   } catch (e) {
-    console.error("Error saving accounts:", e);
+    devError("Error saving accounts:", e);
   }
 }
 
@@ -329,14 +348,14 @@ async function updateTrayMenu() {
                   lastAccount.id,
                 );
               } catch (err) {
-                console.error("Quick connect error:", err);
+                devError("Quick connect error:", err);
               }
             },
           },
         );
       }
     } catch (err) {
-      console.error("Error loading accounts for tray menu:", err);
+      devError("Error loading accounts for tray menu:", err);
     }
   }
 
@@ -370,7 +389,7 @@ function monitorRiotProcess() {
         // "INFO: No tasks are running"
 
         if (!stdout.includes("RiotClientServices.exe")) {
-          console.log("Riot Client closed. Resetting active status.");
+          devLog("Riot Client closed. Resetting active status.");
           activeAccountId = null;
 
           // Notifier le renderer pour qu'il enlève la bordure verte / statut actif
@@ -400,13 +419,13 @@ function setAutoStart(enable) {
     }
 
     app.setLoginItemSettings(settings);
-    console.log(`Auto-start ${enable ? "enabled" : "disabled"}`);
+    devLog(`Auto-start ${enable ? "enabled" : "disabled"}`);
 
     // Verify the setting was applied
     const currentSettings = app.getLoginItemSettings();
-    console.log("Current login item settings:", currentSettings);
+    devLog("Current login item settings:", currentSettings);
   } catch (error) {
-    console.error("Error setting auto-start:", error);
+    devError("Error setting auto-start:", error);
   }
 }
 
@@ -416,14 +435,14 @@ autoUpdater.logger.transports.file.level = "info";
 autoUpdater.logger.info("App starting...");
 
 // Debug: Show update configuration
-console.log("Update configuration:", {
+devLog("Update configuration:", {
   isPackaged: app.isPackaged,
   version: app.getVersion(),
-  repo: "Cori-bot/SwitchMaster-electron",
+  repo: "Cori-bot/SwitchMaster-v2",
 });
 
 autoUpdater.on("checking-for-update", () => {
-  console.log("Checking for update...");
+  devLog("Checking for update...");
   autoUpdater.logger.info("Checking for update...");
   if (mainWindow) {
     mainWindow.webContents.send("update-status", { status: "checking" });
@@ -431,7 +450,7 @@ autoUpdater.on("checking-for-update", () => {
 });
 
 autoUpdater.on("update-available", (info) => {
-  console.log("Update available:", info);
+  devLog("Update available:", info);
   if (mainWindow) {
     mainWindow.webContents.send("update-status", {
       status: "available",
@@ -442,14 +461,14 @@ autoUpdater.on("update-available", (info) => {
 });
 
 autoUpdater.on("update-not-available", (info) => {
-  console.log("Update not available:", info);
+  devLog("Update not available:", info);
   if (mainWindow) {
     mainWindow.webContents.send("update-status", { status: "not-available" });
   }
 });
 
 autoUpdater.on("error", (err) => {
-  console.error("Update error:", err);
+  devError("Update error:", err);
   if (mainWindow) {
     let errorMessage = "Erreur lors de la mise à jour";
 
@@ -480,7 +499,7 @@ autoUpdater.on("download-progress", (progressObj) => {
     "/" +
     progressObj.total +
     ")";
-  console.log(log_message);
+  devLog(log_message);
   if (mainWindow) {
     mainWindow.webContents.send("update-progress", {
       percent: Math.round(progressObj.percent),
@@ -491,7 +510,7 @@ autoUpdater.on("download-progress", (progressObj) => {
 });
 
 autoUpdater.on("update-downloaded", (info) => {
-  console.log("Update downloaded");
+  devLog("Update downloaded");
   if (mainWindow) {
     mainWindow.webContents.send("update-downloaded");
   }
@@ -506,7 +525,7 @@ app.whenReady().then(async () => {
   if (typeof monitorRiotProcess === "function") {
     monitorRiotProcess();
   } else {
-    console.warn("monitorRiotProcess function not found");
+    devWarn("monitorRiotProcess function not found");
   }
 
   // Initial and periodic stats refresh
@@ -522,11 +541,20 @@ app.whenReady().then(async () => {
 
   // Check for updates on startup
   if (!app.isPackaged) {
-    console.log("Running in development mode - update checking disabled");
+    devLog("Running in development mode - update checking disabled");
+    // Notify renderer that update is impossible in dev mode
+    setTimeout(() => {
+      if (mainWindow) {
+        mainWindow.webContents.send("update-status", {
+          status: "error",
+          error: "Mise à jour impossible en mode développement.",
+        });
+      }
+    }, 3000);
   } else {
-    console.log("Production mode - checking for updates...");
+    devLog("Production mode - checking for updates...");
     autoUpdater.checkForUpdatesAndNotify().catch((err) => {
-      console.error("Initial update check failed:", err);
+      devError("Initial update check failed:", err);
     });
   }
 });
@@ -596,7 +624,7 @@ ipcMain.handle(
         );
         newAccount.stats = stats;
       } catch (err) {
-        console.error("Error fetching stats on add-account:", err);
+        devError("Error fetching stats on add-account:", err);
       }
     }
 
@@ -644,7 +672,7 @@ ipcMain.handle(
         );
         updatedAccount.stats = stats;
       } catch (err) {
-        console.error("Error fetching stats on update-account:", err);
+        devError("Error fetching stats on update-account:", err);
       }
     }
 
@@ -706,7 +734,7 @@ async function refreshAllAccountStats() {
           hasChanged = true;
         }
       } catch (err) {
-        console.error(
+        devError(
           `Failed to refresh stats for ${account.name}:`,
           err.message,
         );
@@ -755,7 +783,7 @@ ipcMain.handle("auto-detect-paths", async () => {
 
       ps.on("close", (code) => {
         if (code !== 0) {
-          console.error("Detection PS failed:", errorOutput);
+          devError("Detection PS failed:", errorOutput);
           resolve(null); // Return null on failure, don't crash
           return;
         }
@@ -779,13 +807,13 @@ ipcMain.handle("auto-detect-paths", async () => {
           // Fallback search or just return what we have
           resolve(null);
         } catch (e) {
-          console.error("JSON Parse error in detection:", e);
+          devError("JSON Parse error in detection:", e);
           resolve(null);
         }
       });
     });
   } catch (e) {
-    console.error("Auto detect error:", e);
+    devError("Auto detect error:", e);
     return null;
   }
 });
@@ -801,11 +829,11 @@ ipcMain.handle("switch-account", async (event, id) => {
   const username = decryptData(account.username);
   const password = decryptData(account.password);
 
-  console.log(`Switching to account: ${account.name}`);
+  devLog(`Switching to account: ${account.name}`);
 
   // Kill Riot Processes
   try {
-    console.log("Killing existing Riot processes...");
+    devLog("Killing existing Riot processes...");
     await new Promise((resolve) => {
       exec(
         'taskkill /F /IM "RiotClientServices.exe" /IM "LeagueClient.exe" /IM "VALORANT.exe"',
@@ -814,7 +842,7 @@ ipcMain.handle("switch-account", async (event, id) => {
     });
     await new Promise((r) => setTimeout(r, PROCESS_TERMINATION_DELAY));
   } catch (e) {
-    console.log("Processes cleanup err:", e.message);
+    devLog("Processes cleanup err:", e.message);
   }
 
   // Launch Riot Client
@@ -823,7 +851,7 @@ ipcMain.handle("switch-account", async (event, id) => {
     clientPath = path.join(clientPath, "RiotClientServices.exe");
   }
 
-  console.log("Launching Riot Client from:", clientPath);
+  devLog("Launching Riot Client from:", clientPath);
   if (fs.existsSync(clientPath)) {
     const child = spawn(clientPath, [], { detached: true, stdio: "ignore" });
     child.unref();
@@ -856,7 +884,7 @@ ipcMain.handle("switch-account", async (event, id) => {
     };
 
     // Wait for window (polling)
-    console.log("Waiting for window...");
+    devLog("Waiting for window...");
     let attempts = 0;
     let isWindowFound = false;
     while (attempts < MAX_WINDOW_CHECK_ATTEMPTS) {
@@ -874,7 +902,7 @@ ipcMain.handle("switch-account", async (event, id) => {
     }
 
     if (!isWindowFound) throw new Error("Riot Client window not detected.");
-    console.log("Window found. Performing Login...");
+    devLog("Window found. Performing Login...");
 
     clipboard.writeText(username);
     await runPs("PasteTab");
@@ -886,7 +914,7 @@ ipcMain.handle("switch-account", async (event, id) => {
     await runPs("PasteEnter");
     clipboard.clear();
   } catch (err) {
-    console.error("Automation error:", err);
+    devError("Automation error:", err);
     throw err;
   }
 
@@ -910,7 +938,7 @@ async function launchGame(gameId) {
   }
 
   // Wait 10 seconds before launching the game (let the client fully connect)
-  await new Promise((resolve) => setTimeout(resolve, 10000));
+  await new Promise((resolve) => setTimeout(resolve, GAME_LAUNCH_DELAY_MS));
 
   let args = [];
   if (gameId === "valorant") {
@@ -966,7 +994,7 @@ ipcMain.handle("fetch-account-stats", async (event, accountId) => {
 
     return stats;
   } catch (error) {
-    console.error("Error fetching account stats:", error);
+    devError("Error fetching account stats:", error);
     throw error;
   }
 });
@@ -985,7 +1013,7 @@ ipcMain.handle("update-account-stats", async (event, accountId, stats) => {
 
     return true;
   } catch (error) {
-    console.error("Error updating account stats:", error);
+    devError("Error updating account stats:", error);
     throw error;
   }
 });
@@ -1026,7 +1054,7 @@ ipcMain.handle("get-auto-start-status", () => {
       wasOpenedAtLogin: settings.wasOpenedAtLogin || false,
     };
   } catch (error) {
-    console.error("Error getting auto-start status:", error);
+    devError("Error getting auto-start status:", error);
     return { enabled: false, wasOpenedAtLogin: false };
   }
 });
@@ -1034,19 +1062,40 @@ ipcMain.handle("get-auto-start-status", () => {
 // 13. Check for Updates
 ipcMain.handle("check-for-updates", async () => {
   try {
-    if (!app.isPackaged) {
+    if (isDev) {
       // In development, simulate update check
-      console.log("Development mode - simulating update check");
-      mainWindow.webContents.send("update-status", { status: "not-available" });
+      devLog("Development mode - simulating update check");
+      mainWindow.webContents.send("update-status", { status: "checking" });
+
+      // Simulate network delay
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      // 50% chance to simulate update available
+      const updateAvailable = Math.random() > 0.5;
+
+      if (updateAvailable) {
+        devLog("Simulating: Update available");
+        mainWindow.webContents.send("update-status", {
+          status: "available",
+          version: "9.9.9",
+          releaseNotes: "Ceci est une mise à jour simulée pour le mode dev.",
+        });
+      } else {
+        devLog("Simulating: Update not available");
+        mainWindow.webContents.send("update-status", {
+          status: "not-available",
+        });
+      }
+
       return {
-        status: "not-available",
+        status: "simulated",
         message: "Development mode - update checking simulated",
       };
     }
     await autoUpdater.checkForUpdatesAndNotify();
     return { status: "checking" };
   } catch (error) {
-    console.error("Update check failed:", error);
+    devError("Update check failed:", error);
     throw error;
   }
 });
@@ -1057,7 +1106,7 @@ ipcMain.handle("install-update", async () => {
     autoUpdater.quitAndInstall();
     return true;
   } catch (error) {
-    console.error("Install update failed:", error);
+    devError("Install update failed:", error);
     throw error;
   }
 });

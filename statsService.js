@@ -2,6 +2,20 @@ const https = require("https");
 
 // Service for fetching account statistics from tracker.gg
 
+const isDev = process.env.NODE_ENV === "development";
+
+function devLog(...args) {
+  if (isDev) {
+    console.log(...args);
+  }
+}
+
+function devError(...args) {
+  if (isDev) {
+    console.error(...args);
+  }
+}
+
 const HEADERS = {
   "User-Agent":
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0",
@@ -96,14 +110,12 @@ async function fetchValorantStats(riotId) {
       shard: metadata.activeShard || "unknown",
     };
   } catch (error) {
-    console.error("Error fetching Valorant stats:", error);
+    devError("Error fetching Valorant stats:", error);
     throw new Error(`Failed to fetch Valorant stats: ${error.message}`);
   }
 }
 
-/*
- * Fetch League of Legends account statistics
- */
+//Fetch League of Legends account statistics
 async function fetchLeagueStats(riotId) {
   const { name, tag } = parseRiotId(riotId);
   const url = `https://api.tracker.gg/api/v2/lol/standard/profile/riot/${name}%23${tag}?source=web`;
@@ -169,14 +181,12 @@ async function fetchLeagueStats(riotId) {
       shard: metadata.platformSlug || "unknown",
     };
   } catch (error) {
-    console.error("Error fetching League stats:", error);
+    devError("Error fetching League stats:", error);
     throw new Error(`Failed to fetch League stats: ${error.message}`);
   }
 }
 
-/*
- * Main function to fetch stats based on game type
- */
+//Main function to fetch stats based on game type
 async function fetchAccountStats(riotId, gameType) {
   if (!riotId || !riotId.includes("#")) {
     throw new Error("Invalid Riot ID format");

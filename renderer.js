@@ -17,14 +17,10 @@ const inputRiotId = document.getElementById("input-riot-id");
 const inputCardImage = document.getElementById("input-card-image");
 const btnBrowseImage = document.getElementById("btn-browse-image");
 
-const logsContainer = document.getElementById("logs-container");
-const logsPanel = document.querySelector(".logs-panel");
-
 const statusDot = document.getElementById("status-dot");
 const statusText = document.getElementById("status-text");
 
 // Settings Elements
-const settingLogs = document.getElementById("setting-logs");
 const settingRiotPath = document.getElementById("setting-riot-path");
 const settingShowQuitModal = document.getElementById("setting-show-quit-modal");
 const settingMinimizeToTray = document.getElementById(
@@ -89,15 +85,27 @@ let appConfig = {};
 let currentPinInput = "";
 let isSettingPin = false;
 let confirmPin = "";
+const NOTIFICATION_DISPLAY_TIME_MS = 3000; // 3 secondes
 
 // --- Logging ---
-function log(message) {
-  const time = new Date().toLocaleTimeString();
-  const div = document.createElement("div");
-  div.className = "log-entry";
-  div.textContent = `[${time}] ${message}`;
-  logsContainer.appendChild(div);
-  logsContainer.scrollTop = logsContainer.scrollHeight;
+const isDev = window.env ? window.env.isDev : false;
+
+function devLog(...args) {
+  if (isDev) {
+    console.log(...args);
+  }
+}
+
+function devError(...args) {
+  if (isDev) {
+    console.error(...args);
+  }
+}
+
+function devWarn(...args) {
+  if (isDev) {
+    console.warn(...args);
+  }
 }
 
 // --- Notifications ---
@@ -150,7 +158,12 @@ function showNotification(message, type = "info") {
 
   container.appendChild(toast);
 
+  // Force reflow pour l'animation d'entrée
+  toast.offsetHeight;
+  toast.classList.add("show");
+
   setTimeout(() => {
+    toast.classList.remove("show");
     toast.classList.add("closing");
     toast.addEventListener("animationend", () => {
       toast.remove();
@@ -310,18 +323,25 @@ function renderAccounts() {
       const rankWrapper = document.createElement("div");
       rankWrapper.className = "rank-wrapper";
 
-      // Utilisation de DOMParser pour parser le HTML de manière sécurisée
-      const parser = new DOMParser();
-      try {
-        const doc = parser.parseFromString(rankHTML, "text/html");
-        const nodes = doc.body.childNodes;
+      // Utilisation de DOMPurify pour sécuriser le contenu HTML
+      if (typeof DOMPurify !== "undefined") {
+        // Nettoyage et injection sécurisée
+        const cleanHtml = DOMPurify.sanitize(rankHTML);
+        rankWrapper.innerHTML = cleanHtml;
+      } else {
+        // Utilisation de DOMParser pour parser le HTML de manière sécurisée
+        const parser = new DOMParser();
+        try {
+          const doc = parser.parseFromString(rankHTML, "text/html");
+          const nodes = doc.body.childNodes;
 
-        // Ajout sécurisé des nœuds enfants
-        while (nodes.length > 0) {
-          rankWrapper.appendChild(document.importNode(nodes[0], true));
+          // Ajout sécurisé des nœuds enfants
+          while (nodes.length > 0) {
+            rankWrapper.appendChild(document.importNode(nodes[0], true));
+          }
+        } catch (e) {
+          devError("Erreur lors du parsing du HTML du rang:", e);
         }
-      } catch (e) {
-        console.error("Erreur lors du parsing du HTML du rang:", e);
       }
 
       cardContent.appendChild(rankWrapper);
@@ -552,17 +572,16 @@ async function loadAccounts() {
   try {
     accounts = await ipcRenderer.invoke("get-accounts");
     renderAccounts();
-    log("Accounts loaded.");
     checkStatus();
     for (const acc of accounts) {
       if (acc.riotId && (!acc.stats || !acc.stats.rank)) {
         loadAccountStats(acc.id).catch((err) => {
-          console.log(`Could not load stats for ${acc.name}:`, err.message);
+          devLog(`Could not load stats for ${acc.name}:`, err.message);
         });
       }
     }
   } catch (err) {
-    log(`Error loading accounts: ${err.message}`);
+    devError(`Error loading accounts: ${err.message}`);
   }
 }
 
@@ -575,7 +594,7 @@ async function loadAccountStats(accountId) {
       renderAccounts();
     }
   } catch (err) {
-    console.error("Error loading account stats:", err);
+    devError("Error loading account stats:", err);
   }
 }
 
@@ -670,7 +689,6 @@ async function saveAccount() {
   try {
     if (id) {
       // Edit existing (In-place update)
-      log(`Modification du compte "${name}"...`);
       await ipcRenderer.invoke("update-account", {
         id,
         name,
@@ -682,7 +700,6 @@ async function saveAccount() {
       });
     } else {
       // Add new
-      log("Ajout du compte...");
       await ipcRenderer.invoke("add-account", {
         name,
         username,
@@ -693,7 +710,6 @@ async function saveAccount() {
       });
     }
 
-    log(id ? `✓ Compte modifié.` : `✓ Compte ajouté.`);
     closeModal();
     loadAccounts();
   } catch (err) {
@@ -807,12 +823,9 @@ async function performSwitch(id, gameType, shouldLaunch) {
   if (!account) return;
 
   try {
-    log(`🔄 Connexion à ${account.name}...`);
     await ipcRenderer.invoke("switch-account", id);
-    log(`✓ Login terminé.`);
 
     if (shouldLaunch) {
-      log(`🚀 Lancement du jeu...`);
       await ipcRenderer.invoke("launch-game", gameType);
     }
 
@@ -927,7 +940,7 @@ async function checkStatus() {
       .querySelectorAll(".account-card")
       .forEach((card) => card.classList.remove("active-account"));
   } catch (err) {
-    console.error(err);
+    devError(err);
   }
 }
 
@@ -951,7 +964,6 @@ ipcRenderer.on("riot-client-closed", () => {
 async function loadSettings() {
   try {
     appConfig = await ipcRenderer.invoke("get-config");
-    settingLogs.checked = appConfig.showLogs !== false;
     settingShowQuitModal.checked =
       appConfig.showQuitModal === true || appConfig.showQuitModal === undefined;
     settingMinimizeToTray.checked =
@@ -980,16 +992,14 @@ async function loadSettings() {
       }
     }
     settingRiotPath.value = currentPath.replace(/\\\\/g, "\\");
-    toggleLogs(appConfig.showLogs !== false);
   } catch (err) {
-    console.error("Error loading settings:", err);
+    devError("Error loading settings:", err);
   }
 }
 
 async function saveSettings() {
   const newConfig = {
     theme: "dark",
-    showLogs: settingLogs.checked,
     riotPath: settingRiotPath.value.trim(),
     showQuitModal: settingShowQuitModal.checked,
     minimizeToTray: settingMinimizeToTray.checked,
@@ -999,11 +1009,6 @@ async function saveSettings() {
   await ipcRenderer.invoke("set-auto-start", settingAutoStart.checked);
   showNotification("Paramètres sauvegardés !", "success");
 }
-
-settingLogs.addEventListener("change", () => {
-  toggleLogs(settingLogs.checked);
-  saveSettings();
-});
 
 settingRiotPath.addEventListener("input", () => {
   clearTimeout(window.saveTimeout);
@@ -1171,10 +1176,6 @@ navSettings.addEventListener("click", () => switchView("settings"));
 function closeModal() {
   modalAddAccount.classList.remove("show");
 }
-function toggleLogs(show) {
-  if (show) logsPanel.style.display = "flex";
-  else logsPanel.style.display = "none";
-}
 
 btnAddAccount.addEventListener("click", () => {
   openModal("add");
@@ -1208,7 +1209,6 @@ settingAutoStart.addEventListener("change", saveSettings);
 loadSettings();
 checkSecurity();
 loadAccounts();
-log("Application started.");
 
 // Listen for quit modal from main process
 ipcRenderer.on("show-quit-modal", () => {
@@ -1276,24 +1276,9 @@ function showUpdateModal(updateInfo) {
 
     // Utilisation de DOMPurify pour sécuriser le contenu HTML
     if (typeof DOMPurify !== "undefined") {
-      // Création d'un conteneur temporaire avec le contenu nettoyé
-      const notesContainer = document.createElement("div");
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(
-        DOMPurify.sanitize(htmlNotes),
-        "text/html",
-      );
-      notesContainer.append(...doc.body.childNodes);
-
-      // Vidage sécurisé du conteneur
-      while (releaseNotesEl.firstChild) {
-        releaseNotesEl.removeChild(releaseNotesEl.firstChild);
-      }
-
-      // Ajout sécurisé des nœuds enfants
-      while (temp.firstChild) {
-        releaseNotesEl.appendChild(temp.firstChild);
-      }
+      // Nettoyage et injection sécurisée
+      const cleanHtml = DOMPurify.sanitize(htmlNotes);
+      releaseNotesEl.innerHTML = cleanHtml;
     } else {
       // Fallback sécurisé sans innerHTML
       releaseNotesEl.textContent = "";
@@ -1306,7 +1291,7 @@ function showUpdateModal(updateInfo) {
           releaseNotesEl.appendChild(document.importNode(nodes[0], true));
         }
       } catch (e) {
-        console.error("Erreur lors du parsing des notes de version:", e);
+        devError("Erreur lors du parsing des notes de version:", e);
         releaseNotesEl.textContent =
           "Impossible de charger les notes de version.";
       }
@@ -1375,7 +1360,7 @@ if (btnUpdateDownload) {
       // Start download
       await ipcRenderer.invoke("check-for-updates");
     } catch (error) {
-      console.error("Update download failed:", error);
+      devError("Update download failed:", error);
       showNotification("Échec du téléchargement de la mise à jour", "error");
       btnUpdateDownload.textContent = "Télécharger";
       btnUpdateDownload.disabled = false;
@@ -1409,7 +1394,7 @@ if (btnCheckUpdates) {
       }
       // Other cases are handled by the update-status event listener
     } catch (error) {
-      console.error("Update check failed:", error);
+      devError("Update check failed:", error);
       showNotification("Impossible de vérifier les mises à jour", "error");
       btnCheckUpdates.disabled = false;
       btnCheckUpdates.textContent = "Vérifier les mises à jour";
@@ -1429,7 +1414,7 @@ ipcRenderer.on("update-downloaded", () => {
         await ipcRenderer.invoke("install-update");
         // App will restart automatically
       } catch (error) {
-        console.error("Update install failed:", error);
+        devError("Update install failed:", error);
         showNotification("Échec de l'installation de la mise à jour", "error");
       }
     };

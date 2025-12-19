@@ -1,7 +1,8 @@
-* [ ] Corriger le repo "Cori-bot/SwitchMaster-electron" en "Cori-bot/SwitchMaster-v2"
-* [ ] Verifier le bouton de mises a jour automatique en mode dev et prod :
-  - En mode dev, simulation
+* [X] Corriger le repo "Cori-bot/SwitchMaster-electron" en "Cori-bot/SwitchMaster-v2"
+* [X] Verifier le bouton de mises a jour automatique en mode dev et prod :
+  - En mode dev, dire que l'update est impossible car on est en mode dev
   - En mode prod, doit fonctionner
-* [ ] Afficher les logs dans la console pour chaque action dans le logiciel en mode dev
-* [ ] Supprimer les logs en prod et enlever l'option dans les parametres "Afficher les logs"
-* [ ] Creer un README.md pour le projet
+* [X] Gérer les logs intelligemment :
+  - Afficher les logs (devLog/devError) dans la console uniquement en mode dev
+  - Supprimer l'interface utilisateur "Show Activity Logs" (bouton et panneau)
+* [X] Creer un README.md pour le projet
