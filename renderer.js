@@ -93,9 +93,7 @@ const ERROR_SHAKE_DELAY_MS = 1000;
 const VIEW_SWITCH_TRANSITION_DELAY_MS = 200;
 const CURRENT_APP_VERSION = "2.3.0";
 const PIN_LENGTH = 4;
-const SVG_ICON_SIZE = 20;
-const SVG_VIEWBOX_SIZE = 24;
-const DEFAULT_NOTIFICATION_SVG_STROKE = "#ff4655"; // Correction du nombre magique 039 par une constante explicite si nécessaire, ou utilisation directe ici
+const HTML_ENTITY_APOSTROPHE = "&#039;";
 
 /**
  * Définit le contenu HTML d'un élément de manière sécurisée sans utiliser innerHTML.
@@ -234,7 +232,7 @@ function escapeHtml(unsafe) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+    .replace(/'/g, HTML_ENTITY_APOSTROPHE);
 }
 
 // --- UI Rendering ---
@@ -244,324 +242,266 @@ function renderAccounts() {
   }
 
   if (accounts.length === 0) {
-    const emptyContainer = document.createElement("div");
-    emptyContainer.className = "empty-state-container";
-
-    const emptyButton = document.createElement("button");
-    emptyButton.id = "btn-empty-add";
-    emptyButton.className = "btn-empty-state";
-
-    const emptyIcon = document.createElement("div");
-    emptyIcon.className = "empty-icon";
-    emptyIcon.textContent = "+";
-
-    const emptyText = document.createElement("div");
-    emptyText.className = "empty-text";
-    emptyText.textContent = "Ajouter un premier compte";
-
-    emptyButton.appendChild(emptyIcon);
-    emptyButton.appendChild(emptyText);
-    emptyContainer.appendChild(emptyButton);
-    accountsList.appendChild(emptyContainer);
-
-    emptyButton.addEventListener("click", () => openModal("add"));
+    renderEmptyState();
     return;
   }
 
   accounts.forEach((acc) => {
-    const card = document.createElement("div");
-    card.className = "account-card";
-
-    // Apply background image if exists
-    if (acc.cardImage) {
-      // Use linear gradient to darken image for readability
-      // Path needs to be CSS escaped effectively, but simple replace usually works for paths.
-      // Better to use CSS.escape if we were passing weird chars, but here replace is okay for quotes.
-      const safePath = acc.cardImage.replace(/\\/g, "/").replace(/'/g, "\\'");
-      card.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.9)), url('${safePath}')`;
-      card.style.backgroundSize = "cover";
-      card.style.backgroundPosition = "center";
-      card.classList.add("has-bg");
-    }
-
-    let rankHTML = "";
-    if (acc.stats && acc.stats.rank) {
-      const isUnranked = acc.stats.rank === "Unranked";
-      rankHTML = `
-                <div class="rank-section">
-                    <div class="rank-current">
-                        <div class="rank-header">Rank Actuel</div>
-                        <div class="rank-display">
-                            <img src="${acc.stats.rankIcon}" alt="${escapeHtml(acc.stats.rank)}" class="rank-icon" onerror="this.style.display='none'">
-                            <span class="rank-name">${escapeHtml(acc.stats.rank)}</span>
-                        </div>
-                    </div>
-                    ${
-                      isUnranked &&
-                      acc.stats.peakRank &&
-                      acc.stats.peakRank !== "Unranked"
-                        ? `
-                    <div class="rank-peak">
-                        <div class="rank-header">Peak Rank</div>
-                        <div class="rank-display">
-                            <img src="${acc.stats.peakRankIcon}" alt="${escapeHtml(acc.stats.peakRank)}" class="rank-icon" onerror="this.style.display='none'">
-                            <span class="rank-name">${escapeHtml(acc.stats.peakRank)}</span>
-                        </div>
-                    </div>
-                    `
-                        : ""
-                    }
-                </div>
-            `;
-    } else if (acc.riotId) {
-      rankHTML = `
-                <div class="rank-section">
-                    <div class="rank-loading">Chargement des stats...</div>
-                </div>
-            `;
-    }
-
-    // Add z-index to content to ensure it sits above background
-    const cardContent = document.createElement("div");
-    cardContent.className = "card-content";
-    cardContent.style.position = "relative";
-    cardContent.style.zIndex = "2";
-
-    const cardTop = document.createElement("div");
-    cardTop.className = "card-top-section";
-    cardTop.style.display = "flex";
-    cardTop.style.justifyContent = "space-between";
-    cardTop.style.width = "100%";
-    cardTop.style.marginBottom = "8px";
-
-    const cardInfo = document.createElement("div");
-    cardInfo.className = "card-info";
-    cardInfo.style.flex = "1";
-
-    const accountNameEl = document.createElement("div");
-    accountNameEl.className = "account-name";
-    accountNameEl.textContent = acc.name;
-    cardInfo.appendChild(accountNameEl);
-
-    if (acc.riotId) {
-      const riotIdEl = document.createElement("div");
-      riotIdEl.className = "account-riot-id";
-      riotIdEl.style.fontSize = "12px";
-      riotIdEl.style.color = "var(--text-muted)";
-      riotIdEl.style.opacity = "0.8";
-      riotIdEl.style.marginTop = "4px";
-      riotIdEl.textContent = acc.riotId;
-      cardInfo.appendChild(riotIdEl);
-    }
-
-    const cardRight = document.createElement("div");
-    cardRight.className = "card-right-side";
-    cardRight.style.display = "flex";
-    cardRight.style.flexDirection = "column";
-    cardRight.style.alignItems = "flex-end";
-    cardRight.style.gap = "12px";
-
-    const cardDisplayImage = document.createElement("div");
-    cardDisplayImage.className = "card-display-image";
-    const gameImg = document.createElement("img");
-    gameImg.src = `assets/${acc.gameType === "league" ? "league" : "valorant"}.png`;
-    gameImg.alt = acc.gameType;
-    cardDisplayImage.appendChild(gameImg);
-    cardRight.appendChild(cardDisplayImage);
-
-    cardTop.appendChild(cardInfo);
-    cardTop.appendChild(cardRight);
-    cardContent.appendChild(cardTop);
-
-    // Partie rank (HTML contrôlé mais contenant des images et du texte déjà échappé)
-    if (rankHTML) {
-      const rankWrapper = document.createElement("div");
-      rankWrapper.className = "rank-wrapper";
-
-      // Utilisation du helper sécurisé pour éviter innerHTML
-      setSafeHTML(rankWrapper, rankHTML);
-
-      cardContent.appendChild(rankWrapper);
-    }
-
-    const cardActions = document.createElement("div");
-    cardActions.className = "card-actions";
-    cardActions.style.display = "flex";
-    cardActions.style.gap = "8px";
-    cardActions.style.position = "relative";
-
-    const btnSwitch = document.createElement("button");
-    btnSwitch.className = "btn-switch";
-    btnSwitch.dataset.id = acc.id;
-    btnSwitch.dataset.game = acc.gameType;
-    btnSwitch.style.flex = "1";
-    btnSwitch.textContent = "CONNECTER";
-
-    const settingsWrapper = document.createElement("div");
-    settingsWrapper.className = "settings-wrapper";
-    settingsWrapper.style.position = "relative";
-
-    const btnSettings = document.createElement("button");
-    btnSettings.className = "btn-settings";
-    btnSettings.dataset.id = acc.id;
-    btnSettings.title = "Paramètres du compte";
-    // Icône SVG des paramètres
-    const settingsIcon = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "svg",
-    );
-    settingsIcon.setAttribute("width", "24");
-    settingsIcon.setAttribute("height", "24");
-    settingsIcon.setAttribute("viewBox", "0 0 24 24");
-    settingsIcon.setAttribute("fill", "none");
-    settingsIcon.setAttribute("stroke", "currentColor");
-    settingsIcon.setAttribute("stroke-width", "2");
-    settingsIcon.setAttribute("stroke-linecap", "round");
-    settingsIcon.setAttribute("stroke-linejoin", "round");
-    settingsIcon.classList.add(
-      "lucide",
-      "lucide-settings-icon",
-      "lucide-settings",
-    );
-
-    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    path.setAttribute(
-      "d",
-      "M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915",
-    );
-    const circle = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "circle",
-    );
-    circle.setAttribute("cx", "12");
-    circle.setAttribute("cy", "12");
-    circle.setAttribute("r", "3");
-
-    settingsIcon.appendChild(path);
-    settingsIcon.appendChild(circle);
-    btnSettings.appendChild(settingsIcon);
-
-    const settingsMenu = document.createElement("div");
-    settingsMenu.className = "settings-menu";
-    settingsMenu.dataset.id = acc.id;
-    settingsMenu.style.display = "none";
-
-    const btnEdit = document.createElement("button");
-    btnEdit.className = "menu-item";
-    btnEdit.dataset.action = "edit";
-    // Création de l'icône d'édition avec createElementNS
-    const editIcon = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "svg",
-    );
-    editIcon.setAttribute("width", "16");
-    editIcon.setAttribute("height", "16");
-    editIcon.setAttribute("viewBox", "0 0 24 24");
-    editIcon.setAttribute("fill", "none");
-    editIcon.setAttribute("stroke", "currentColor");
-    editIcon.setAttribute("stroke-width", "2");
-    editIcon.setAttribute("stroke-linecap", "round");
-    editIcon.setAttribute("stroke-linejoin", "round");
-
-    const path1 = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "path",
-    );
-    path1.setAttribute(
-      "d",
-      "M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7",
-    );
-
-    const path2 = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "path",
-    );
-    path2.setAttribute(
-      "d",
-      "M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z",
-    );
-
-    editIcon.appendChild(path1);
-    editIcon.appendChild(path2);
-
-    btnEdit.appendChild(editIcon);
-    btnEdit.appendChild(document.createTextNode(" Modifier le compte"));
-
-    const btnDelete = document.createElement("button");
-    btnDelete.className = "menu-item menu-item-danger";
-    btnDelete.dataset.action = "delete";
-    // Création de l'icône de suppression avec createElementNS
-    const deleteIcon = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "svg",
-    );
-    deleteIcon.setAttribute("width", "16");
-    deleteIcon.setAttribute("height", "16");
-    deleteIcon.setAttribute("viewBox", "0 0 24 24");
-    deleteIcon.setAttribute("fill", "none");
-    deleteIcon.setAttribute("stroke", "currentColor");
-    deleteIcon.setAttribute("stroke-width", "2");
-    deleteIcon.setAttribute("stroke-linecap", "round");
-    deleteIcon.setAttribute("stroke-linejoin", "round");
-
-    const polyline = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "polyline",
-    );
-    polyline.setAttribute("points", "3 6 5 6 21 6");
-
-    const path3 = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "path",
-    );
-    path3.setAttribute(
-      "d",
-      "M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2",
-    );
-
-    const line1 = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "line",
-    );
-    line1.setAttribute("x1", "10");
-    line1.setAttribute("y1", "11");
-    line1.setAttribute("x2", "10");
-    line1.setAttribute("y2", "17");
-
-    const line2 = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "line",
-    );
-    line2.setAttribute("x1", "14");
-    line2.setAttribute("y1", "11");
-    line2.setAttribute("x2", "14");
-    line2.setAttribute("y2", "17");
-
-    deleteIcon.appendChild(polyline);
-    deleteIcon.appendChild(path3);
-    deleteIcon.appendChild(line1);
-    deleteIcon.appendChild(line2);
-
-    btnDelete.appendChild(deleteIcon);
-    btnDelete.appendChild(document.createTextNode(" Supprimer le compte"));
-
-    settingsMenu.appendChild(btnEdit);
-    settingsMenu.appendChild(btnDelete);
-
-    settingsWrapper.appendChild(btnSettings);
-    settingsWrapper.appendChild(settingsMenu);
-
-    cardActions.appendChild(btnSwitch);
-    cardActions.appendChild(settingsWrapper);
-
-    cardContent.appendChild(cardActions);
-    card.appendChild(cardContent);
-
+    const card = createAccountCard(acc);
     addDragHandlers(card, acc.id);
     accountsList.appendChild(card);
   });
 
   addAccountCardListeners();
+}
+
+function renderEmptyState() {
+  const emptyContainer = document.createElement("div");
+  emptyContainer.className = "empty-state-container";
+
+  const emptyButton = document.createElement("button");
+  emptyButton.id = "btn-empty-add";
+  emptyButton.className = "btn-empty-state";
+
+  const emptyIcon = document.createElement("div");
+  emptyIcon.className = "empty-icon";
+  emptyIcon.textContent = "+";
+
+  const emptyText = document.createElement("div");
+  emptyText.className = "empty-text";
+  emptyText.textContent = "Ajouter un premier compte";
+
+  emptyButton.appendChild(emptyIcon);
+  emptyButton.appendChild(emptyText);
+  emptyContainer.appendChild(emptyButton);
+  accountsList.appendChild(emptyContainer);
+
+  emptyButton.addEventListener("click", () => openModal("add"));
+}
+
+function createAccountCard(acc) {
+  const card = document.createElement("div");
+  card.className = "account-card";
+
+  if (acc.cardImage) {
+    const safePath = acc.cardImage.replace(/\\/g, "/").replace(/'/g, "\\'");
+    card.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.9)), url('${safePath}')`;
+    card.style.backgroundSize = "cover";
+    card.style.backgroundPosition = "center";
+    card.classList.add("has-bg");
+  }
+
+  const cardContent = document.createElement("div");
+  cardContent.className = "card-content";
+  cardContent.style.position = "relative";
+  cardContent.style.zIndex = "2";
+
+  cardContent.appendChild(createCardTop(acc));
+
+  const rankHTML = getRankHTML(acc);
+  if (rankHTML) {
+    const rankWrapper = document.createElement("div");
+    rankWrapper.className = "rank-wrapper";
+    setSafeHTML(rankWrapper, rankHTML);
+    cardContent.appendChild(rankWrapper);
+  }
+
+  cardContent.appendChild(createCardActions(acc));
+  card.appendChild(cardContent);
+
+  return card;
+}
+
+function createCardTop(acc) {
+  const cardTop = document.createElement("div");
+  cardTop.className = "card-top-section";
+  cardTop.style.display = "flex";
+  cardTop.style.justifyContent = "space-between";
+  cardTop.style.width = "100%";
+  cardTop.style.marginBottom = "8px";
+
+  const cardInfo = document.createElement("div");
+  cardInfo.className = "card-info";
+  cardInfo.style.flex = "1";
+
+  const accountNameEl = document.createElement("div");
+  accountNameEl.className = "account-name";
+  accountNameEl.textContent = acc.name;
+  cardInfo.appendChild(accountNameEl);
+
+  if (acc.riotId) {
+    const riotIdEl = document.createElement("div");
+    riotIdEl.className = "account-riot-id";
+    riotIdEl.style.fontSize = "12px";
+    riotIdEl.style.color = "var(--text-muted)";
+    riotIdEl.style.opacity = "0.8";
+    riotIdEl.style.marginTop = "4px";
+    riotIdEl.textContent = acc.riotId;
+    cardInfo.appendChild(riotIdEl);
+  }
+
+  const cardRight = document.createElement("div");
+  cardRight.className = "card-right-side";
+  cardRight.style.display = "flex";
+  cardRight.style.flexDirection = "column";
+  cardRight.style.alignItems = "flex-end";
+  cardRight.style.gap = "12px";
+
+  const cardDisplayImage = document.createElement("div");
+  cardDisplayImage.className = "card-display-image";
+  const gameImg = document.createElement("img");
+  gameImg.src = `assets/${acc.gameType === "league" ? "league" : "valorant"}.png`;
+  gameImg.alt = acc.gameType;
+  cardDisplayImage.appendChild(gameImg);
+  cardRight.appendChild(cardDisplayImage);
+
+  cardTop.appendChild(cardInfo);
+  cardTop.appendChild(cardRight);
+  return cardTop;
+}
+
+function getRankHTML(acc) {
+  if (acc.stats && acc.stats.rank) {
+    const isUnranked = acc.stats.rank === "Unranked";
+    return `
+      <div class="rank-section">
+        <div class="rank-current">
+          <div class="rank-header">Rank Actuel</div>
+          <div class="rank-display">
+            <img src="${acc.stats.rankIcon}" alt="${escapeHtml(acc.stats.rank)}" class="rank-icon" onerror="this.style.display='none'">
+            <span class="rank-name">${escapeHtml(acc.stats.rank)}</span>
+          </div>
+        </div>
+        ${isUnranked && acc.stats.peakRank && acc.stats.peakRank !== "Unranked" ? `
+          <div class="rank-peak">
+            <div class="rank-header">Peak Rank</div>
+            <div class="rank-display">
+              <img src="${acc.stats.peakRankIcon}" alt="${escapeHtml(acc.stats.peakRank)}" class="rank-icon" onerror="this.style.display='none'">
+              <span class="rank-name">${escapeHtml(acc.stats.peakRank)}</span>
+            </div>
+          </div>
+        ` : ""}
+      </div>
+    `;
+  } else if (acc.riotId) {
+    return `
+      <div class="rank-section">
+        <div class="rank-loading">Chargement des stats...</div>
+      </div>
+    `;
+  }
+  return "";
+}
+
+function createCardActions(acc) {
+  const cardActions = document.createElement("div");
+  cardActions.className = "card-actions";
+  cardActions.style.display = "flex";
+  cardActions.style.gap = "8px";
+  cardActions.style.position = "relative";
+
+  const btnSwitch = document.createElement("button");
+  btnSwitch.className = "btn-switch";
+  btnSwitch.dataset.id = acc.id;
+  btnSwitch.dataset.game = acc.gameType;
+  btnSwitch.style.flex = "1";
+  btnSwitch.textContent = "CONNECTER";
+
+  const settingsWrapper = document.createElement("div");
+  settingsWrapper.className = "settings-wrapper";
+  settingsWrapper.style.position = "relative";
+
+  const btnSettings = document.createElement("button");
+  btnSettings.className = "btn-settings";
+  btnSettings.dataset.id = acc.id;
+  btnSettings.title = "Paramètres du compte";
+
+  const settingsIcon = createSvgIcon("settings", "24", "24");
+  btnSettings.appendChild(settingsIcon);
+
+  const settingsMenu = createSettingsMenu(acc);
+
+  settingsWrapper.appendChild(btnSettings);
+  settingsWrapper.appendChild(settingsMenu);
+
+  cardActions.appendChild(btnSwitch);
+  cardActions.appendChild(settingsWrapper);
+
+  return cardActions;
+}
+
+function createSettingsMenu(acc) {
+  const settingsMenu = document.createElement("div");
+  settingsMenu.className = "settings-menu";
+  settingsMenu.dataset.id = acc.id;
+  settingsMenu.style.display = "none";
+
+  const btnEdit = document.createElement("button");
+  btnEdit.className = "menu-item";
+  btnEdit.dataset.action = "edit";
+  btnEdit.appendChild(createSvgIcon("edit", "16", "16"));
+  btnEdit.appendChild(document.createTextNode(" Modifier le compte"));
+
+  const btnDelete = document.createElement("button");
+  btnDelete.className = "menu-item menu-item-danger";
+  btnDelete.dataset.action = "delete";
+  btnDelete.appendChild(createSvgIcon("delete", "16", "16"));
+  btnDelete.appendChild(document.createTextNode(" Supprimer le compte"));
+
+  settingsMenu.appendChild(btnEdit);
+  settingsMenu.appendChild(btnDelete);
+  return settingsMenu;
+}
+
+function createSvgIcon(type, width, height) {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("width", width);
+  svg.setAttribute("height", height);
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("fill", "none");
+  svg.setAttribute("stroke", "currentColor");
+  svg.setAttribute("stroke-width", "2");
+  svg.setAttribute("stroke-linecap", "round");
+  svg.setAttribute("stroke-linejoin", "round");
+
+  if (type === "settings") {
+    svg.classList.add("lucide", "lucide-settings-icon", "lucide-settings");
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", "M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915");
+    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    circle.setAttribute("cx", "12");
+    circle.setAttribute("cy", "12");
+    circle.setAttribute("r", "3");
+    svg.appendChild(path);
+    svg.appendChild(circle);
+  } else if (type === "edit") {
+    const path1 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path1.setAttribute("d", "M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7");
+    const path2 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path2.setAttribute("d", "M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z");
+    svg.appendChild(path1);
+    svg.appendChild(path2);
+  } else if (type === "delete") {
+    const polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+    polyline.setAttribute("points", "3 6 5 6 21 6");
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", "M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2");
+    const line1 = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line1.setAttribute("x1", "10");
+    line1.setAttribute("y1", "11");
+    line1.setAttribute("x2", "10");
+    line1.setAttribute("y2", "17");
+    const line2 = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line2.setAttribute("x1", "14");
+    line2.setAttribute("y1", "11");
+    line2.setAttribute("x2", "14");
+    line2.setAttribute("y2", "17");
+    svg.appendChild(polyline);
+    svg.appendChild(path);
+    svg.appendChild(line1);
+    svg.appendChild(line2);
+  }
+  return svg;
 }
 
 function addAccountCardListeners() {
@@ -1112,7 +1052,7 @@ async function processPin() {
     if (!confirmPin) {
       confirmPin = currentPinInput;
       currentPinInput = "";
-      updatePinDisplay();
+      updatePinDisplay(); // lgtm [js/unawaited-promise]
       lockScreen.querySelector("h2").textContent = "Confirmer le PIN";
       lockScreen.querySelector("p").textContent =
         "Entrez le code à nouveau pour confirmer";
@@ -1133,7 +1073,7 @@ async function processPin() {
           lockScreen.querySelector("h2").textContent = "Définir un Code PIN";
           lockScreen.querySelector("p").textContent =
             "Entrez un nouveau code PIN à 4 chiffres";
-          updatePinDisplay();
+          updatePinDisplay(); // lgtm [js/unawaited-promise]
         }, PIN_ERROR_RESET_DELAY_MS);
       }
     }
@@ -1144,7 +1084,7 @@ async function processPin() {
     } else {
       showError("Code incorrect");
       currentPinInput = "";
-      updatePinDisplay();
+      updatePinDisplay(); // lgtm [js/unawaited-promise]
     }
   }
 }

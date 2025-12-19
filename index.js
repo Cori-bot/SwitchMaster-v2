@@ -15,8 +15,10 @@ const fs = require("fs-extra");
 const yaml = require("yaml");
 const chokidar = require("chokidar");
 const crypto = require("crypto");
+const util = require("util");
 const { fetchAccountStats } = require("./statsService");
 const { spawn, exec } = require("child_process");
+const execAsync = util.promisify(exec);
 
 // Set user data path to a local directory to avoid permission issues
 const userDataPath = path.join(app.getAppPath(), "..\\app-data");
@@ -309,7 +311,7 @@ function createWindow() {
   });
 }
 
-// --- System Tray ---
+// --- Tray Menu ---
 async function updateTrayMenu() {
   if (!tray) {
     const iconPath = path.join(__dirname, "assets", "logo.png");
@@ -327,14 +329,10 @@ async function updateTrayMenu() {
     });
   }
 
-  // Build menu items
   const menuItems = [
     {
       label: "Afficher SwitchMaster",
-      click: () => {
-        mainWindow.show();
-        mainWindow.focus();
-      },
+      click: () => mainWindow.show(),
     },
     { type: "separator" },
     {
@@ -349,34 +347,7 @@ async function updateTrayMenu() {
 
   // Add quick connect if there's a last account
   if (appConfig.lastAccountId) {
-    try {
-      const accounts = await loadAccountsMeta();
-      const lastAccount = accounts.find(
-        (a) => a.id === appConfig.lastAccountId,
-      );
-      if (lastAccount) {
-        menuItems.push(
-          { type: "separator" },
-          {
-            label: `Connecter: ${lastAccount.name}`,
-            click: async () => {
-              try {
-                // Trigger the switch account handler
-                await ipcMain.emit("switch-account-trigger", lastAccount.id);
-                mainWindow.webContents.send(
-                  "quick-connect-triggered",
-                  lastAccount.id,
-                );
-              } catch (err) {
-                devError("Quick connect error:", err);
-              }
-            },
-          },
-        );
-      }
-    } catch (err) {
-      devError("Error loading accounts for tray menu:", err);
-    }
+    await addQuickConnectToMenu(menuItems);
   }
 
   // Add quit button
@@ -394,31 +365,49 @@ async function updateTrayMenu() {
   tray.setContextMenu(Menu.buildFromTemplate(menuItems));
 }
 
-// --- Process Monitoring ---
-function monitorRiotProcess() {
-  setInterval(() => {
-    if (!activeAccountId) return;
+async function addQuickConnectToMenu(menuItems) {
+  try {
+    const accounts = await loadAccountsMeta();
+    const lastAccount = accounts.find((a) => a.id === appConfig.lastAccountId);
+    if (!lastAccount) return;
 
-    exec(
-      'tasklist /FI "IMAGENAME eq RiotClientServices.exe" /FO CSV',
-      (err, stdout) => {
-        if (err) return;
-        // stdout will contain "No tasks are running" or similar if not found,
-        // or the CSV header + process line if found.
-        // Simplest check: does it include the exe name in a data line?
-        // "INFO: No tasks are running"
-
-        if (!stdout.includes("RiotClientServices.exe")) {
-          devLog("Riot Client closed. Resetting active status.");
-          activeAccountId = null;
-
-          // Notifier le renderer pour qu'il enlève la bordure verte / statut actif
-          if (mainWindow) {
-            mainWindow.webContents.send("riot-client-closed");
-          }
+    menuItems.push({ type: "separator" }, {
+      label: `Connecter: ${lastAccount.name}`,
+      click: async () => {
+        try {
+          // Trigger the switch account handler
+          await ipcMain.emit("switch-account-trigger", lastAccount.id);
+          mainWindow.webContents.send("quick-connect-triggered", lastAccount.id);
+        } catch (err) {
+          devError("Quick connect error:", err);
         }
       },
-    );
+    });
+  } catch (err) {
+    devError("Error loading accounts for tray menu:", err);
+  }
+}
+
+// --- Process Monitoring ---
+async function monitorRiotProcess() {
+  setInterval(async () => {
+    if (!activeAccountId) return;
+
+    try {
+      const { stdout } = await execAsync('tasklist /FI "IMAGENAME eq RiotClientServices.exe" /FO CSV');
+
+      if (!stdout.includes("RiotClientServices.exe")) {
+        devLog("Riot Client closed. Resetting active status.");
+        activeAccountId = null;
+
+        // Notifier le renderer pour qu'il enlève la bordure verte / statut actif
+        if (mainWindow) {
+          mainWindow.webContents.send("riot-client-closed");
+        }
+      }
+    } catch (err) {
+      // ignore errors from tasklist
+    }
   }, RIOT_PROCESS_CHECK_INTERVAL_MS);
 }
 
@@ -536,9 +525,9 @@ autoUpdater.on("update-downloaded", (info) => {
   }
 });
 
-app
-  .whenReady()
-  .then(async () => {
+async function initApp() {
+  try {
+    await app.whenReady();
     await loadConfig();
     await createWindow();
     await updateTrayMenu();
@@ -579,10 +568,14 @@ app
         devError("Initial update check failed:", err);
       });
     }
-  })
-  .catch((err) => {
+  } catch (err) {
     devError("App initialization failed:", err);
-  });
+  }
+}
+
+initApp().catch((err) => {
+  devError("Fatal app initialization error:", err);
+});
 
 app.on("window-all-closed", () => {
   // Don't quit on window close if minimizing to tray
@@ -720,7 +713,7 @@ ipcMain.handle("reorder-accounts", async (event, newOrderIds) => {
   for (const id of newOrderIds) {
     if (reorderedMap.has(id)) {
       reorderedAccounts.push(reorderedMap.get(id));
-      reorderedMap.delete(id);
+      reorderedMap.delete(id); // lgtm [js/unawaited-promise]
     }
   }
 
@@ -742,29 +735,29 @@ ipcMain.handle("delete-account", async (event, accountId) => {
 });
 
 // --- Stats Refresh ---
+async function refreshAccountStats(account) {
+  if (!account.riotId) return false;
+
+  try {
+    const newStats = await fetchAccountStats(
+      account.riotId,
+      account.gameType,
+    );
+    // Check if stats have actually changed to avoid unnecessary writes
+    if (JSON.stringify(account.stats) !== JSON.stringify(newStats)) {
+      account.stats = newStats;
+      return true;
+    }
+  } catch (err) {
+    devError(`Failed to refresh stats for ${account.name}:`, err.message);
+  }
+  return false;
+}
+
 async function refreshAllAccountStats() {
   const accounts = await loadAccountsMeta();
-  let hasChanged = false;
-
-  const statsPromises = accounts.map(async (account) => {
-    if (account.riotId) {
-      try {
-        const newStats = await fetchAccountStats(
-          account.riotId,
-          account.gameType,
-        );
-        // Check if stats have actually changed to avoid unnecessary writes
-        if (JSON.stringify(account.stats) !== JSON.stringify(newStats)) {
-          account.stats = newStats;
-          hasChanged = true;
-        }
-      } catch (err) {
-        devError(`Failed to refresh stats for ${account.name}:`, err.message);
-      }
-    }
-  });
-
-  await Promise.all(statsPromises);
+  const results = await Promise.all(accounts.map(refreshAccountStats));
+  const hasChanged = results.some((changed) => changed);
 
   if (hasChanged) {
     await saveAccountsMeta(accounts);
@@ -791,58 +784,40 @@ ipcMain.handle("select-riot-path", async () => {
 ipcMain.handle("auto-detect-paths", async () => {
   try {
     const psScript = path.join(SCRIPTS_PATH, "detect_games.ps1");
+    const { stdout } = await execAsync(
+      `powershell.exe -ExecutionPolicy Bypass -File "${psScript}"`,
+    );
 
-    return new Promise((resolve, reject) => {
-      const ps = spawn("powershell.exe", [
-        "-ExecutionPolicy",
-        "Bypass",
-        "-File",
-        psScript,
-      ]);
-      let output = "";
-      let errorOutput = "";
+    const detectionResults = JSON.parse(stdout);
+    const riotPath = await findRiotPathFromResults(detectionResults);
 
-      ps.stdout.on("data", (d) => (output += d.toString()));
-      ps.stderr.on("data", (d) => (errorOutput += d.toString()));
-
-      ps.on("close", async (code) => {
-        if (code !== 0) {
-          devError("Detection PS failed:", errorOutput);
-          resolve(null); // Return null on failure, don't crash
-          return;
-        }
-
-        try {
-          const detectionResults = JSON.parse(output);
-          // Find Riot Client
-          const riotEntry = detectionResults.find(
-            (item) =>
-              item.DisplayName && item.DisplayName.includes("Riot Client"),
-          );
-          let riotPath = null;
-          if (riotEntry && riotEntry.InstallLocation) {
-            riotPath = path.join(
-              riotEntry.InstallLocation,
-              "RiotClientServices.exe",
-            );
-            if (await fs.pathExists(riotPath)) {
-              return resolve({ riotPath });
-            }
-          }
-
-          // Fallback search or just return what we have
-          resolve(null);
-        } catch (e) {
-          devError("JSON Parse error in detection:", e);
-          resolve(null);
-        }
-      });
-    });
+    return riotPath ? { riotPath } : null;
   } catch (e) {
     devError("Auto detect error:", e);
     return null;
   }
 });
+
+async function findRiotPathFromResults(results) {
+  const riotEntry = results.find(
+    (item) => item.DisplayName && item.DisplayName.includes("Riot Client"),
+  );
+
+  if (!riotEntry || !riotEntry.InstallLocation) {
+    return null;
+  }
+
+  const riotPath = path.join(
+    riotEntry.InstallLocation,
+    "RiotClientServices.exe",
+  );
+
+  if (await fs.pathExists(riotPath)) {
+    return riotPath;
+  }
+
+  return null;
+}
 
 // 5. Switch Account (with automation)
 ipcMain.handle("switch-account", async (event, id) => {
@@ -858,88 +833,15 @@ ipcMain.handle("switch-account", async (event, id) => {
   devLog(`Switching to account: ${account.name}`);
 
   // Kill Riot Processes
-  try {
-    devLog("Killing existing Riot processes...");
-    await new Promise((resolve) => {
-      exec(
-        'taskkill /F /IM "RiotClientServices.exe" /IM "LeagueClient.exe" /IM "VALORANT.exe"',
-        () => resolve(),
-      );
-    });
-    await new Promise((r) => setTimeout(r, PROCESS_TERMINATION_DELAY));
-  } catch (e) {
-    devLog("Processes cleanup err:", e.message);
-  }
+  await killRiotProcesses();
 
   // Launch Riot Client
-  let clientPath = appConfig.riotPath || DEFAULT_RIOT_DATA_PATH;
-  if (!clientPath.endsWith(".exe")) {
-    clientPath = path.join(clientPath, "RiotClientServices.exe");
-  }
-
-  devLog("Launching Riot Client from:", clientPath);
-  if (await fs.pathExists(clientPath)) {
-    const child = spawn(clientPath, [], { detached: true, stdio: "ignore" });
-    child.unref();
-  } else {
-    throw new Error("Riot Client executable not found at: " + clientPath);
-  }
+  const clientPath = await getRiotClientPath();
+  await launchRiotClient(clientPath);
 
   // Automation
   try {
-    const psScript = path.join(SCRIPTS_PATH, "automate_login.ps1");
-
-    // Helper to run PS
-    const runPs = (action) => {
-      return new Promise((resolve, reject) => {
-        const ps = spawn("powershell.exe", [
-          "-ExecutionPolicy",
-          "Bypass",
-          "-File",
-          psScript,
-          "-Action",
-          action,
-        ]);
-        let output = "";
-        ps.stdout.on("data", (d) => (output += d.toString()));
-        ps.on("close", (code) => {
-          if (code === 0) resolve(output);
-          else reject(new Error(`PS Action ${action} failed`));
-        });
-      });
-    };
-
-    // Wait for window (polling)
-    devLog("Waiting for window...");
-    let attempts = 0;
-    let isWindowFound = false;
-    // Sequential await is intended here for polling
-    while (attempts < MAX_WINDOW_CHECK_ATTEMPTS) {
-      try {
-        const check = await runPs("Check");
-        if (check && check.includes("Found")) {
-          isWindowFound = true;
-          break;
-        }
-      } catch (e) {
-        /*ignore*/
-      }
-      await new Promise((r) => setTimeout(r, WINDOW_CHECK_POLLING_MS));
-      attempts++;
-    }
-
-    if (!isWindowFound) throw new Error("Riot Client window not detected.");
-    devLog("Window found. Performing Login...");
-
-    clipboard.writeText(username);
-    await runPs("PasteTab");
-    clipboard.clear();
-
-    await new Promise((r) => setTimeout(r, LOGIN_ACTION_DELAY_MS));
-
-    clipboard.writeText(password);
-    await runPs("PasteEnter");
-    clipboard.clear();
+    await performAutomation(username, password);
   } catch (err) {
     devError("Automation error:", err);
     throw err;
@@ -948,9 +850,88 @@ ipcMain.handle("switch-account", async (event, id) => {
   activeAccountId = id;
   appConfig.lastAccountId = id;
   await saveConfig(appConfig);
-  await updateTrayMenu(); // Update tray menu with new last account
+  await updateTrayMenu();
   return { success: true };
 });
+
+async function killRiotProcesses() {
+  try {
+    devLog("Killing existing Riot processes...");
+    try {
+      await execAsync('taskkill /F /IM "RiotClientServices.exe" /IM "LeagueClient.exe" /IM "VALORANT.exe"');
+    } catch (e) {
+      // ignore errors if processes are not running
+    }
+    await new Promise((r) => setTimeout(r, PROCESS_TERMINATION_DELAY));
+  } catch (e) {
+    devLog("Processes cleanup err:", e.message);
+  }
+}
+
+async function getRiotClientPath() {
+  let clientPath = appConfig.riotPath || DEFAULT_RIOT_DATA_PATH;
+  if (!clientPath.endsWith(".exe")) {
+    clientPath = path.join(clientPath, "RiotClientServices.exe");
+  }
+  return clientPath;
+}
+
+async function launchRiotClient(clientPath) {
+  devLog("Launching Riot Client from:", clientPath);
+  if (await fs.pathExists(clientPath)) {
+    const child = spawn(clientPath, [], { detached: true, stdio: "ignore" });
+    child.unref();
+  } else {
+    throw new Error("Riot Client executable not found at: " + clientPath);
+  }
+}
+
+async function performAutomation(username, password) {
+  const psScript = path.join(SCRIPTS_PATH, "automate_login.ps1");
+
+  const runPs = (action) => {
+    return new Promise((resolve, reject) => {
+      const ps = spawn("powershell.exe", [
+        "-ExecutionPolicy", "Bypass", "-File", psScript, "-Action", action,
+      ]);
+      let output = "";
+      ps.stdout.on("data", (d) => (output += d.toString()));
+      ps.on("close", (code) => {
+        if (code === 0) resolve(output);
+        else reject(new Error(`PS Action ${action} failed`));
+      });
+    });
+  };
+
+  // Wait for window
+  devLog("Waiting for window...");
+  let attempts = 0;
+  let isWindowFound = false;
+  while (attempts < MAX_WINDOW_CHECK_ATTEMPTS) {
+    try {
+      const check = await runPs("Check");
+      if (check && check.includes("Found")) {
+        isWindowFound = true;
+        break;
+      }
+    } catch (e) { /* ignore */ }
+    await new Promise((r) => setTimeout(r, WINDOW_CHECK_POLLING_MS));
+    attempts++;
+  }
+
+  if (!isWindowFound) throw new Error("Riot Client window not detected.");
+  devLog("Window found. Performing Login...");
+
+  clipboard.writeText(username);
+  await runPs("PasteTab");
+  clipboard.clear();
+
+  await new Promise((r) => setTimeout(r, LOGIN_ACTION_DELAY_MS));
+
+  clipboard.writeText(password);
+  await runPs("PasteEnter");
+  clipboard.clear();
+}
 
 // Helper function to launch game
 async function launchGame(gameId) {
@@ -1092,7 +1073,7 @@ ipcMain.handle("check-for-updates", async () => {
     if (isDev) {
       // In development, simulate update check
       devLog("Development mode - simulating update check");
-      mainWindow.webContents.send("update-status", { status: "checking" });
+      mainWindow.webContents.send("update-status", { status: "checking" }); // lgtm [js/unawaited-promise]
 
       // Simulate network delay
       await new Promise((resolve) =>

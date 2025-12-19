@@ -33,27 +33,23 @@ function httpsGet(url, headers) {
     https
       .get(url, { headers }, (res) => {
         let responseBody = "";
-
-        res.on("data", (chunk) => {
-          responseBody += chunk;
-        });
-
-        res.on("end", () => {
-          if (res.statusCode === 200) {
-            try {
-              resolve(JSON.parse(responseBody));
-            } catch (e) {
-              reject(new Error("Failed to parse JSON response"));
-            }
-          } else {
-            reject(new Error(`HTTP ${res.statusCode}: ${responseBody}`));
-          }
-        });
+        res.on("data", (chunk) => { responseBody += chunk; });
+        res.on("end", () => handleResponse(res, responseBody, resolve, reject));
       })
-      .on("error", (err) => {
-        reject(err);
-      });
+      .on("error", (err) => reject(err));
   });
+}
+
+function handleResponse(res, responseBody, resolve, reject) {
+  if (res.statusCode !== 200) {
+    return reject(new Error(`HTTP ${res.statusCode}: ${responseBody}`));
+  }
+
+  try {
+    resolve(JSON.parse(responseBody));
+  } catch (e) {
+    reject(new Error("Failed to parse JSON response"));
+  }
 }
 
 // Parse Riot ID (Username#TAG)
@@ -71,7 +67,10 @@ function parseRiotId(riotId) {
 //Fetch Valorant account statistics
 async function fetchValorantStats(riotId) {
   const { name, tag } = parseRiotId(riotId);
-  const url = `https://api.tracker.gg/api/v2/valorant/standard/profile/riot/${name}%23${tag}?source=web`;
+  const baseUrl = `https://api.tracker.gg/api/v2/valorant/standard/profile/riot/${name}%23${tag}`;
+  const urlObj = new URL(baseUrl);
+  urlObj.searchParams.set("source", "web");
+  const url = urlObj.toString();
 
   try {
     const apiResponse = await httpsGet(url, HEADERS);
@@ -106,7 +105,9 @@ async function fetchValorantStats(riotId) {
       stats.peakRank?.metadata?.iconUrl ||
       "https://trackercdn.com/cdn/tracker.gg/valorant/icons/tiersv2/0.png";
 
-    const playtimeDisplay = segments[0]?.stats?.timePlayed?.displayValue || "0h";
+    const firstSegment = segments[0] || {};
+    const playtimeDisplay =
+      firstSegment.stats?.timePlayed?.displayValue || "0h";
     const bannerUrl = apiResponse.data.platformInfo?.avatarUrl || null;
     const activeShard = metadata.activeShard || "unknown";
 
@@ -166,7 +167,7 @@ async function fetchLeagueStats(riotId) {
       rankedSegment = segments[0];
     }
 
-    const stats = rankedSegment?.stats || {};
+    const stats = rankedSegment ? rankedSegment.stats : {};
 
     // Rang actuel (tier)
     const tierMeta = stats.tier?.metadata || {};
