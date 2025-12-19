@@ -1,403 +1,689 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: https:; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; connect-src 'self' https://api.tracker.gg https://github.com https://api.github.com; font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com;">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; img-src 'self' data: https:; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; connect-src 'self' https://api.tracker.gg https://github.com https://api.github.com; font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com;"
+    />
     <title>SwitchMaster</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css" />
     <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-</head>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
 
-<body>
+  <body>
     <div class="app-container">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="logo">
-                <img src="assets/logo.png" alt="Logo" onerror="this.style.display='none'">
-            </div>
-            <nav class="nav-menu">
-                <button class="nav-item active" id="nav-dashboard">
-                    <span class="icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                            <polyline points="9 22 9 12 15 12 15 22"></polyline>
-                        </svg>
-                    </span>
-                    Comptes
-                </button>
-                <button class="nav-item" id="nav-settings">
-                    <span class="icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="3"></circle>
-                            <path
-                                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 5 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
-                            </path>
-                        </svg>
-                    </span>
-                    Paramètres
-                </button>
-            </nav>
-            <div class="launch-controls">
-                <h3>Lancement Rapide</h3>
-                <button class="launch-btn valorant" id="launch-val">
-                    <img src="assets/valorant.png" alt="Val" onerror="this.style.display='none'">
-                    Lancer Valorant
-                </button>
-                <button class="launch-btn league" id="launch-lol">
-                    <img src="assets/league.png" alt="LoL" onerror="this.style.display='none'">
-                    Lancer LoL
-                </button>
-            </div>
-        </aside>
-
-        <!-- Main Content -->
-        <main class="main-content">
-            <header class="top-bar">
-                <div class="status-indicator">
-                    <span class="status-dot" id="status-dot"></span>
-                    <span id="status-text">Checking status...</span>
-                </div>
-                <button class="btn-primary" id="btn-add-account">
-                    + Ajouter un Compte
-                </button>
-            </header>
-
-            <div class="content-area">
-                <!-- Dashboard View -->
-                <div id="view-dashboard" class="view-section active">
-                    <div class="accounts-grid" id="accounts-list">
-                        <!-- Accounts will be injected here -->
-                    </div>
-
-                    <!-- Logs Panel -->
-                </div>
-
-                <!-- Settings View -->
-                <div id="view-settings" class="view-section" style="display: none;">
-                    <div class="settings-container">
-                        <h3>Application Settings</h3>
-
-                        <div class="setting-item">
-                            <label>Comportement de fermeture</label>
-                            <label class="checkbox-wrapper" for="setting-show-quit-modal">
-                                <input type="checkbox" id="setting-show-quit-modal">
-                                <span class="checkbox-visual"></span>
-                                <span class="checkbox-label">Afficher la confirmation de fermeture</span>
-                            </label>
-                            <label class="checkbox-wrapper" for="setting-minimize-to-tray" style="margin-top: 10px;">
-                                <input type="checkbox" id="setting-minimize-to-tray">
-                                <span class="checkbox-visual"></span>
-                                <span class="checkbox-label">Réduire dans la barre système au lieu de quitter</span>
-                            </label>
-                            <label class="checkbox-wrapper" for="setting-auto-start" style="margin-top: 10px;">
-                                <input type="checkbox" id="setting-auto-start">
-                                <span class="checkbox-visual"></span>
-                                <span class="checkbox-label">Lancer au démarrage de Windows</span>
-                            </label>
-                        </div>
-
-                        <div class="setting-item">
-                            <label>Riot Client Path</label>
-                            <div class="input-group" style="display: flex; gap: 10px; margin-top: 5px;">
-                                <input type="text" id="setting-riot-path"
-                                    placeholder="C:\Riot Games\Riot Client\RiotClientServices.exe" style="flex: 1;">
-                                <button id="btn-browse-path" class="btn-secondary"
-                                    style="padding: 10px; display: flex; align-items: center; justify-content: center;"
-                                    title="Parcourir...">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                        stroke-linejoin="round">
-                                        <path
-                                            d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z">
-                                        </path>
-                                    </svg>
-                                </button>
-                            </div>
-                            <p class="setting-hint">Chemin vers l'exéaqcutable RiotClientServices.exe</p>
-                        </div>
-
-                        <div class="setting-item">
-                            <label>Sécurité</label>
-                            <label class="checkbox-wrapper" for="setting-security-enable">
-                                <input type="checkbox" id="setting-security-enable">
-                                <span class="checkbox-visual"></span>
-                                <span class="checkbox-label">Activer le code PIN au démarrage</span>
-                            </label>
-                            <div id="security-config-area" style="margin-top: 10px; display: none; padding-left: 28px;">
-                                <button id="btn-change-pin" class="btn-secondary"
-                                    style="font-size: 13px; padding: 6px 12px;">
-                                    Définir / Changer le code PIN
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="setting-item">
-                            <label>Version</label>
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <p style="color: var(--text-muted); font-size: 13px;">v2.4.1</p>
-                                <button id="btn-check-updates" class="btn-secondary" style="font-size: 12px; padding: 4px 8px;">
-                                    Vérifier les mises à jour
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="logo">
+          <img
+            src="assets/logo.png"
+            alt="Logo"
+            onerror="this.style.display = 'none'"
+          />
         </div>
-        </main>
+        <nav class="nav-menu">
+          <button class="nav-item active" id="nav-dashboard">
+            <span class="icon">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+              </svg>
+            </span>
+            Comptes
+          </button>
+          <button class="nav-item" id="nav-settings">
+            <span class="icon">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="12" cy="12" r="3"></circle>
+                <path
+                  d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 5 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
+                ></path>
+              </svg>
+            </span>
+            Paramètres
+          </button>
+        </nav>
+        <div class="launch-controls">
+          <h3>Lancement Rapide</h3>
+          <button class="launch-btn valorant" id="launch-val">
+            <img
+              src="assets/valorant.png"
+              alt="Val"
+              onerror="this.style.display = 'none'"
+            />
+            Lancer Valorant
+          </button>
+          <button class="launch-btn league" id="launch-lol">
+            <img
+              src="assets/league.png"
+              alt="LoL"
+              onerror="this.style.display = 'none'"
+            />
+            Lancer LoL
+          </button>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="main-content">
+        <header class="top-bar">
+          <div class="status-indicator">
+            <span class="status-dot" id="status-dot"></span>
+            <span id="status-text">Checking status...</span>
+          </div>
+          <button class="btn-primary" id="btn-add-account">
+            + Ajouter un Compte
+          </button>
+        </header>
+
+        <div class="content-area">
+          <!-- Dashboard View -->
+          <div id="view-dashboard" class="view-section active">
+            <div class="accounts-grid" id="accounts-list">
+              <!-- Accounts will be injected here -->
+            </div>
+
+            <!-- Logs Panel -->
+          </div>
+
+          <!-- Settings View -->
+          <div id="view-settings" class="view-section" style="display: none">
+            <div class="settings-container">
+              <h3>Application Settings</h3>
+
+              <div class="setting-item">
+                <label>Comportement de fermeture</label>
+                <label class="checkbox-wrapper" for="setting-show-quit-modal">
+                  <input type="checkbox" id="setting-show-quit-modal" />
+                  <span class="checkbox-visual"></span>
+                  <span class="checkbox-label"
+                    >Afficher la confirmation de fermeture</span
+                  >
+                </label>
+                <label
+                  class="checkbox-wrapper"
+                  for="setting-minimize-to-tray"
+                  style="margin-top: 10px"
+                >
+                  <input type="checkbox" id="setting-minimize-to-tray" />
+                  <span class="checkbox-visual"></span>
+                  <span class="checkbox-label"
+                    >Réduire dans la barre système au lieu de quitter</span
+                  >
+                </label>
+                <label
+                  class="checkbox-wrapper"
+                  for="setting-auto-start"
+                  style="margin-top: 10px"
+                >
+                  <input type="checkbox" id="setting-auto-start" />
+                  <span class="checkbox-visual"></span>
+                  <span class="checkbox-label"
+                    >Lancer au démarrage de Windows</span
+                  >
+                </label>
+              </div>
+
+              <div class="setting-item">
+                <label>Riot Client Path</label>
+                <div
+                  class="input-group"
+                  style="display: flex; gap: 10px; margin-top: 5px"
+                >
+                  <input
+                    type="text"
+                    id="setting-riot-path"
+                    placeholder="C:\Riot Games\Riot Client\RiotClientServices.exe"
+                    style="flex: 1"
+                  />
+                  <button
+                    id="btn-browse-path"
+                    class="btn-secondary"
+                    style="
+                      padding: 10px;
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                    "
+                    title="Parcourir..."
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path
+                        d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"
+                      ></path>
+                    </svg>
+                  </button>
+                </div>
+                <p class="setting-hint">
+                  Chemin vers l'exéaqcutable RiotClientServices.exe
+                </p>
+              </div>
+
+              <div class="setting-item">
+                <label>Sécurité</label>
+                <label class="checkbox-wrapper" for="setting-security-enable">
+                  <input type="checkbox" id="setting-security-enable" />
+                  <span class="checkbox-visual"></span>
+                  <span class="checkbox-label"
+                    >Activer le code PIN au démarrage</span
+                  >
+                </label>
+                <div
+                  id="security-config-area"
+                  style="margin-top: 10px; display: none; padding-left: 28px"
+                >
+                  <button
+                    id="btn-change-pin"
+                    class="btn-secondary"
+                    style="font-size: 13px; padding: 6px 12px"
+                  >
+                    Définir / Changer le code PIN
+                  </button>
+                </div>
+              </div>
+
+              <div class="setting-item">
+                <label>Version</label>
+                <div style="display: flex; align-items: center; gap: 10px">
+                  <p style="color: var(--text-muted); font-size: 13px">
+                    v2.4.1
+                  </p>
+                  <button
+                    id="btn-check-updates"
+                    class="btn-secondary"
+                    style="font-size: 12px; padding: 4px 8px"
+                  >
+                    Vérifier les mises à jour
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
     </div>
 
     <!-- Add/Edit Account Modal -->
     <div class="modal-overlay" id="add-account-modal">
-        <div class="modal">
-            <div class="modal-header">
-                <h3 id="modal-title">Ajouter un Compte</h3>
-                <button class="close-modal"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg></button>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" id="input-edit-id"> <!-- Hidden ID for editing -->
-                <div class="form-group">
-                    <label>Nom du Compte <span style="color: #ff4655;">*</span></label>
-                    <input type="text" id="input-name" placeholder="ex: Main, Smurf, Alt..." required>
-                </div>
-
-                <div class="form-group">
-                    <label>Username Riot <span style="color: #ff4655;">*</span></label>
-                    <input type="text" id="input-username" placeholder="Votre username Riot" required>
-                </div>
-
-                <div class="form-group">
-                    <label>Mot de passe <span style="color: #ff4655;">*</span></label>
-                    <div class="password-input-wrapper">
-                        <input type="password" id="input-password" placeholder="Votre mot de passe" required>
-                        <button type="button" class="password-toggle" id="toggle-password" title="Afficher/Masquer">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="eye-icon">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                <circle cx="12" cy="12" r="3"></circle>
-                            </svg>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="eye-off-icon" style="display: none;">
-                                <path
-                                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
-                                </path>
-                                <line x1="1" y1="1" x2="23" y2="23"></line>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Riot ID <span style="color: #ff4655;">*</span></label>
-                    <input type="text" id="input-riot-id" placeholder="Username#TAG" required>
-                </div>
-
-                <div class="form-group">
-                    <label>Personnalisation (Bannière)</label>
-                    <div class="input-group" style="display: flex; gap: 8px;">
-                        <input type="text" id="input-card-image" placeholder="URL de l'image ou Chemin local"
-                            style="flex: 1;">
-                        <button type="button" id="btn-browse-image" class="btn-secondary" title="Parcourir..."
-                            style="padding: 10px; display: flex; align-items: center; justify-content: center;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round">
-                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                                <polyline points="21 15 16 10 5 21"></polyline>
-                            </svg>
-                        </button>
-                    </div>
-                    <p class="setting-hint" style="margin-top: 4px;">Laissez vide pour le thème par défaut.</p>
-                </div>
-
-                <div class="form-group">
-                    <label>Jeu</label>
-                    <div class="game-selector">
-                        <label class="game-option">
-                            <input type="radio" name="game-type" value="valorant" checked>
-                            <div class="game-option-content">
-                                <img src="assets/valorant.png" class="game-icon" alt="Valorant">
-                                <span class="game-name">Valorant</span>
-                            </div>
-                        </label>
-                        <label class="game-option">
-                            <input type="radio" name="game-type" value="league">
-                            <div class="game-option-content">
-                                <img src="assets/league.png" class="game-icon" alt="League">
-                                <span class="game-name">League of Legends</span>
-                            </div>
-                        </label>
-                    </div>
-                </div>
-
-            </div>
-            <div class="modal-footer">
-                <button class="btn-secondary close-modal">Annuler</button>
-                <button class="btn-primary" id="btn-save-account">Enregistrer</button>
-            </div>
+      <div class="modal">
+        <div class="modal-header">
+          <h3 id="modal-title">Ajouter un Compte</h3>
+          <button class="close-modal">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
         </div>
+        <div class="modal-body">
+          <input type="hidden" id="input-edit-id" />
+          <!-- Hidden ID for editing -->
+          <div class="form-group">
+            <label>Nom du Compte <span style="color: #ff4655">*</span></label>
+            <input
+              type="text"
+              id="input-name"
+              placeholder="ex: Main, Smurf, Alt..."
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Username Riot <span style="color: #ff4655">*</span></label>
+            <input
+              type="text"
+              id="input-username"
+              placeholder="Votre username Riot"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Mot de passe <span style="color: #ff4655">*</span></label>
+            <div class="password-input-wrapper">
+              <input
+                type="password"
+                id="input-password"
+                placeholder="Votre mot de passe"
+                required
+              />
+              <button
+                type="button"
+                class="password-toggle"
+                id="toggle-password"
+                title="Afficher/Masquer"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="eye-icon"
+                >
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="eye-off-icon"
+                  style="display: none"
+                >
+                  <path
+                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"
+                  ></path>
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Riot ID <span style="color: #ff4655">*</span></label>
+            <input
+              type="text"
+              id="input-riot-id"
+              placeholder="Username#TAG"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Personnalisation (Bannière)</label>
+            <div class="input-group" style="display: flex; gap: 8px">
+              <input
+                type="text"
+                id="input-card-image"
+                placeholder="URL de l'image ou Chemin local"
+                style="flex: 1"
+              />
+              <button
+                type="button"
+                id="btn-browse-image"
+                class="btn-secondary"
+                title="Parcourir..."
+                style="
+                  padding: 10px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                "
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                  <polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
+              </button>
+            </div>
+            <p class="setting-hint" style="margin-top: 4px">
+              Laissez vide pour le thème par défaut.
+            </p>
+          </div>
+
+          <div class="form-group">
+            <label>Jeu</label>
+            <div class="game-selector">
+              <label class="game-option">
+                <input type="radio" name="game-type" value="valorant" checked />
+                <div class="game-option-content">
+                  <img
+                    src="assets/valorant.png"
+                    class="game-icon"
+                    alt="Valorant"
+                  />
+                  <span class="game-name">Valorant</span>
+                </div>
+              </label>
+              <label class="game-option">
+                <input type="radio" name="game-type" value="league" />
+                <div class="game-option-content">
+                  <img src="assets/league.png" class="game-icon" alt="League" />
+                  <span class="game-name">League of Legends</span>
+                </div>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary close-modal">Annuler</button>
+          <button class="btn-primary" id="btn-save-account">Enregistrer</button>
+        </div>
+      </div>
     </div>
 
     <!-- Launch Game Modal -->
     <div class="modal-overlay" id="launch-game-modal">
-        <div class="modal" style="width: 400px; text-align: center;">
-            <div class="modal-header" style="justify-content: center; margin-bottom: 10px;">
-                <h3 id="launch-game-title" style="font-size: 20px;">Lancer le jeu ?</h3>
-            </div>
-            <div class="modal-body">
-                <p style="color: var(--text-muted); margin-bottom: 24px;">Voulez-vous lancer le jeu après la connexion
-                    ?
-                </p>
-                <div class="modal-footer" style="justify-content: center; margin-top: 0;">
-                    <button class="btn-secondary close-launch-modal" style="width: 120px;">Non</button>
-                    <button id="btn-confirm-launch" class="btn-primary" style="width: 120px;">Oui</button>
-                </div>
-            </div>
+      <div class="modal" style="width: 400px; text-align: center">
+        <div
+          class="modal-header"
+          style="justify-content: center; margin-bottom: 10px"
+        >
+          <h3 id="launch-game-title" style="font-size: 20px">
+            Lancer le jeu ?
+          </h3>
         </div>
+        <div class="modal-body">
+          <p style="color: var(--text-muted); margin-bottom: 24px">
+            Voulez-vous lancer le jeu après la connexion ?
+          </p>
+          <div
+            class="modal-footer"
+            style="justify-content: center; margin-top: 0"
+          >
+            <button
+              class="btn-secondary close-launch-modal"
+              style="width: 120px"
+            >
+              Non
+            </button>
+            <button
+              id="btn-confirm-launch"
+              class="btn-primary"
+              style="width: 120px"
+            >
+              Oui
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Delete Account Confirmation Modal -->
     <div class="modal-overlay" id="delete-account-modal">
-        <div class="modal" style="width: 400px; text-align: center;">
-            <div class="modal-header" style="justify-content: center; margin-bottom: 10px;">
-                <h3 id="delete-account-title" style="font-size: 20px;">Supprimer le compte</h3>
-            </div>
-            <div class="modal-body">
-                <p style="color: var(--text-muted); margin-bottom: 24px;">Êtes-vous sûr de vouloir supprimer ce compte ?
-                    Cette action est irréversible.</p>
-                <div class="modal-footer" style="justify-content: center; margin-top: 0;">
-                    <button class="btn-secondary close-delete-modal" style="width: 120px;">Annuler</button>
-                    <button id="btn-confirm-delete" class="btn-primary"
-                        style="width: 120px; background-color: #ff4655;">Supprimer</button>
-                </div>
-            </div>
+      <div class="modal" style="width: 400px; text-align: center">
+        <div
+          class="modal-header"
+          style="justify-content: center; margin-bottom: 10px"
+        >
+          <h3 id="delete-account-title" style="font-size: 20px">
+            Supprimer le compte
+          </h3>
         </div>
+        <div class="modal-body">
+          <p style="color: var(--text-muted); margin-bottom: 24px">
+            Êtes-vous sûr de vouloir supprimer ce compte ? Cette action est
+            irréversible.
+          </p>
+          <div
+            class="modal-footer"
+            style="justify-content: center; margin-top: 0"
+          >
+            <button
+              class="btn-secondary close-delete-modal"
+              style="width: 120px"
+            >
+              Annuler
+            </button>
+            <button
+              id="btn-confirm-delete"
+              class="btn-primary"
+              style="width: 120px; background-color: #ff4655"
+            >
+              Supprimer
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Error Modal -->
     <div class="modal-overlay" id="error-modal">
-        <div class="modal" style="width: 400px; text-align: center;">
-            <div class="modal-header" style="justify-content: center; margin-bottom: 10px;">
-                <h3 id="error-modal-title" style="font-size: 20px;">Erreur</h3>
-            </div>
-            <div class="modal-body">
-                <p id="error-modal-message" style="color: var(--text-muted); margin-bottom: 24px;">Erreur, les
-                    identifiants renseignés ne sont pas corrects.</p>
-                <div class="modal-footer" style="justify-content: center; margin-top: 0;">
-                    <button id="btn-close-error" class="btn-primary" style="width: 120px;">OK</button>
-                </div>
-            </div>
+      <div class="modal" style="width: 400px; text-align: center">
+        <div
+          class="modal-header"
+          style="justify-content: center; margin-bottom: 10px"
+        >
+          <h3 id="error-modal-title" style="font-size: 20px">Erreur</h3>
         </div>
+        <div class="modal-body">
+          <p
+            id="error-modal-message"
+            style="color: var(--text-muted); margin-bottom: 24px"
+          >
+            Erreur, les identifiants renseignés ne sont pas corrects.
+          </p>
+          <div
+            class="modal-footer"
+            style="justify-content: center; margin-top: 0"
+          >
+            <button
+              id="btn-close-error"
+              class="btn-primary"
+              style="width: 120px"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Quit/Minimize Modal -->
     <div class="modal-overlay" id="quit-modal">
-        <div class="modal" style="width: 450px; text-align: center;">
-            <div class="modal-header" style="justify-content: center; margin-bottom: 10px;">
-                <h3 style="font-size: 20px;">Quitter l'application ?</h3>
-            </div>
-            <div class="modal-body">
-                <p style="color: var(--text-muted); margin-bottom: 24px;">
-                    Voulez-vous quitter complètement l'application ou la réduire dans la barre système ?
-                </p>
-
-                <label class="checkbox-wrapper" for="quit-dont-show-again"
-                    style="margin-bottom: 24px; justify-content: center;">
-                    <input type="checkbox" id="quit-dont-show-again">
-                    <span class="checkbox-visual"></span>
-                    <span class="checkbox-label">Ne plus afficher ce message</span>
-                </label>
-
-                <div class="modal-footer" style="justify-content: center; margin-top: 0; gap: 10px;">
-                    <button id="btn-quit-cancel" class="btn-secondary" style="width: 120px;">Annuler</button>
-                    <button id="btn-quit-minimize" class="btn-primary" style="width: 140px;">Réduire</button>
-                    <button id="btn-quit-app" class="btn-primary"
-                        style="width: 120px; background-color: #ff4655;">Quitter</button>
-                </div>
-            </div>
+      <div class="modal" style="width: 450px; text-align: center">
+        <div
+          class="modal-header"
+          style="justify-content: center; margin-bottom: 10px"
+        >
+          <h3 style="font-size: 20px">Quitter l'application ?</h3>
         </div>
+        <div class="modal-body">
+          <p style="color: var(--text-muted); margin-bottom: 24px">
+            Voulez-vous quitter complètement l'application ou la réduire dans la
+            barre système ?
+          </p>
+
+          <label
+            class="checkbox-wrapper"
+            for="quit-dont-show-again"
+            style="margin-bottom: 24px; justify-content: center"
+          >
+            <input type="checkbox" id="quit-dont-show-again" />
+            <span class="checkbox-visual"></span>
+            <span class="checkbox-label">Ne plus afficher ce message</span>
+          </label>
+
+          <div
+            class="modal-footer"
+            style="justify-content: center; margin-top: 0; gap: 10px"
+          >
+            <button
+              id="btn-quit-cancel"
+              class="btn-secondary"
+              style="width: 120px"
+            >
+              Annuler
+            </button>
+            <button
+              id="btn-quit-minimize"
+              class="btn-primary"
+              style="width: 140px"
+            >
+              Réduire
+            </button>
+            <button
+              id="btn-quit-app"
+              class="btn-primary"
+              style="width: 120px; background-color: #ff4655"
+            >
+              Quitter
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Update Available Modal -->
     <div class="modal-overlay" id="update-modal">
-        <div class="modal" style="width: 450px;">
-            <div class="modal-header">
-                <h3>Mise à jour disponible !</h3>
-            </div>
-            <div class="modal-body">
-                <p style="color: var(--text-muted); margin-bottom: 16px;">
-                    Une nouvelle version <strong id="update-latest-version">vX.X.X</strong> est disponible.
-                    Vous avez actuellement la version <strong id="update-current-version">vX.X.X</strong>.
-                </p>
-                <div id="update-release-notes" style="max-height: 150px; overflow-y: auto; margin-bottom: 20px; padding: 12px; background: var(--bg-secondary); border-radius: 8px; font-size: 13px; line-height: 1.4;">
-                    <!-- Release notes will be injected here -->
-                </div>
-                <div class="modal-footer" style="justify-content: center; gap: 10px;">
-                    <button id="btn-update-later" class="btn-secondary" style="width: 120px;">Plus tard</button>
-                    <button id="btn-update-download" class="btn-primary" style="width: 140px;">Télécharger</button>
-                </div>
-            </div>
+      <div class="modal" style="width: 450px">
+        <div class="modal-header">
+          <h3>Mise à jour disponible !</h3>
         </div>
+        <div class="modal-body">
+          <p style="color: var(--text-muted); margin-bottom: 16px">
+            Une nouvelle version
+            <strong id="update-latest-version">vX.X.X</strong> est disponible.
+            Vous avez actuellement la version
+            <strong id="update-current-version">vX.X.X</strong>.
+          </p>
+          <div
+            id="update-release-notes"
+            style="
+              max-height: 150px;
+              overflow-y: auto;
+              margin-bottom: 20px;
+              padding: 12px;
+              background: var(--bg-secondary);
+              border-radius: 8px;
+              font-size: 13px;
+              line-height: 1.4;
+            "
+          >
+            <!-- Release notes will be injected here -->
+          </div>
+          <div class="modal-footer" style="justify-content: center; gap: 10px">
+            <button
+              id="btn-update-later"
+              class="btn-secondary"
+              style="width: 120px"
+            >
+              Plus tard
+            </button>
+            <button
+              id="btn-update-download"
+              class="btn-primary"
+              style="width: 140px"
+            >
+              Télécharger
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Security Lock Screen -->
-    <div id="lock-screen" class="lock-screen" style="display: none;">
-        <div class="lock-content">
-            <div class="lock-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                </svg>
-            </div>
-            <h2>Verrouillé</h2>
-            <p>Entrez votre code PIN pour accéder à SwitchMaster</p>
-
-            <div class="pin-display" id="lock-pin-display">
-                <span class="pin-dot"></span>
-                <span class="pin-dot"></span>
-                <span class="pin-dot"></span>
-                <span class="pin-dot"></span>
-            </div>
-
-            <div class="pin-pad">
-                <button class="pin-btn" data-val="1">1</button>
-                <button class="pin-btn" data-val="2">2</button>
-                <button class="pin-btn" data-val="3">3</button>
-                <button class="pin-btn" data-val="4">4</button>
-                <button class="pin-btn" data-val="5">5</button>
-                <button class="pin-btn" data-val="6">6</button>
-                <button class="pin-btn" data-val="7">7</button>
-                <button class="pin-btn" data-val="8">8</button>
-                <button class="pin-btn" data-val="9">9</button>
-                <button class="pin-btn empty"></button>
-                <button class="pin-btn" data-val="0">0</button>
-                <button class="pin-btn delete" id="pin-delete">⌫</button>
-            </div>
-            <p id="lock-error" class="lock-error"></p>
+    <div id="lock-screen" class="lock-screen" style="display: none">
+      <div class="lock-content">
+        <div class="lock-icon">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="48"
+            height="48"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
         </div>
+        <h2>Verrouillé</h2>
+        <p>Entrez votre code PIN pour accéder à SwitchMaster</p>
+
+        <div class="pin-display" id="lock-pin-display">
+          <span class="pin-dot"></span>
+          <span class="pin-dot"></span>
+          <span class="pin-dot"></span>
+          <span class="pin-dot"></span>
+        </div>
+
+        <div class="pin-pad">
+          <button class="pin-btn" data-val="1">1</button>
+          <button class="pin-btn" data-val="2">2</button>
+          <button class="pin-btn" data-val="3">3</button>
+          <button class="pin-btn" data-val="4">4</button>
+          <button class="pin-btn" data-val="5">5</button>
+          <button class="pin-btn" data-val="6">6</button>
+          <button class="pin-btn" data-val="7">7</button>
+          <button class="pin-btn" data-val="8">8</button>
+          <button class="pin-btn" data-val="9">9</button>
+          <button class="pin-btn empty"></button>
+          <button class="pin-btn" data-val="0">0</button>
+          <button class="pin-btn delete" id="pin-delete">⌫</button>
+        </div>
+        <p id="lock-error" class="lock-error"></p>
+      </div>
     </div>
 
     <!-- Custom Notification Container -->
     <div id="notification-container" class="notification-container"></div>
 
+    <script src="node_modules/dompurify/dist/dompurify.min.js"></script>
+    <script src="node_modules/marked/lib/marked.umd.js"></script>
     <script src="renderer.js"></script>
-</body>
-
-
+  </body>
 </html>

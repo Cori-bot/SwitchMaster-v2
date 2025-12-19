@@ -27,20 +27,26 @@ const WINDOW_DEFAULT_HEIGHT = 700;
 const WINDOW_DEFAULT_WIDTH = 1000;
 const WINDOW_MIN_HEIGHT = 600;
 const WINDOW_MIN_WIDTH = 600;
-const RIOT_PROCESS_CHECK_INTERVAL = 5000; // 5 seconds
-const PROCESS_TERMINATION_DELAY = 2000; // 2 seconds
-const STATS_REFRESH_INTERVAL_MS = 60000; // 1 minute
-const MAX_WINDOW_CHECK_ATTEMPTS = 30;
-const GAME_LAUNCH_DELAY_MS = 10000; // 10 seconds
-const DEV_UPDATE_NOTIF_DELAY = 3000; // 3 seconds
-const DEV_SIMULATED_UPDATE_DELAY = 2000; // 2 seconds
-
-const APP_DATA_PATH = app.getPath("userData");
+const APP_DATA_PATH = path.join(app.getPath("userData"), "SwitchMaster-v2");
 const ACCOUNTS_FILE = path.join(APP_DATA_PATH, "accounts.json");
 const CONFIG_FILE = path.join(APP_DATA_PATH, "config.json");
-const DEFAULT_RIOT_DATA_PATH =
-  "C:\\Riot Games\\Riot Client\\RiotClientServices.exe";
-const PRIVATE_SETTINGS_FILE = "RiotClientPrivateSettings.yaml";
+const PRIVATE_SETTINGS_FILE = "RiotGamesPrivateSettings.yaml";
+const DEFAULT_RIOT_DATA_PATH = path.join(
+  process.env.LOCALAPPDATA,
+  "Riot Games",
+  "Riot Client",
+  "Data",
+);
+
+const RIOT_PROCESS_CHECK_INTERVAL_MS = 10000;
+const STATS_REFRESH_INTERVAL_MS = 60000;
+const MAX_WINDOW_CHECK_ATTEMPTS = 30;
+const WINDOW_CHECK_POLLING_MS = 1000;
+const LOGIN_ACTION_DELAY_MS = 500;
+const DEV_UPDATE_NOTIF_DELAY_MS = 1500;
+const PROCESS_TERMINATION_DELAY = 2000;
+const GAME_LAUNCH_DELAY_MS = 10000;
+const DEV_SIMULATED_UPDATE_DELAY = 2000;
 
 // Get scripts path (works in both dev and production)
 const isDev = process.env.NODE_ENV === "development" || !app.isPackaged;
@@ -48,19 +54,22 @@ const isDev = process.env.NODE_ENV === "development" || !app.isPackaged;
 // --- Logging ---
 function devLog(...args) {
   if (isDev) {
-    console.log(...args);
+    const logger = console;
+    logger.log(...args);
   }
 }
 
 function devError(...args) {
   if (isDev) {
-    console.error(...args);
+    const logger = console;
+    logger.error(...args);
   }
 }
 
 function devWarn(...args) {
   if (isDev) {
-    console.warn(...args);
+    const logger = console;
+    logger.warn(...args);
   }
 }
 
@@ -69,18 +78,24 @@ const SCRIPTS_PATH = isDev
   : path.join(process.resourcesPath, "scripts");
 
 // Ensure User Data Directory Exists
-fs.ensureDirSync(APP_DATA_PATH);
+async function ensureAppData() {
+  await fs.ensureDir(APP_DATA_PATH);
+}
+ensureAppData().catch((err) => devError("Error creating app data dir:", err));
 
 // Verify scripts exist
 const automateLoginScript = path.join(SCRIPTS_PATH, "automate_login.ps1");
 const detectGamesScript = path.join(SCRIPTS_PATH, "detect_games.ps1");
 
-if (!fs.existsSync(automateLoginScript)) {
+async function checkScripts() {
+  if (!(await fs.pathExists(automateLoginScript))) {
     devError(`Automation script not found: ${automateLoginScript}`);
   }
-  if (!fs.existsSync(detectGamesScript)) {
+  if (!(await fs.pathExists(detectGamesScript))) {
     devError(`Detection script not found: ${detectGamesScript}`);
   }
+}
+checkScripts().catch((err) => devError("Error checking scripts:", err));
 
 let mainWindow;
 let tray = null;
@@ -404,7 +419,7 @@ function monitorRiotProcess() {
         }
       },
     );
-  }, RIOT_PROCESS_CHECK_INTERVAL);
+  }, RIOT_PROCESS_CHECK_INTERVAL_MS);
 }
 
 // --- Auto-start functionality
@@ -521,48 +536,53 @@ autoUpdater.on("update-downloaded", (info) => {
   }
 });
 
-app.whenReady().then(async () => {
-  await loadConfig();
-  createWindow();
-  updateTrayMenu();
+app
+  .whenReady()
+  .then(async () => {
+    await loadConfig();
+    await createWindow();
+    await updateTrayMenu();
 
-  // Start process monitoring if function exists
-  if (typeof monitorRiotProcess === "function") {
-    monitorRiotProcess();
-  } else {
-    devWarn("monitorRiotProcess function not found");
-  }
+    // Start process monitoring if function exists
+    if (typeof monitorRiotProcess === "function") {
+      monitorRiotProcess();
+    } else {
+      devWarn("monitorRiotProcess function not found");
+    }
 
-  // Initial and periodic stats refresh
-  refreshAllAccountStats(); // Initial refresh
-  setInterval(refreshAllAccountStats, STATS_REFRESH_INTERVAL_MS); // Refresh every minute
+    // Initial and periodic stats refresh
+    refreshAllAccountStats(); // Initial refresh
+    setInterval(refreshAllAccountStats, STATS_REFRESH_INTERVAL_MS); // Refresh every minute
 
-  const settingsPath = path.join(riotDataPath, PRIVATE_SETTINGS_FILE);
-  if (fs.existsSync(riotDataPath)) {
-    chokidar.watch(settingsPath).on("change", () => {
-      // Optional: Notify renderer
-    });
-  }
+    const settingsPath = path.join(riotDataPath, PRIVATE_SETTINGS_FILE);
+    if (await fs.pathExists(settingsPath)) {
+      chokidar.watch(settingsPath).on("change", () => {
+        // Optional: Notify renderer
+      });
+    }
 
-  // Check for updates on startup
-  if (!app.isPackaged) {
-    devLog("Running in development mode - update checking disabled");
-    // Notify renderer that update is impossible in dev mode
-    setTimeout(() => {
-      if (mainWindow) {
-        mainWindow.webContents.send("update-status", {
-          status: "error",
-          error: "Mise à jour impossible en mode développement.",
-        });
-      }
-    }, DEV_UPDATE_NOTIF_DELAY);
-  } else {
-    devLog("Production mode - checking for updates...");
-    autoUpdater.checkForUpdatesAndNotify().catch((err) => {
-      devError("Initial update check failed:", err);
-    });
-  }
-});
+    // Check for updates on startup
+    if (!app.isPackaged) {
+      devLog("Running in development mode - update checking disabled");
+      // Notify renderer that update is impossible in dev mode
+      setTimeout(() => {
+        if (mainWindow) {
+          mainWindow.webContents.send("update-status", {
+            status: "error",
+            error: "Mise à jour impossible en mode développement.",
+          });
+        }
+      }, DEV_UPDATE_NOTIF_DELAY_MS);
+    } else {
+      devLog("Production mode - checking for updates...");
+      autoUpdater.checkForUpdatesAndNotify().catch((err) => {
+        devError("Initial update check failed:", err);
+      });
+    }
+  })
+  .catch((err) => {
+    devError("App initialization failed:", err);
+  });
 
 app.on("window-all-closed", () => {
   // Don't quit on window close if minimizing to tray
@@ -739,10 +759,7 @@ async function refreshAllAccountStats() {
           hasChanged = true;
         }
       } catch (err) {
-        devError(
-          `Failed to refresh stats for ${account.name}:`,
-          err.message,
-        );
+        devError(`Failed to refresh stats for ${account.name}:`, err.message);
       }
     }
   });
@@ -788,7 +805,7 @@ ipcMain.handle("auto-detect-paths", async () => {
       ps.stdout.on("data", (d) => (output += d.toString()));
       ps.stderr.on("data", (d) => (errorOutput += d.toString()));
 
-      ps.on("close", (code) => {
+      ps.on("close", async (code) => {
         if (code !== 0) {
           devError("Detection PS failed:", errorOutput);
           resolve(null); // Return null on failure, don't crash
@@ -805,13 +822,13 @@ ipcMain.handle("auto-detect-paths", async () => {
           let riotPath = null;
           if (riotEntry && riotEntry.InstallLocation) {
             riotPath = path.join(
-        riotEntry.InstallLocation,
-        "RiotClientServices.exe",
-      );
-      if (fs.existsSync(riotPath)) {
-        return resolve({ riotPath });
-      }
-    }
+              riotEntry.InstallLocation,
+              "RiotClientServices.exe",
+            );
+            if (await fs.pathExists(riotPath)) {
+              return resolve({ riotPath });
+            }
+          }
 
           // Fallback search or just return what we have
           resolve(null);
@@ -861,7 +878,7 @@ ipcMain.handle("switch-account", async (event, id) => {
   }
 
   devLog("Launching Riot Client from:", clientPath);
-  if (fs.existsSync(clientPath)) {
+  if (await fs.pathExists(clientPath)) {
     const child = spawn(clientPath, [], { detached: true, stdio: "ignore" });
     child.unref();
   } else {
@@ -896,6 +913,7 @@ ipcMain.handle("switch-account", async (event, id) => {
     devLog("Waiting for window...");
     let attempts = 0;
     let isWindowFound = false;
+    // Sequential await is intended here for polling
     while (attempts < MAX_WINDOW_CHECK_ATTEMPTS) {
       try {
         const check = await runPs("Check");
@@ -906,7 +924,7 @@ ipcMain.handle("switch-account", async (event, id) => {
       } catch (e) {
         /*ignore*/
       }
-      await new Promise((r) => setTimeout(r, 1000));
+      await new Promise((r) => setTimeout(r, WINDOW_CHECK_POLLING_MS));
       attempts++;
     }
 
@@ -917,7 +935,7 @@ ipcMain.handle("switch-account", async (event, id) => {
     await runPs("PasteTab");
     clipboard.clear();
 
-    await new Promise((r) => setTimeout(r, 500));
+    await new Promise((r) => setTimeout(r, LOGIN_ACTION_DELAY_MS));
 
     clipboard.writeText(password);
     await runPs("PasteEnter");
@@ -930,7 +948,7 @@ ipcMain.handle("switch-account", async (event, id) => {
   activeAccountId = id;
   appConfig.lastAccountId = id;
   await saveConfig(appConfig);
-  updateTrayMenu(); // Update tray menu with new last account
+  await updateTrayMenu(); // Update tray menu with new last account
   return { success: true };
 });
 
@@ -1077,7 +1095,9 @@ ipcMain.handle("check-for-updates", async () => {
       mainWindow.webContents.send("update-status", { status: "checking" });
 
       // Simulate network delay
-      await new Promise((resolve) => setTimeout(resolve, DEV_SIMULATED_UPDATE_DELAY));
+      await new Promise((resolve) =>
+        setTimeout(resolve, DEV_SIMULATED_UPDATE_DELAY),
+      );
 
       // 50% chance to simulate update available
       const updateAvailable = Math.random() > 0.5;

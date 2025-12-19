@@ -17,4 +17,5 @@ SwitchMaster est un gestionnaire de comptes multi-plateforme pour les jeux Riot 
 3. Suivez les instructions à l'écran.
 
 ## 📄 Licence
+
 Ce projet est sous licence ISC.

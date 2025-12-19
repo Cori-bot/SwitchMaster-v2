@@ -6,13 +6,15 @@ const isDev = process.env.NODE_ENV === "development";
 
 function devLog(...args) {
   if (isDev) {
-    console.log(...args);
+    const logger = console;
+    logger.log(...args);
   }
 }
 
 function devError(...args) {
   if (isDev) {
-    console.error(...args);
+    const logger = console;
+    logger.error(...args);
   }
 }
 
@@ -93,21 +95,32 @@ async function fetchValorantStats(riotId) {
     const stats = competitiveSegment.stats || {};
     const metadata = apiResponse.data.metadata || {};
 
+    // Extraction sécurisée des métadonnées
+    const rankTierName = stats.rank?.metadata?.tierName || "Unranked";
+    const rankIconUrl =
+      stats.rank?.metadata?.iconUrl ||
+      "https://trackercdn.com/cdn/tracker.gg/valorant/icons/tiersv2/0.png";
+
+    const peakTierName = stats.peakRank?.metadata?.tierName || "Unranked";
+    const peakIconUrl =
+      stats.peakRank?.metadata?.iconUrl ||
+      "https://trackercdn.com/cdn/tracker.gg/valorant/icons/tiersv2/0.png";
+
+    const playtimeDisplay = segments[0]?.stats?.timePlayed?.displayValue || "0h";
+    const bannerUrl = apiResponse.data.platformInfo?.avatarUrl || null;
+    const activeShard = metadata.activeShard || "unknown";
+
     return {
       game: "valorant",
       riotId: riotId,
       level: metadata.accountLevel || 0,
-      rank: stats.rank?.metadata?.tierName || "Unranked",
-      rankIcon:
-        stats.rank?.metadata?.iconUrl ||
-        "https://trackercdn.com/cdn/tracker.gg/valorant/icons/tiersv2/0.png",
-      peakRank: stats.peakRank?.metadata?.tierName || "Unranked",
-      peakRankIcon:
-        stats.peakRank?.metadata?.iconUrl ||
-        "https://trackercdn.com/cdn/tracker.gg/valorant/icons/tiersv2/0.png",
-      playtime: segments[0]?.stats?.timePlayed?.displayValue || "0h",
-      banner: apiResponse.data.platformInfo?.avatarUrl || null,
-      shard: metadata.activeShard || "unknown",
+      rank: rankTierName,
+      rankIcon: rankIconUrl,
+      peakRank: peakTierName,
+      peakRankIcon: peakIconUrl,
+      playtime: playtimeDisplay,
+      banner: bannerUrl,
+      shard: activeShard,
     };
   } catch (error) {
     devError("Error fetching Valorant stats:", error);

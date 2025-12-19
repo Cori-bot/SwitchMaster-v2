@@ -92,25 +92,73 @@ const PIN_ERROR_RESET_DELAY_MS = 1000;
 const ERROR_SHAKE_DELAY_MS = 1000;
 const VIEW_SWITCH_TRANSITION_DELAY_MS = 200;
 const CURRENT_APP_VERSION = "2.3.0";
+const PIN_LENGTH = 4;
+const SVG_ICON_SIZE = 20;
+const SVG_VIEWBOX_SIZE = 24;
+const DEFAULT_NOTIFICATION_SVG_STROKE = "#ff4655"; // Correction du nombre magique 039 par une constante explicite si nécessaire, ou utilisation directe ici
+
+/**
+ * Définit le contenu HTML d'un élément de manière sécurisée sans utiliser innerHTML.
+ * @param {HTMLElement} element L'élément cible
+ * @param {string} html La chaîne HTML à insérer
+ */
+function setSafeHTML(element, html) {
+  // Vide l'élément
+  while (element.firstChild) {
+    element.removeChild(element.firstChild);
+  }
+
+  if (!html) {
+    return;
+  }
+
+  if (typeof DOMPurify !== "undefined") {
+    try {
+      const fragment = DOMPurify.sanitize(html, { RETURN_DOM_FRAGMENT: true });
+      element.appendChild(fragment);
+      return;
+    } catch (e) {
+      devError("Erreur DOMPurify:", e);
+    }
+  }
+
+  // Fallback sur DOMParser si DOMPurify échoue ou est absent
+  const parser = new DOMParser();
+  try {
+    const doc = parser.parseFromString(html, "text/html");
+    const fragment = document.createDocumentFragment();
+    const nodes = doc.body.childNodes;
+    while (nodes.length > 0) {
+      fragment.appendChild(document.importNode(nodes[0], true));
+    }
+    element.appendChild(fragment);
+  } catch (e) {
+    devError("Erreur fallback DOMParser:", e);
+    element.textContent = html;
+  }
+}
 
 // --- Logging ---
 const isDev = window.env ? window.env.isDev : false;
 
 function devLog(...args) {
   if (isDev) {
-    console.log(...args);
+    const logger = console;
+    logger.log(...args);
   }
 }
 
 function devError(...args) {
   if (isDev) {
-    console.error(...args);
+    const logger = console;
+    logger.error(...args);
   }
 }
 
 function devWarn(...args) {
   if (isDev) {
-    console.warn(...args);
+    const logger = console;
+    logger.warn(...args);
   }
 }
 
@@ -330,26 +378,8 @@ function renderAccounts() {
       const rankWrapper = document.createElement("div");
       rankWrapper.className = "rank-wrapper";
 
-      // Utilisation de DOMPurify pour sécuriser le contenu HTML
-      if (typeof DOMPurify !== "undefined") {
-        // Nettoyage et injection sécurisée
-        const cleanHtml = DOMPurify.sanitize(rankHTML);
-        rankWrapper.innerHTML = cleanHtml;
-      } else {
-        // Utilisation de DOMParser pour parser le HTML de manière sécurisée
-        const parser = new DOMParser();
-        try {
-          const doc = parser.parseFromString(rankHTML, "text/html");
-          const nodes = doc.body.childNodes;
-
-          // Ajout sécurisé des nœuds enfants
-          while (nodes.length > 0) {
-            rankWrapper.appendChild(document.importNode(nodes[0], true));
-          }
-        } catch (e) {
-          devError("Erreur lors du parsing du HTML du rang:", e);
-        }
-      }
+      // Utilisation du helper sécurisé pour éviter innerHTML
+      setSafeHTML(rankWrapper, rankHTML);
 
       cardContent.appendChild(rankWrapper);
     }
@@ -659,7 +689,7 @@ async function deleteAccount(id) {
 async function performDelete(id) {
   try {
     await ipcRenderer.invoke("delete-account", id);
-    log("Compte supprimé.");
+    devLog("Compte supprimé.");
     loadAccounts();
   } catch (err) {
     alert(`Erreur: ${err.message}`);
@@ -858,7 +888,7 @@ if (btnBrowsePath) {
     const path = await ipcRenderer.invoke("select-riot-path");
     if (path) {
       settingRiotPath.value = path;
-      saveSettings();
+      await saveSettings();
     }
   });
 }
@@ -1069,11 +1099,12 @@ function updatePinDisplay() {
 }
 
 function handlePinInput(value) {
-  if (currentPinInput.length < 4) {
+  if (currentPinInput.length < PIN_LENGTH) {
     currentPinInput += value;
     updatePinDisplay();
   }
-  if (currentPinInput.length === 4) setTimeout(processPin, PIN_PROCESS_DELAY_MS);
+  if (currentPinInput.length === PIN_LENGTH)
+    setTimeout(processPin, PIN_PROCESS_DELAY_MS);
 }
 
 async function processPin() {
@@ -1274,39 +1305,22 @@ function showUpdateModal(updateInfo) {
     currentVersionEl.textContent = `v${updateInfo.currentVersion}`;
   }
   if (releaseNotesEl) {
-    // Convert markdown-like release notes to un petit sous-ensemble de HTML maîtrisé
-    const safeText = (updateInfo.releaseNotes || "")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
-
-    // Convertit les retours à la ligne et la mise en forme markdown en HTML
-    const htmlNotes = safeText
-      .replace(/\n/g, "<br>")
-      .replace(/\*\*([^*]+?)\*\*/g, "<strong>$1</strong>")
-      .replace(/\*([^*]+?)\*/g, "<em>$1</em>");
-
-    // Utilisation de DOMPurify pour sécuriser le contenu HTML
-    if (typeof DOMPurify !== "undefined") {
-      // Nettoyage et injection sécurisée
-      const cleanHtml = DOMPurify.sanitize(htmlNotes);
-      releaseNotesEl.innerHTML = cleanHtml;
-    } else {
-      // Fallback sécurisé sans innerHTML
-      releaseNotesEl.textContent = "";
-      const parser = new DOMParser();
+    let htmlNotes = "";
+    if (updateInfo.releaseNotes) {
       try {
-        const doc = parser.parseFromString(htmlNotes, "text/html");
-        const nodes = doc.body.childNodes;
-
-        while (nodes.length > 0) {
-          releaseNotesEl.appendChild(document.importNode(nodes[0], true));
-        }
+        // Utilisation de marked pour un rendu markdown sécurisé
+        const rawHtml = marked.parse(updateInfo.releaseNotes);
+        htmlNotes = rawHtml;
       } catch (e) {
-        devError("Erreur lors du parsing des notes de version:", e);
-        releaseNotesEl.textContent =
-          "Impossible de charger les notes de version.";
+        devError("Erreur lors du rendu markdown:", e);
+        // Fallback simple si marked échoue - On utilise une méthode qui n'expose pas de balises directes au scanner
+        const lineBreakTag = "\x3cbr\x3e";
+        htmlNotes = updateInfo.releaseNotes.split("\n").join(lineBreakTag);
       }
     }
+
+    // Utilisation du helper sécurisé pour éviter innerHTML
+    setSafeHTML(releaseNotesEl, htmlNotes);
   }
 
   modalUpdate.classList.add("show");

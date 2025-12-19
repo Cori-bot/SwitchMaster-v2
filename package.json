@@ -1,78 +1,80 @@
 {
-    "name": "switchmaster",
-    "version": "2.4.1",
-    "description": "SwitchMaster : Multi-Account Switcher",
-    "main": "index.js",
-    "scripts": {
-        "start": "electron .",
-        "release": "electron-builder --publish=always",
-        "build": "electron-builder",
-        "up-dep": "pnpm up --latest"
+  "name": "switchmaster",
+  "version": "2.4.1",
+  "description": "SwitchMaster : Multi-Account Switcher",
+  "main": "index.js",
+  "scripts": {
+    "start": "electron .",
+    "release": "electron-builder --publish=always",
+    "build": "electron-builder",
+    "up-dep": "pnpm up --latest"
+  },
+  "build": {
+    "appId": "com.switchmaster.app",
+    "productName": "SwitchMaster",
+    "directories": {
+      "output": "build"
     },
-    "build": {
-        "appId": "com.switchmaster.app",
-        "productName": "SwitchMaster",
-        "directories": {
-            "output": "build"
-        },
-        "win": {
-            "target": "nsis",
-            "icon": "assets/logo.ico"
-        },
-        "nsis": {
-            "oneClick": false,
-            "allowToChangeInstallationDirectory": true,
-            "createDesktopShortcut": true,
-            "createStartMenuShortcut": true
-        },
-        "publish": {
-            "provider": "github",
-            "owner": "Cori-bot",
-            "repo": "SwitchMaster-v2",
-            "private": false,
-            "releaseType": "release"
-        },
-        "extraResources": [
-            {
-                "from": "assets/scripts",
-                "to": "scripts"
-            }
-        ]
+    "win": {
+      "target": "nsis",
+      "icon": "assets/logo.ico"
     },
-    "keywords": [
-        "riot",
-        "riot games",
-        "games",
-        "account",
-        "switcher",
-        "multi-account",
-        "switchmaster",
-        "riot-id",
-        "riot-switcher",
-        "riot-account-switcher",
-        "valorant",
-        "valorant switcher",
-        "valorant account switcher",
-        "league of legends",
-        "league of legends switcher",
-        "league of legends account switcher",
-        "league of legends switcher",
-        "league of legends account switcher",
-        "league of legends switcher",
-        "league of legends account switcher"
-    ],
-    "author": "Coridor",
-    "license": "ISC",
-    "dependencies": {
-        "chokidar": "5.0.0",
-        "electron-log": "5.4.3",
-        "electron-updater": "6.6.2",
-        "fs-extra": "11.3.3",
-        "yaml": "2.8.2"
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
     },
-    "devDependencies": {
-        "electron": "39.2.7",
-        "electron-builder": "26.0.12",
-        "prettier": "^3.7.4"
-    }
+    "publish": {
+      "provider": "github",
+      "owner": "Cori-bot",
+      "repo": "SwitchMaster-v2",
+      "private": false,
+      "releaseType": "release"
+    },
+    "extraResources": [
+      {
+        "from": "assets/scripts",
+        "to": "scripts"
+      }
+    ]
+  },
+  "keywords": [
+    "riot",
+    "riot games",
+    "games",
+    "account",
+    "switcher",
+    "multi-account",
+    "switchmaster",
+    "riot-id",
+    "riot-switcher",
+    "riot-account-switcher",
+    "valorant",
+    "valorant switcher",
+    "valorant account switcher",
+    "league of legends",
+    "league of legends switcher",
+    "league of legends account switcher",
+    "league of legends switcher",
+    "league of legends account switcher",
+    "league of legends switcher",
+    "league of legends account switcher"
+  ],
+  "author": "Coridor",
+  "license": "ISC",
+  "dependencies": {
+    "chokidar": "5.0.0",
+    "dompurify": "^3.3.1",
+    "electron-log": "5.4.3",
+    "electron-updater": "6.6.2",
+    "fs-extra": "11.3.3",
+    "marked": "^17.0.1",
+    "yaml": "2.8.2"
+  },
+  "devDependencies": {
+    "electron": "39.2.7",
+    "electron-builder": "26.0.12",
+    "prettier": "^3.7.4"
+  }
 }
