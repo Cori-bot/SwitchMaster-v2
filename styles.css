@@ -301,12 +301,26 @@ body {
   flex-direction: column;
   gap: 8px;
   height: 100%;
+  position: relative;
+  z-index: 2;
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+}
+
+.card-top-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.card-info {
+  flex: 1;
 }
 
 .account-name {
@@ -316,11 +330,18 @@ body {
   margin-bottom: 4px;
 }
 
-.account-note {
-  font-size: 13px;
+.account-riot-id {
+  font-size: 12px;
   color: var(--text-muted);
-  font-weight: 500;
-  display: inline-block;
+  opacity: 0.8;
+  margin-top: 4px;
+}
+
+.card-right-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
 }
 
 .card-display-image {
@@ -355,10 +376,13 @@ body {
 
 .card-actions {
   margin-top: auto;
+  display: flex;
+  gap: 8px;
+  position: relative;
 }
 
 .btn-switch {
-  width: 100%;
+  flex: 1;
   padding: 12px;
   background-color: var(--bg-hover);
   border: 1px solid var(--border);

@@ -3,3 +3,5 @@ dist
 build
 TODO.md
 update.md
+__tests__
+vitest.config.js

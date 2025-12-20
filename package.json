@@ -1,13 +1,14 @@
 {
   "name": "switchmaster",
-  "version": "2.4.2",
+  "version": "2.4.3",
   "description": "SwitchMaster : Multi-Account Switcher",
   "main": "index.js",
   "scripts": {
     "start": "electron .",
     "release": "electron-builder --publish=always",
     "build": "electron-builder",
-    "up-dep": "pnpm up --latest"
+    "up-dep": "pnpm up --latest",
+    "test": "vitest run"
   },
   "build": {
     "appId": "com.switchmaster.app",
@@ -34,7 +35,7 @@
     },
     "extraResources": [
       {
-        "from": "assets/scripts",
+        "from": "src/scripts",
         "to": "scripts"
       }
     ]
@@ -73,8 +74,11 @@
     "yaml": "2.8.2"
   },
   "devDependencies": {
+    "@vitest/ui": "^4.0.16",
     "electron": "39.2.7",
     "electron-builder": "26.0.12",
-    "prettier": "^3.7.4"
+    "jsdom": "^27.3.0",
+    "prettier": "^3.7.4",
+    "vitest": "^4.0.16"
   }
 }
