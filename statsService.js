@@ -108,7 +108,10 @@ async function fetchValorantStats(riotId) {
     const firstSegment = segments[0] || {};
     const playtimeDisplay =
       (firstSegment.stats && firstSegment.stats.timePlayed && firstSegment.stats.timePlayed.displayValue) || "0h";
-    const bannerUrl = apiResponse.data.platformInfo?.avatarUrl || null;
+    let bannerUrl = null;
+    if (apiResponse.data && apiResponse.data.platformInfo) {
+      bannerUrl = apiResponse.data.platformInfo.avatarUrl || null;
+    }
     const activeShard = metadata.activeShard || "unknown";
 
     return {
@@ -191,7 +194,7 @@ async function fetchLeagueStats(riotId) {
       peakRank: "Unranked",
       peakRankIcon: "",
       playtime,
-      banner: apiResponse.data.platformInfo?.avatarUrl || null,
+      banner: (apiResponse.data && apiResponse.data.platformInfo) ? (apiResponse.data.platformInfo.avatarUrl || null) : null,
       shard: metadata.platformSlug || "unknown",
     };
   } catch (error) {

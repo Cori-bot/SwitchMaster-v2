@@ -87,7 +87,7 @@ const PIN_PROCESS_DELAY_MS = 100;
 const PIN_ERROR_RESET_DELAY_MS = 1000;
 const ERROR_SHAKE_DELAY_MS = 1000;
 const VIEW_SWITCH_TRANSITION_DELAY_MS = 200;
-const CURRENT_APP_VERSION = "2.4.1";
+const CURRENT_APP_VERSION = "2.4.2";
 const PIN_LENGTH = 4;
 const HTML_ENTITY_APOSTROPHE = "&#039;";
 
@@ -235,13 +235,14 @@ function escapeHtml(unsafe) {
   if (unsafe === undefined || unsafe === null) {
     return "";
   }
-  return String(unsafe)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, HTML_ENTITY_APOSTROPHE)
-    .replace(/`/g, "&#096;");
+  let escaped = String(unsafe);
+  escaped = escaped.replace(/&/g, "&amp;");
+  escaped = escaped.replace(/</g, "&lt;");
+  escaped = escaped.replace(/>/g, "&gt;");
+  escaped = escaped.replace(/"/g, "&quot;");
+  escaped = escaped.replace(/'/g, HTML_ENTITY_APOSTROPHE);
+  escaped = escaped.replace(/`/g, "&#096;");
+  return escaped;
 }
 
 // --- UI Rendering ---
@@ -706,9 +707,8 @@ async function saveAccount() {
   const password = inputPassword.value.trim();
   const riotId = inputRiotId.value.trim();
   const cardImage = inputCardImage.value.trim();
-  const gameType =
-    document.querySelector('input[name="game-type"]:checked')?.value ||
-    "valorant";
+  const checkedInput = document.querySelector('input[name="game-type"]:checked');
+  const gameType = checkedInput ? checkedInput.value : "valorant";
 
   if (!name || !username || !password) {
     alert("Nom, Username et Mot de passe sont requis.");
@@ -772,11 +772,10 @@ function addDragHandlers(card, id) {
 
   card.addEventListener("dragend", (e) => {
     card.classList.remove("dragging");
-    document
-      .querySelectorAll(".account-card")
-      .forEach((card) => {
-        card.classList.remove("drag-over");
-      });
+    const cards = document.querySelectorAll(".account-card");
+    cards.forEach((card) => {
+      card.classList.remove("drag-over");
+    });
   });
 
   card.addEventListener("dragover", (e) => {
@@ -987,8 +986,12 @@ async function checkStatus() {
   }
   try {
     const statusResponse = await ipcRenderer.invoke("get-status");
-    const status = statusResponse?.status;
-    const accountId = statusResponse?.accountId;
+    let status = null;
+    let accountId = null;
+    if (statusResponse) {
+      status = statusResponse.status;
+      accountId = statusResponse.accountId;
+    }
     const isActive = status === "Active" && accountId;
 
     if (!isActive) {
@@ -1010,24 +1013,25 @@ async function checkStatus() {
 }
 
 function applyDefaultStatus(statusResponse) {
-  const displayStatus = statusResponse?.status || "Unknown";
+  let displayStatus = "Unknown";
+  if (statusResponse && statusResponse.status) {
+    displayStatus = statusResponse.status;
+  }
   statusText.textContent = displayStatus;
   statusDot.classList.add("active");
-  document
-    .querySelectorAll(".account-card")
-    .forEach((card) => {
-      card.classList.remove("active-account");
-    });
+  const cards = document.querySelectorAll(".account-card");
+  cards.forEach((card) => {
+    card.classList.remove("active-account");
+  });
 }
 
 function applyActiveAccountStatus(acc) {
   statusText.textContent = `Active: ${acc.name}`;
   statusDot.classList.add("active");
-  document
-    .querySelectorAll(".account-card")
-    .forEach((card) => {
-      card.classList.remove("active-account");
-    });
+  const cards = document.querySelectorAll(".account-card");
+  cards.forEach((card) => {
+    card.classList.remove("active-account");
+  });
 
   const btn = document.querySelector(`.btn-switch[data-id="${acc.id}"]`);
   if (!btn) {
@@ -1048,11 +1052,10 @@ ipcRenderer.on("riot-client-closed", () => {
   statusDot.classList.add("active");
 
   // Enlève la bordure verte de toutes les cartes
-  document
-    .querySelectorAll(".account-card")
-    .forEach((card) => {
-      card.classList.remove("active-account");
-    });
+  const cards = document.querySelectorAll(".account-card");
+  cards.forEach((card) => {
+    card.classList.remove("active-account");
+  });
 
   // Et synchronise l'état avec le main process (au cas où)
   checkStatus();
@@ -1246,9 +1249,8 @@ if (pinDeleteBtn) {
 
 // Navigation
 function switchView(viewName) {
-  const currentView = navDashboard.classList.contains("active")
-    ? viewDashboard
-    : viewSettings;
+  const isDashboardActive = navDashboard.classList.contains("active");
+  const currentView = isDashboardActive ? viewDashboard : viewSettings;
   const targetView = viewName === "dashboard" ? viewDashboard : viewSettings;
 
   if (currentView === targetView) {
@@ -1492,10 +1494,10 @@ if (btnCheckUpdates) {
 
       const updateCheckResult = await ipcRenderer.invoke("check-for-updates");
 
-      if (
-        updateCheckResult.status === "not-available" &&
-        updateCheckResult.message
-      ) {
+      const isNotAvailable = updateCheckResult.status === "not-available";
+      const hasMessage = !!updateCheckResult.message;
+
+      if (isNotAvailable && hasMessage) {
         // Development mode - show message
         showNotification(
           "Mode développement : simulation de vérification",
