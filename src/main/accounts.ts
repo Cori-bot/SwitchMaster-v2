@@ -6,13 +6,41 @@ import { fetchAccountStats } from "./statsService";
 import { Account } from "../shared/types";
 
 export async function loadAccountsMeta(): Promise<Account[]> {
-  const { ACCOUNTS_FILE } = getPaths();
+  const { ACCOUNTS_FILE, ACCOUNTS_BACKUP } = getPaths();
   try {
     if (await fs.pathExists(ACCOUNTS_FILE)) {
-      return await fs.readJson(ACCOUNTS_FILE);
+      const content = await fs.readFile(ACCOUNTS_FILE, "utf-8");
+      if (content && content.trim() !== "") {
+        const accounts = JSON.parse(content);
+        // Si le chargement réussit, on met à jour le backup
+        await fs.copy(ACCOUNTS_FILE, ACCOUNTS_BACKUP, { overwrite: true }).catch(() => {});
+        return accounts;
+      }
+    }
+
+    // Si le fichier principal est vide ou absent, on tente le backup
+    if (await fs.pathExists(ACCOUNTS_BACKUP)) {
+      console.warn("Main accounts file invalid, attempting to restore from backup...");
+      const backupContent = await fs.readFile(ACCOUNTS_BACKUP, "utf-8");
+      if (backupContent && backupContent.trim() !== "") {
+        const accounts = JSON.parse(backupContent);
+        // On restaure le fichier principal à partir du backup
+        await fs.outputJson(ACCOUNTS_FILE, accounts, { spaces: 2 });
+        return accounts;
+      }
     }
   } catch (e) {
-    console.error("Error loading accounts:", e);
+    console.error("Error loading accounts, trying backup:", e);
+    try {
+      if (await fs.pathExists(ACCOUNTS_BACKUP)) {
+        const backupContent = await fs.readFile(ACCOUNTS_BACKUP, "utf-8");
+        const accounts = JSON.parse(backupContent);
+        await fs.outputJson(ACCOUNTS_FILE, accounts, { spaces: 2 });
+        return accounts;
+      }
+    } catch (backupErr) {
+      console.error("Backup restoration failed:", backupErr);
+    }
   }
   return [];
 }
@@ -20,7 +48,10 @@ export async function loadAccountsMeta(): Promise<Account[]> {
 export async function saveAccountsMeta(accounts: Account[]): Promise<void> {
   const { ACCOUNTS_FILE } = getPaths();
   try {
-    await fs.outputJson(ACCOUNTS_FILE, accounts, { spaces: 2 });
+    // Écriture atomique via un fichier temporaire pour éviter la corruption en cas de crash
+    const tempFile = `${ACCOUNTS_FILE}.tmp`;
+    await fs.outputJson(tempFile, accounts, { spaces: 2 });
+    await fs.move(tempFile, ACCOUNTS_FILE, { overwrite: true });
   } catch (e) {
     console.error("Error saving accounts:", e);
     throw e;

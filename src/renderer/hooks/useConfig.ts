@@ -19,6 +19,12 @@ export const useConfig = () => {
 
   useEffect(() => {
     fetchConfig();
+
+    const unsubscribe = window.ipc.on('config-updated', (_event, newConfig) => {
+      setConfig(prev => (prev ? { ...prev, ...newConfig as Partial<Config> } : null));
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const updateConfig = async (newConfig: Partial<Config>) => {

@@ -81,6 +81,11 @@ function registerAccountHandlers() {
     const stats = await fetchAccountStats(acc.riotId, acc.gameType);
     acc.stats = stats;
     await saveAccountsMeta(accounts);
+
+    // Notification de mise à jour immédiate
+    const wins = BrowserWindow.getAllWindows();
+    wins.forEach((win) => win.webContents.send('accounts-updated', accounts));
+
     return stats;
   });
 }
@@ -193,6 +198,27 @@ function registerMiscHandlers(mainWindow: BrowserWindow, context: IpcContext) {
     return true;
   });
   
+  safeHandle("handle-quit-choice", async (_e, dataRaw) => {
+    const { action, dontShowAgain } = dataRaw as { action: 'quit' | 'minimize', dontShowAgain: boolean };
+    
+    if (dontShowAgain) {
+      const newConfig = { 
+        showQuitModal: false,
+        minimizeToTray: action === 'minimize'
+      };
+      await saveConfig(newConfig);
+      // Notifier le renderer que la config a changé
+      mainWindow.webContents.send('config-updated', newConfig);
+    }
+
+    if (action === 'quit') {
+      app.quit();
+    } else {
+      mainWindow.hide();
+    }
+    return true;
+  });
+
   safeHandle("close-app", () => {
     app.quit();
   });
