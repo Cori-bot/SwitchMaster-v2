@@ -7,6 +7,7 @@ interface SettingsProps {
   onUpdate: (newConfig: Partial<Config>) => void;
   onSelectRiotPath: () => void;
   onOpenPinModal: () => void;
+  onDisablePin: () => void;
   onCheckUpdates: () => void;
 }
 
@@ -15,6 +16,7 @@ const Settings: React.FC<SettingsProps> = ({
   onUpdate,
   onSelectRiotPath,
   onOpenPinModal,
+  onDisablePin,
   onCheckUpdates,
 }) => {
   if (!config) return null;
@@ -178,7 +180,13 @@ const Settings: React.FC<SettingsProps> = ({
           label="Activer la protection par PIN"
           subLabel="Demande un code de sécurité à chaque ouverture de l'application."
           checked={!!config.security?.enabled}
-          onChange={(val) => handleChange('security', { ...config.security, enabled: val })}
+          onChange={(val) => {
+            if (!val) {
+              onDisablePin();
+            } else {
+              onOpenPinModal();
+            }
+          }}
         />
         {config.security?.enabled && (
           <div className="mt-4 pt-4 border-t border-white/5">

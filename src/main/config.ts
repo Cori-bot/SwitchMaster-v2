@@ -53,6 +53,15 @@ export async function loadConfig(): Promise<Config> {
 
 export async function saveConfig(newConfig: Partial<Config>): Promise<Config> {
   const { CONFIG_FILE } = getPaths();
+  
+  // Merge spécial pour la sécurité pour éviter d'écraser pinHash si on ne change que enabled
+  if (newConfig.security && appConfig.security) {
+    newConfig.security = {
+      ...appConfig.security,
+      ...newConfig.security
+    };
+  }
+
   appConfig = { ...appConfig, ...newConfig };
   try {
     await fs.outputJson(CONFIG_FILE, appConfig, { spaces: 2 });

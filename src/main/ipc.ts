@@ -88,7 +88,12 @@ function registerAccountHandlers() {
 function registerConfigHandlers() {
   safeHandle("get-config", () => getConfig());
   safeHandle("save-config", async (_e, config) => {
-    await saveConfig(config as Partial<Config>);
+    // Interdire la modification directe de la sécurité via save-config
+    const cleanConfig = { ...config as Partial<Config> };
+    if (cleanConfig.security) {
+      delete cleanConfig.security;
+    }
+    await saveConfig(cleanConfig);
     return true;
   });
 }
@@ -139,9 +144,15 @@ function registerSecurityHandlers() {
     return true;
   });
 
-  safeHandle("disable-pin", async () => {
-    await saveConfig({ security: { enabled: false, pinHash: null } });
-    return true;
+  safeHandle("disable-pin", async (_e, pin) => {
+    const config = getConfig();
+    if (!config.security?.enabled) return true;
+    const hash = crypto.createHash("sha256").update(pin as string).digest("hex");
+    if (hash === config.security.pinHash) {
+      await saveConfig({ security: { enabled: false, pinHash: null } });
+      return true;
+    }
+    return false;
   });
 
   safeHandle("get-security-status", () => {

@@ -9,7 +9,7 @@ export interface Notification {
 export const useNotifications = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
-  const addNotification = useCallback((message: string, type: 'success' | 'error' | 'info' = 'info', duration = 3000) => {
+  const addNotification = useCallback((message: string, type: 'success' | 'error' | 'info' = 'info', duration = 6000) => {
     const id = Date.now();
     setNotifications((prev) => [...prev, { id, message, type }]);
 

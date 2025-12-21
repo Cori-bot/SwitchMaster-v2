@@ -41,5 +41,5 @@ export const useConfig = () => {
     return result;
   };
 
-  return { config, loading, updateConfig, selectRiotPath, autoDetectPaths };
+  return { config, loading, updateConfig, selectRiotPath, autoDetectPaths, refreshConfig: fetchConfig };
 };

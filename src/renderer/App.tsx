@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle2, AlertCircle } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 import TopBar from './components/TopBar';
 import Dashboard from './components/Dashboard';
 import Settings from './components/Settings';
 import AddAccountModal from './components/AddAccountModal';
 import SecurityLock from './components/SecurityLock';
+import NotificationItem from './components/NotificationItem';
 import { QuitModal, UpdateModal, LaunchConfirmModal } from './components/AppModals';
 import { useAccounts } from './hooks/useAccounts';
 import { useConfig } from './hooks/useConfig';
@@ -34,7 +34,7 @@ const App: React.FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
   const [status, setStatus] = useState<AppStatus & { accountId?: string }>({ status: 'Initialisation...' });
-  const [securityMode, setSecurityMode] = useState<'verify' | 'set' | null>(null);
+  const [securityMode, setSecurityMode] = useState<'verify' | 'set' | 'disable' | null>(null);
   
   // App-level Modal states
   const [isQuitModalOpen, setIsQuitModalOpen] = useState(false);
@@ -52,8 +52,8 @@ const App: React.FC = () => {
   }>({ isOpen: false, accountId: null, gameType: 'valorant' });
 
   const { accounts, addAccount, updateAccount, deleteAccount, refreshAccounts, reorderAccounts } = useAccounts();
-  const { config, updateConfig, selectRiotPath } = useConfig();
-  const { verifyPin, setPin, checkSecurityStatus } = useSecurity();
+  const { config, updateConfig, selectRiotPath, refreshConfig } = useConfig();
+  const { verifyPin, setPin, disablePin, checkSecurityStatus } = useSecurity();
   const { notifications, showSuccess, showError, removeNotification } = useNotifications();
 
   useEffect(() => {
@@ -225,6 +225,17 @@ const App: React.FC = () => {
   };
 
   const handleVerifyPin = async (pin: string) => {
+    if (securityMode === 'disable') {
+      const success = await disablePin(pin);
+      if (success) {
+        setSecurityMode(null);
+        showSuccess('Protection par PIN désactivée');
+        await refreshConfig();
+        return true;
+      }
+      return false;
+    }
+
     const isValid = await verifyPin(pin);
     if (isValid) {
       setSecurityMode(null);
@@ -239,16 +250,16 @@ const App: React.FC = () => {
     if (success) {
       setSecurityMode(null);
       showSuccess('Code PIN configuré avec succès');
-      await updateConfig({ security: { enabled: true } });
+      await refreshConfig();
     }
   };
 
   const handleUpdateConfig = async (newConfig: Partial<Config>) => {
     try {
       await updateConfig(newConfig);
-      showSuccess('Paramètres mis à jour avec succès');
+      showSuccess('Paramètres mis à jour');
     } catch (err) {
-      showError('Erreur lors de la mise à jour des paramètres');
+      showError('Erreur de mise à jour');
     }
   };
 
@@ -287,29 +298,18 @@ const App: React.FC = () => {
               onSelectRiotPath={selectRiotPath}
               onCheckUpdates={() => window.ipc.invoke('check-updates')}
               onOpenPinModal={() => setSecurityMode('set')}
+              onDisablePin={() => setSecurityMode('disable')}
             />
           )}
         </main>
 
         <div className="fixed bottom-6 right-6 flex flex-col gap-3 z-50 pointer-events-none">
           {notifications.map((n) => (
-            <div 
-              key={n.id}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl border pointer-events-auto animate-in slide-in-from-right-full duration-300 shadow-2xl ${
-                n.type === 'success' 
-                  ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' 
-                  : 'bg-rose-500/10 border-rose-500/20 text-rose-400'
-              }`}
-            >
-              {n.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
-              <span className="text-sm font-medium">{n.message}</span>
-              <button 
-                onClick={() => removeNotification(n.id)}
-                className="ml-2 hover:opacity-70 transition-opacity"
-              >
-                ×
-              </button>
-            </div>
+            <NotificationItem 
+              key={n.id} 
+              notification={n} 
+              onRemove={removeNotification} 
+            />
           ))}
         </div>
       </div>
