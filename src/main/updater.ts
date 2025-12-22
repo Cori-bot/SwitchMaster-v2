@@ -11,7 +11,6 @@ autoUpdater.autoDownload = false; // Disable auto-download
 autoUpdater.fullChangelog = true;
 
 const isDev = process.env.NODE_ENV === "development" || !app.isPackaged;
-const DEV_UPDATE_NOTIF_DELAY_MS = 1500;
 const DEV_SIMULATED_UPDATE_DELAY = 2000;
 
 export function setupUpdater(mainWindow: BrowserWindow | null) {

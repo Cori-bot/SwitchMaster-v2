@@ -61,13 +61,13 @@ const App: React.FC = () => {
       const locked = await checkSecurityStatus();
       if (locked) setSecurityMode('verify');
       
-      const res = await window.ipc.invoke('get-status');
-      updateStatusDisplay(res);
+      const appStatus = await window.ipc.invoke('get-status');
+      updateStatusDisplay(appStatus);
     };
     init();
 
-    const statusUnsubscribe = window.ipc.on('status-updated', (_event, res) => {
-      updateStatusDisplay(res);
+    const statusUnsubscribe = window.ipc.on('status-updated', (_event, appStatus) => {
+      updateStatusDisplay(appStatus);
     });
 
     const riotClosedUnsubscribe = window.ipc.on('riot-client-closed', () => {
@@ -117,20 +117,20 @@ const App: React.FC = () => {
     };
   }, []);
 
-  const updateStatusDisplay = (res: AppStatus) => {
-    if (res && res.status === 'Active') {
+  const updateStatusDisplay = (appStatus: AppStatus) => {
+    if (appStatus && appStatus.status === 'Active') {
       setStatus({ 
-        status: `Actif: ${res.accountName}`,
-        accountId: res.accountId 
+        status: `Actif: ${appStatus.accountName}`,
+        accountId: appStatus.accountId 
       });
     } else {
-      setStatus({ status: res?.status || 'Prêt', accountId: undefined });
+      setStatus({ status: appStatus?.status || 'Prêt', accountId: undefined });
     }
   };
 
   const refreshStatus = async () => {
-    const res = await window.ipc.invoke('get-status');
-    updateStatusDisplay(res);
+    const appStatus = await window.ipc.invoke('get-status');
+    updateStatusDisplay(appStatus);
   };
 
   const handleSwitch = async (accountId: string, askToLaunch = true) => {
@@ -145,12 +145,12 @@ const App: React.FC = () => {
     }
 
     try {
-      const res = await window.ipc.invoke('switch-account', accountId);
-      if (res.success) {
+      const switchResult = await window.ipc.invoke('switch-account', accountId);
+      if (switchResult.success) {
         showSuccess('Changement de compte réussi');
         refreshStatus();
       } else {
-        showError(res.error || 'Erreur lors du changement de compte');
+        showError(switchResult.error || 'Erreur lors du changement de compte');
       }
     } catch (err) {
       showError('Erreur de communication avec le système');
@@ -162,13 +162,13 @@ const App: React.FC = () => {
     setLaunchConfirm({ ...launchConfirm, isOpen: false });
 
     try {
-      const res = await window.ipc.invoke('switch-account', accountId);
-      if (res.success) {
+      const switchResult = await window.ipc.invoke('switch-account', accountId);
+      if (switchResult.success) {
         showSuccess('Changement de compte réussi');
         refreshStatus();
         await window.ipc.invoke('launch-game', gameType);
       } else {
-        showError(res.error || 'Erreur lors du changement de compte');
+        showError(switchResult.error || 'Erreur lors du changement de compte');
       }
     } catch (err) {
       showError('Erreur lors du lancement du jeu');
@@ -180,12 +180,12 @@ const App: React.FC = () => {
     setLaunchConfirm({ ...launchConfirm, isOpen: false });
 
     try {
-      const res = await window.ipc.invoke('switch-account', accountId);
-      if (res.success) {
+      const switchResult = await window.ipc.invoke('switch-account', accountId);
+      if (switchResult.success) {
         showSuccess('Changement de compte réussi');
         refreshStatus();
       } else {
-        showError(res.error || 'Erreur lors du changement de compte');
+        showError(switchResult.error || 'Erreur lors du changement de compte');
       }
     } catch (err) {
       showError('Erreur lors du changement de compte');

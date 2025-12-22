@@ -54,6 +54,42 @@ const AccountCard: React.FC<AccountCardProps> = ({
       }
     : {};
 
+  const renderStats = () => {
+    if (!riotId) return null;
+    
+    return (
+      <div className="bg-black/20 rounded-xl p-3 mb-4 border border-white/5 backdrop-blur-sm">
+        {stats ? (
+          <div className="flex items-center gap-3">
+            {stats.rankIcon && (
+              <img 
+                src={stats.rankIcon} 
+                alt={stats.rank} 
+                className="w-10 h-10 object-contain" 
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            )}
+            <div>
+              <div className={`text-sm font-bold uppercase tracking-wider ${getRankColor(stats.rank)}`}>
+                {stats.rank || 'Unranked'}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3 animate-pulse">
+            <div className="w-10 h-10 rounded-full bg-white/5" />
+            <div className="space-y-2">
+              <div className="w-24 h-3 bg-white/5 rounded" />
+              <div className="w-16 h-2 bg-white/5 rounded" />
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div 
       style={cardStyle}
@@ -109,37 +145,7 @@ const AccountCard: React.FC<AccountCardProps> = ({
           </div>
         </div>
 
-        {riotId && (
-          <div className="bg-black/20 rounded-xl p-3 mb-4 border border-white/5 backdrop-blur-sm">
-            {stats ? (
-              <div className="flex items-center gap-3">
-                {stats.rankIcon && (
-                  <img 
-                    src={stats.rankIcon} 
-                    alt={stats.rank} 
-                    className="w-10 h-10 object-contain" 
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none';
-                    }}
-                  />
-                )}
-                <div>
-                  <div className={`text-sm font-bold uppercase tracking-wider ${getRankColor(stats.rank)}`}>
-                    {stats.rank || 'Unranked'}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center gap-3 animate-pulse">
-                <div className="w-10 h-10 rounded-full bg-white/5" />
-                <div className="space-y-2">
-                  <div className="w-24 h-3 bg-white/5 rounded" />
-                  <div className="w-16 h-2 bg-white/5 rounded" />
-                </div>
-              </div>
-            )}
-          </div>
-        )}
+        {renderStats()}
 
         <button
           onClick={() => onSwitch(account.id)}

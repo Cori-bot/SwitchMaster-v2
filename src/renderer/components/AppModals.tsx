@@ -109,8 +109,8 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({ isOpen, status, progre
                 Une nouvelle version <span className="text-blue-500 font-bold">v{version}</span> est disponible.
               </p>
               {releaseNotes && (
-                <div className="bg-black/20 rounded-xl p-4 mb-6 max-h-40 overflow-y-auto text-sm text-gray-400 border border-white/5">
-                  <div dangerouslySetInnerHTML={{ __html: releaseNotes }} />
+                <div className="bg-black/20 rounded-xl p-4 mb-6 max-h-40 overflow-y-auto text-sm text-gray-400 border border-white/5 whitespace-pre-wrap">
+                  {releaseNotes.replace(/<[^>]*>/g, '')}
                 </div>
               )}
               <button

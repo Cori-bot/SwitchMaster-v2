@@ -20,28 +20,29 @@ const AddAccountModal: React.FC<AddAccountModalProps> = ({ isOpen, onClose, onAd
 
   useEffect(() => {
     const fetchCreds = async () => {
-      if (editingAccount) {
-        setName(editingAccount.name || '');
-        setRiotId(editingAccount.riotId || '');
-        setGameType(editingAccount.gameType || 'valorant');
-        setCardImage(editingAccount.cardImage || '');
-        
-        try {
-          const creds = await window.ipc.invoke('get-account-credentials', editingAccount.id);
-          if (creds) {
-            setUsername(creds.username || '');
-            setPassword(creds.password || '');
-          }
-        } catch (err) {
-          console.error('Failed to fetch credentials:', err);
-        }
-      } else {
+      if (!editingAccount) {
         setName('');
         setRiotId('');
         setUsername('');
         setPassword('');
         setGameType('valorant');
         setCardImage('');
+        return;
+      }
+
+      setName(editingAccount.name || '');
+      setRiotId(editingAccount.riotId || '');
+      setGameType(editingAccount.gameType || 'valorant');
+      setCardImage(editingAccount.cardImage || '');
+      
+      try {
+        const creds = await window.ipc.invoke('get-account-credentials', editingAccount.id);
+        if (creds) {
+          setUsername(creds.username || '');
+          setPassword(creds.password || '');
+        }
+      } catch (err) {
+        console.error('Failed to fetch credentials:', err);
       }
     };
     

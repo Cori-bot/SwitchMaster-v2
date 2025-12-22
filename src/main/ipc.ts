@@ -27,16 +27,16 @@ interface IpcContext {
   getStatus: () => Promise<{ status: string; accountId?: string; accountName?: string }>;
 }
 
-let handlersRegistered = false;
+let areHandlersRegistered = false;
 
 export function setupIpcHandlers(mainWindow: BrowserWindow | null, context: IpcContext) {
   // Account handlers don't need mainWindow
-  if (!handlersRegistered) {
+  if (!areHandlersRegistered) {
     registerAccountHandlers();
     registerConfigHandlers();
     registerRiotHandlers(context.launchGame);
     registerSecurityHandlers();
-    handlersRegistered = true;
+    areHandlersRegistered = true;
   }
 
   // Misc and Update handlers might need it
@@ -182,15 +182,15 @@ function registerMiscHandlers(mainWindow: BrowserWindow, context: IpcContext) {
   });
 
   safeHandle("get-status", async () => {
-    const res = await context.getStatus();
-    if (res.status === "Active" && res.accountId) {
+    const statusInfo = await context.getStatus();
+    if (statusInfo.status === "Active" && statusInfo.accountId) {
       const accounts = await loadAccountsMeta();
-      const acc = accounts.find(a => a.id === res.accountId);
+      const acc = accounts.find(a => a.id === statusInfo.accountId);
       if (acc) {
-        res.accountName = acc.name;
+        statusInfo.accountName = acc.name;
       }
     }
-    return res;
+    return statusInfo;
   });
   safeHandle("get-auto-start", () => context.getAutoStartStatus());
   safeHandle("set-auto-start", (_e, enable) => {
