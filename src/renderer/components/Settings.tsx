@@ -7,12 +7,13 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { Config } from "../hooks/useConfig";
+import logoImg from "@assets/logo.png";
 
 import {
   ICON_SIZE_NORMAL,
   ICON_SIZE_SMALL,
   ICON_SIZE_XSMALL,
-} from "./Modals/constants";
+} from "@/constants/ui";
 
 interface SettingItemProps {
   icon: React.ElementType;
@@ -247,15 +248,15 @@ const Settings: React.FC<SettingsProps> = ({
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center">
               <img
-                src="src/assets/logo.png"
-                alt="Logo"
-                className="w-8 h-8 object-contain"
+                src={logoImg}
+                alt="SwitchMaster Logo"
+                className="w-16 h-16 object-contain"
               />
             </div>
             <div>
               <div className="text-white font-bold">SwitchMaster v2.5.0</div>
               <div className="text-xs text-gray-500 font-medium">
-                Développé par le Coridor
+                Développé par Coridor
               </div>
             </div>
           </div>

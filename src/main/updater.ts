@@ -1,8 +1,15 @@
-import { autoUpdater } from "electron-updater";
+import * as electronUpdater from "electron-updater";
+import { AppUpdater, UpdateInfo, ProgressInfo } from "electron-updater";
 import log from "electron-log";
 import { app, Notification, BrowserWindow } from "electron";
 import path from "path";
 import { devError } from "./logger";
+
+// Handle different import patterns for ESM/CJS compatibility
+const autoUpdater: AppUpdater = (electronUpdater as any).autoUpdater || 
+                   (electronUpdater as any).default?.autoUpdater || 
+                   (electronUpdater as any).default || 
+                   electronUpdater;
 
 autoUpdater.logger = log;
 (autoUpdater.logger as any).transports.file.level = "info";
@@ -20,7 +27,11 @@ export function setupUpdater(mainWindow: BrowserWindow | null) {
       mainWindow.webContents.send("update-status", { status: "checking" });
   });
 
-  autoUpdater.on("update-available", (info) => {
+  const iconPath = app.isPackaged
+    ? path.join(process.resourcesPath, "assets", "logo.png")
+    : path.join(__dirname, "..", "..", "src", "assets", "logo.png");
+
+  autoUpdater.on("update-available", (info: UpdateInfo) => {
     if (mainWindow) {
       mainWindow.webContents.send("update-status", {
         status: "available",
@@ -33,7 +44,7 @@ export function setupUpdater(mainWindow: BrowserWindow | null) {
     const notification = new Notification({
       title: "Mise à jour disponible",
       body: `Une nouvelle version (${info.version}) de SwitchMaster est disponible !`,
-      icon: path.join(__dirname, "..", "assets", "logo.png"),
+      icon: iconPath,
     });
     notification.show();
     notification.on("click", () => {
@@ -49,13 +60,24 @@ export function setupUpdater(mainWindow: BrowserWindow | null) {
       mainWindow.webContents.send("update-status", { status: "not-available" });
   });
 
-  autoUpdater.on("error", (err) => {
+  autoUpdater.on("error", (err: Error) => {
     if (mainWindow) {
       let errorMessage = "Erreur lors de la mise à jour";
       if (err.message.includes("GitHub")) {
         errorMessage =
           "Erreur de connexion à GitHub. Vérifiez votre connexion internet.";
       }
+
+      // Ignore semver errors from GitHub tags (like "2.2" which is not x.y.z)
+      if (err.message.includes("Invalid Version")) {
+        devError("Semver error ignored (likely bad tag on GitHub):", err.message);
+        mainWindow.webContents.send("update-status", {
+          status: "not-available",
+          isManual: false,
+        });
+        return;
+      }
+
       mainWindow.webContents.send("update-status", {
         status: "error",
         error: errorMessage,
@@ -64,7 +86,7 @@ export function setupUpdater(mainWindow: BrowserWindow | null) {
     }
   });
 
-  autoUpdater.on("download-progress", (progressObj) => {
+  autoUpdater.on("download-progress", (progressObj: ProgressInfo) => {
     if (mainWindow) {
       mainWindow.webContents.send("update-progress", {
         percent: Math.round(progressObj.percent),
@@ -74,14 +96,14 @@ export function setupUpdater(mainWindow: BrowserWindow | null) {
     }
   });
 
-  autoUpdater.on("update-downloaded", (info) => {
+  autoUpdater.on("update-downloaded", (info: UpdateInfo) => {
     if (mainWindow) mainWindow.webContents.send("update-downloaded");
 
     // Notification système personnalisée en français
     const notification = new Notification({
       title: "Mise à jour prête",
       body: `La version ${info.version} a été téléchargée et est prête à être installée.`,
-      icon: path.join(__dirname, "..", "assets", "logo.png"),
+      icon: iconPath,
     });
     notification.show();
     notification.on("click", () => {
@@ -98,8 +120,7 @@ export async function handleUpdateCheck(
   isManual: boolean = false,
 ) {
   if (isDev) {
-    await simulateUpdateCheck(mainWindow, isManual);
-    return { status: "dev" };
+    return await simulateUpdateCheck(mainWindow, isManual);
   } else {
     try {
       if (mainWindow) {
@@ -109,8 +130,20 @@ export async function handleUpdateCheck(
         });
       }
       return await autoUpdater.checkForUpdates();
-    } catch (err) {
+    } catch (err: any) {
       devError("Initial update check failed:", err);
+
+      // Handle semver error in manual check too
+      if (err?.message?.includes("Invalid Version")) {
+        if (mainWindow && isManual) {
+          mainWindow.webContents.send("update-status", {
+            status: "not-available",
+            isManual: true,
+          });
+        }
+        return;
+      }
+
       if (mainWindow && isManual) {
         mainWindow.webContents.send("update-status", {
           status: "error",

@@ -4,7 +4,7 @@ import { CheckCircle2, AlertCircle, Info, X } from "lucide-react";
 import {
   ICON_SIZE_SMALL,
   ICON_SIZE_XSMALL,
-} from "./Modals/constants";
+} from "@/constants/ui";
 
 interface NotificationItemProps {
   notification: {

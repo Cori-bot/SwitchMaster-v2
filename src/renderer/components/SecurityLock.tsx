@@ -4,7 +4,7 @@ import { Shield, AlertCircle, Delete } from "lucide-react";
 import {
   ICON_SIZE_MEDIUM,
   ICON_SIZE_XSMALL,
-} from "./Modals/constants";
+} from "@/constants/ui";
 
 interface SecurityLockProps {
   mode?: "verify" | "set" | "disable";

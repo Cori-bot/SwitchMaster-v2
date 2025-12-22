@@ -6,7 +6,7 @@ import {
   MODAL_ZOOM_IN,
   Z_INDEX_MODAL,
   ACTIVE_SCALE,
-} from "./constants";
+} from "@/constants/ui";
 
 interface QuitModalProps {
   isOpen: boolean;

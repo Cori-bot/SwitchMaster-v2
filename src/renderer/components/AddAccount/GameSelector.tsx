@@ -1,4 +1,6 @@
 import React from "react";
+import valorantIcon from "@assets/valorant.png";
+import leagueIcon from "@assets/league.png";
 
 interface GameSelectorProps {
   gameType: "league" | "valorant";
@@ -28,7 +30,7 @@ const GameSelector: React.FC<GameSelectorProps> = ({
             }`}
         >
           <img
-            src="src/assets/valorant.png"
+            src={valorantIcon}
             alt="Val"
             className="w-5 h-5 object-contain"
           />
@@ -45,7 +47,7 @@ const GameSelector: React.FC<GameSelectorProps> = ({
             }`}
         >
           <img
-            src="src/assets/league.png"
+            src={leagueIcon}
             alt="LoL"
             className="w-5 h-5 object-contain"
           />

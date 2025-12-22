@@ -9,6 +9,7 @@ app.commandLine.appendSwitch("lang", "fr-FR");
 
 import { getConfig } from "./config";
 import { loadAccountsMeta } from "./accounts";
+import { devLog, devError } from "./logger";
 
 let mainWindow: BrowserWindow;
 let tray: Tray | null = null;
@@ -33,13 +34,22 @@ export function createWindow(isDev: boolean): BrowserWindow {
     frame: true,
     show: isDev, // Show immediately in dev to debug
     autoHideMenuBar: true,
-    icon: path.join(__dirname, "..", "assets", "logo.png"),
+    icon: app.isPackaged
+      ? path.join(process.resourcesPath, "assets", "logo.png")
+      : path.join(__dirname, "..", "..", "src", "assets", "logo.png"),
   });
 
   if (isDev) {
     mainWindow.loadURL("http://localhost:3000");
   } else {
-    mainWindow.loadFile(path.join(__dirname, "../../dist/index.html"));
+    // Utilisation de __dirname car main.js est dans dist-main/
+    // Le dossier dist/ est au même niveau que dist-main/
+    const indexPath = path.join(__dirname, "..", "dist", "index.html");
+    devLog("Chargement du fichier index (prod):", indexPath);
+    
+    mainWindow.loadFile(indexPath).catch((err) => {
+      devError("Erreur lors du chargement de index.html:", err);
+    });
   }
 
   mainWindow.webContents.on("will-navigate", (event, url) => {
@@ -73,7 +83,9 @@ export async function updateTrayMenu(
   launchGame: (gameId: "league" | "valorant") => Promise<void>,
   switchAccountTrigger: (id: string) => Promise<void>,
 ) {
-  const iconPath = path.join(__dirname, "..", "assets", "logo.png");
+  const iconPath = app.isPackaged
+    ? path.join(process.resourcesPath, "assets", "logo.png")
+    : path.join(__dirname, "..", "..", "src", "assets", "logo.png");
   if (!tray) {
     tray = new Tray(iconPath);
     tray.setToolTip("SwitchMaster");

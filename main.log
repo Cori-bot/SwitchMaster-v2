@@ -1,0 +1,99 @@
+[2025-12-22 19:26:51.280] [info]  Démarrage de l'initialisation de l'application...
+[2025-12-22 19:26:51.282] [info]  UserData Path: C:\Users\Coridor\AppData\Roaming\switchmaster
+[2025-12-22 19:26:51.283] [info]  Mode développement: false
+[2025-12-22 19:26:51.283] [info]  Attente de app.whenReady()...
+[2025-12-22 19:26:51.329] [info]  App ready
+[2025-12-22 19:26:51.353] [info]  Chargement de la configuration...
+[2025-12-22 19:26:51.358] [info]  Configuration des IPC handlers (étape 1)...
+[2025-12-22 19:26:51.358] [info]  Création de la fenêtre principale...
+[2025-12-22 19:26:51.396] [info]  Chargement du fichier index (prod): C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\dist\index.html
+[2025-12-22 19:26:51.401] [info]  Fenêtre créée.
+[2025-12-22 19:26:51.402] [info]  Démarrage minimisé: false
+[2025-12-22 19:26:51.402] [info]  Mode prod: configuration de l'affichage de la fenêtre.
+[2025-12-22 19:26:51.422] [info]  Checking for update
+[2025-12-22 19:26:51.761] [info]  Événement did-finish-load reçu.
+[2025-12-22 19:26:51.785] [info]  Événement ready-to-show reçu.
+[2025-12-22 19:26:51.786] [info]  Tentative d'affichage de la fenêtre (showWindow)...
+[2025-12-22 19:26:51.814] [info]  mainWindow.show() appelé.
+[2025-12-22 19:26:51.814] [info]  mainWindow.focus() appelé.
+[2025-12-22 19:26:51.868] [info]  Tentative d'affichage de la fenêtre (showWindow)...
+[2025-12-22 19:26:51.869] [info]  mainWindow.focus() appelé.
+[2025-12-22 19:26:52.505] [error] Error: TypeError: Invalid Version: 2.2
+    at new SemVer (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\semver\classes\semver.js:40:13)
+    at compare (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\semver\functions\compare.js:5:32)
+    at Object.lt (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\semver\functions\lt.js:4:29)
+    at computeReleaseNotes (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\electron-updater\out\providers\GitHubProvider.js:189:20)
+    at GitHubProvider.getLatestVersion (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\electron-updater\out\providers\GitHubProvider.js:139:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async NsisUpdater.getUpdateInfoAndProvider (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\electron-updater\out\AppUpdater.js:365:19)
+    at async NsisUpdater.doCheckForUpdates (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\electron-updater\out\AppUpdater.js:378:24)
+    at async lt (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\dist-main\main.js:1:16707)
+[2025-12-22 19:26:52.506] [error] Initial update check failed: TypeError: Invalid Version: 2.2
+    at new SemVer (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\semver\classes\semver.js:40:13)
+    at compare (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\semver\functions\compare.js:5:32)
+    at Object.lt (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\semver\functions\lt.js:4:29)
+    at computeReleaseNotes (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\electron-updater\out\providers\GitHubProvider.js:189:20)
+    at GitHubProvider.getLatestVersion (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\electron-updater\out\providers\GitHubProvider.js:139:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async NsisUpdater.getUpdateInfoAndProvider (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\electron-updater\out\AppUpdater.js:365:19)
+    at async NsisUpdater.doCheckForUpdates (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\electron-updater\out\AppUpdater.js:378:24)
+    at async lt (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\dist-main\main.js:1:16707)
+[2025-12-22 19:26:52.506] [error] Update check failed: TypeError: Invalid Version: 2.2
+    at new SemVer (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\semver\classes\semver.js:40:13)
+    at compare (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\semver\functions\compare.js:5:32)
+    at Object.lt (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\semver\functions\lt.js:4:29)
+    at computeReleaseNotes (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\electron-updater\out\providers\GitHubProvider.js:189:20)
+    at GitHubProvider.getLatestVersion (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\electron-updater\out\providers\GitHubProvider.js:139:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async NsisUpdater.getUpdateInfoAndProvider (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\electron-updater\out\AppUpdater.js:365:19)
+    at async NsisUpdater.doCheckForUpdates (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\electron-updater\out\AppUpdater.js:378:24)
+    at async lt (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\dist-main\main.js:1:16707)
+[2025-12-22 19:26:56.417] [info]  Fallback de sécurité (5s) pour l'affichage.
+[2025-12-22 19:26:56.417] [info]  Tentative d'affichage de la fenêtre (showWindow)...
+[2025-12-22 19:26:56.418] [info]  mainWindow.focus() appelé.
+[2025-12-22 19:26:58.105] [info]  Checking for update
+[2025-12-22 19:26:58.242] [error] Error: TypeError: Invalid Version: 2.2
+    at new SemVer (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\semver\classes\semver.js:40:13)
+    at compare (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\semver\functions\compare.js:5:32)
+    at Object.lt (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\semver\functions\lt.js:4:29)
+    at computeReleaseNotes (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\electron-updater\out\providers\GitHubProvider.js:189:20)
+    at GitHubProvider.getLatestVersion (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\electron-updater\out\providers\GitHubProvider.js:139:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async NsisUpdater.getUpdateInfoAndProvider (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\electron-updater\out\AppUpdater.js:365:19)
+    at async NsisUpdater.doCheckForUpdates (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\electron-updater\out\AppUpdater.js:378:24)
+    at async lt (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\dist-main\main.js:1:16707)
+    at async C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\dist-main\main.js:1:17465
+[2025-12-22 19:26:58.242] [error] Initial update check failed: TypeError: Invalid Version: 2.2
+    at new SemVer (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\semver\classes\semver.js:40:13)
+    at compare (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\semver\functions\compare.js:5:32)
+    at Object.lt (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\semver\functions\lt.js:4:29)
+    at computeReleaseNotes (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\electron-updater\out\providers\GitHubProvider.js:189:20)
+    at GitHubProvider.getLatestVersion (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\electron-updater\out\providers\GitHubProvider.js:139:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async NsisUpdater.getUpdateInfoAndProvider (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\electron-updater\out\AppUpdater.js:365:19)
+    at async NsisUpdater.doCheckForUpdates (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\electron-updater\out\AppUpdater.js:378:24)
+    at async lt (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\dist-main\main.js:1:16707)
+    at async C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\dist-main\main.js:1:17465
+[2025-12-22 19:27:22.604] [info]  Checking for update
+[2025-12-22 19:27:23.172] [error] Error: TypeError: Invalid Version: 2.2
+    at new SemVer (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\semver\classes\semver.js:40:13)
+    at compare (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\semver\functions\compare.js:5:32)
+    at Object.lt (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\semver\functions\lt.js:4:29)
+    at computeReleaseNotes (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\electron-updater\out\providers\GitHubProvider.js:189:20)
+    at GitHubProvider.getLatestVersion (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\electron-updater\out\providers\GitHubProvider.js:139:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async NsisUpdater.getUpdateInfoAndProvider (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\electron-updater\out\AppUpdater.js:365:19)
+    at async NsisUpdater.doCheckForUpdates (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\electron-updater\out\AppUpdater.js:378:24)
+    at async lt (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\dist-main\main.js:1:16707)
+    at async C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\dist-main\main.js:1:17465
+[2025-12-22 19:27:23.172] [error] Initial update check failed: TypeError: Invalid Version: 2.2
+    at new SemVer (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\semver\classes\semver.js:40:13)
+    at compare (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\semver\functions\compare.js:5:32)
+    at Object.lt (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\semver\functions\lt.js:4:29)
+    at computeReleaseNotes (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\electron-updater\out\providers\GitHubProvider.js:189:20)
+    at GitHubProvider.getLatestVersion (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\electron-updater\out\providers\GitHubProvider.js:139:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async NsisUpdater.getUpdateInfoAndProvider (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\electron-updater\out\AppUpdater.js:365:19)
+    at async NsisUpdater.doCheckForUpdates (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\node_modules\electron-updater\out\AppUpdater.js:378:24)
+    at async lt (C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\dist-main\main.js:1:16707)
+    at async C:\Users\Coridor\AppData\Local\Programs\switchmaster\resources\app.asar\dist-main\main.js:1:17465

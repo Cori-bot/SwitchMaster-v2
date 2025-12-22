@@ -10,7 +10,7 @@ import {
   ANIMATION_DURATION_LONG,
   MODAL_ZOOM_IN,
   Z_INDEX_MODAL,
-} from "./constants";
+} from "@/constants/ui";
 
 interface UpdateModalProps {
   isOpen: boolean;
@@ -45,10 +45,34 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
         return "Téléchargement...";
       case "downloaded":
         return "Mise à jour prête";
+      case "not-available":
+        return "Application à jour";
       case "error":
         return "Erreur";
       default:
         return "Mise à jour";
+    }
+  };
+
+  const getIcon = () => {
+    switch (status) {
+      case "not-available":
+        return <RefreshCw size={ICON_SIZE_NORMAL} />;
+      case "error":
+        return <AlertCircle size={ICON_SIZE_NORMAL} />;
+      default:
+        return <Download size={ICON_SIZE_NORMAL} />;
+    }
+  };
+
+  const getIconBgColor = () => {
+    switch (status) {
+      case "not-available":
+        return "bg-green-600/10 text-green-500";
+      case "error":
+        return "bg-red-600/10 text-red-500";
+      default:
+        return "bg-blue-600/10 text-blue-500";
     }
   };
 
@@ -59,8 +83,8 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
       >
         <div className="p-8 overflow-y-auto scrollbar-hide">
           <div className="flex justify-between items-start mb-6">
-            <div className="w-12 h-12 bg-blue-600/10 rounded-xl flex items-center justify-center text-blue-500">
-              <Download size={ICON_SIZE_NORMAL} />
+            <div className={`w-12 h-12 ${getIconBgColor()} rounded-xl flex items-center justify-center`}>
+              {getIcon()}
             </div>
             <button
               onClick={onCancel}
@@ -78,6 +102,20 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
             <div className="flex flex-col items-center justify-center py-8 space-y-4">
               <RefreshCw size={40} className="text-blue-500 animate-spin" />
               <p className="text-gray-400">Vérification des mises à jour...</p>
+            </div>
+          )}
+
+          {status === "not-available" && (
+            <div className="text-center py-4">
+              <p className="text-gray-400 mb-6">
+                Vous utilisez déjà la dernière version de SwitchMaster.
+              </p>
+              <button
+                onClick={onCancel}
+                className="w-full px-6 py-3.5 bg-white/5 hover:bg-white/10 text-white rounded-xl font-bold transition-all"
+              >
+                Super !
+              </button>
             </div>
           )}
 

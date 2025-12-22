@@ -2,10 +2,10 @@
   "name": "switchmaster",
   "version": "2.5.0",
   "description": "SwitchMaster : Multi-Account Switcher",
-  "main": "src/main/main.ts",
+  "main": "dist-main/main.js",
   "scripts": {
     "dev": "concurrently \"vite\" \"wait-on http://localhost:3000 && cross-env NODE_ENV=development electron -r tsx src/main/main.ts\"",
-    "build": "vite build && electron-builder",
+    "build": "vite build && node scripts/build-main.js && electron-builder",
     "release": "vite build && electron-builder --publish=always",
     "up-dep": "pnpm up --latest",
     "test": "vitest run"
@@ -37,6 +37,10 @@
       {
         "from": "src/scripts",
         "to": "scripts"
+      },
+      {
+        "from": "src/assets",
+        "to": "assets"
       }
     ]
   },

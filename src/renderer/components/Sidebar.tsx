@@ -2,6 +2,10 @@ import React from "react";
 import { LayoutDashboard, Settings, Rocket } from "lucide-react";
 import { devError } from "../utils/logger";
 
+import logoImg from "@assets/logo.png";
+import valorantIcon from "@assets/valorant.png";
+import leagueIcon from "@assets/league.png";
+
 interface SidebarProps {
   activeView: string;
   onViewChange: (view: string) => void;
@@ -20,7 +24,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) => {
     <aside className="w-64 bg-[#1a1a1a] flex flex-col border-r border-white/5">
       <div className="p-6 flex items-center justify-center">
         <img
-          src="src/assets/logo.png"
+          src={logoImg}
           alt="Logo"
           className="h-12 w-auto"
           onError={(e) =>
@@ -68,7 +72,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) => {
             >
               <div className="w-10 h-10 rounded-lg bg-[#ff4655]/10 flex items-center justify-center group-hover:bg-[#ff4655]/20 transition-colors">
                 <img
-                  src="src/assets/valorant.png"
+                  src={valorantIcon}
                   alt="Val"
                   className="w-6 h-6 object-contain"
                 />
@@ -85,7 +89,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) => {
             >
               <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
                 <img
-                  src="src/assets/league.png"
+                  src={leagueIcon}
                   alt="LoL"
                   className="w-6 h-6 object-contain"
                 />

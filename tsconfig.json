@@ -19,7 +19,8 @@
     "noUnusedParameters": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/renderer/*"]
+      "@/*": ["src/renderer/*"],
+      "@assets/*": ["src/assets/*"]
     }
   },
   "include": ["src/renderer", "src/main", "src/shared", "*.ts"],

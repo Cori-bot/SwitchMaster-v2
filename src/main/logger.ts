@@ -1,27 +1,24 @@
 import { app } from "electron";
+import log from "electron-log";
 
 const isDev = process.env.NODE_ENV === "development" || (app && !app.isPackaged);
 
+// Configure electron-log
+log.transports.file.level = "info";
+log.transports.console.level = isDev ? "debug" : false;
+
 export function devLog(...args: unknown[]) {
-  if (isDev) {
-    console.log(...args);
-  }
+  log.info(...args);
 }
 
 export function devError(...args: unknown[]) {
-  if (isDev) {
-    console.error(...args);
-  }
+  log.error(...args);
 }
 
 export function devWarn(...args: unknown[]) {
-  if (isDev) {
-    console.warn(...args);
-  }
+  log.warn(...args);
 }
 
 export function devDebug(...args: unknown[]) {
-  if (isDev) {
-    console.debug(...args);
-  }
+  log.debug(...args);
 }

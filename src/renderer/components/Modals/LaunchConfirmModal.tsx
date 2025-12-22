@@ -1,5 +1,7 @@
 import React from "react";
 import { X, Rocket } from "lucide-react";
+import valorantIcon from "@assets/valorant.png";
+import leagueIcon from "@assets/league.png";
 import {
   ICON_SIZE_SMALL,
   ICON_SIZE_XSMALL,
@@ -7,7 +9,7 @@ import {
   MODAL_ZOOM_IN,
   Z_INDEX_MODAL,
   ACTIVE_SCALE,
-} from "./constants";
+} from "@/constants/ui";
 
 interface LaunchConfirmModalProps {
   isOpen: boolean;
@@ -41,7 +43,7 @@ export const LaunchConfirmModal: React.FC<LaunchConfirmModalProps> = ({
             className={`w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 ${gameType === "valorant" ? "bg-[#ff4655]/10 text-[#ff4655]" : "bg-blue-600/10 text-blue-500"}`}
           >
             <img
-              src={`src/assets/${gameType === "league" ? "league" : "valorant"}.png`}
+              src={gameType === "league" ? leagueIcon : valorantIcon}
               alt={gameType}
               className="w-12 h-12 object-contain"
             />

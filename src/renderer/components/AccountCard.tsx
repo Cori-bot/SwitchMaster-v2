@@ -3,12 +3,15 @@ import { MoreVertical, Play, Trash2, Edit2, GripVertical } from "lucide-react";
 import { Account } from "../hooks/useAccounts";
 import { devLog } from "../utils/logger";
 
+import leagueIcon from "@assets/league.png";
+import valorantIcon from "@assets/valorant.png";
+
 import {
   ICON_SIZE_SMALL,
   ICON_SIZE_MEDIUM,
   ANIMATION_DURATION_LONG,
   ACTIVE_SCALE,
-} from "./Modals/constants";
+} from "@/constants/ui";
 
 interface AccountCardProps {
   account: Account;
@@ -55,10 +58,10 @@ const AccountCard: React.FC<AccountCardProps> = ({
   const cardStyle = cardImage
     ? {
         backgroundImage: `linear-gradient(rgba(0,0,0,${GRADIENT_OPACITY}), rgba(0,0,0,0.9)), url('${
-          cardImage.startsWith("http")
-            ? cardImage
-            : `file:///${cardImage.replace(/\\/g, "/")}`
-        }')`,
+        cardImage.startsWith("http")
+          ? cardImage
+          : `sm-img://${cardImage.replace(/\\/g, "/")}`
+      }')`,
         backgroundSize: "cover",
         backgroundPosition: "center",
       }
@@ -139,7 +142,7 @@ const AccountCard: React.FC<AccountCardProps> = ({
           </div>
           <div className="flex items-center gap-3">
             <img
-              src={`src/assets/${gameType === "league" ? "league" : "valorant"}.png`}
+              src={gameType === "league" ? leagueIcon : valorantIcon}
               alt={gameType}
               className="w-6 h-6 object-contain opacity-80"
             />

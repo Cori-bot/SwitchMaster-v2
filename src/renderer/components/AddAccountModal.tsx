@@ -17,7 +17,7 @@ import {
   ACTIVE_SCALE,
   MODAL_ZOOM_IN,
   Z_INDEX_MODAL,
-} from "./Modals/constants";
+} from "@/constants/ui";
 
 import { devError } from "../utils/logger";
 

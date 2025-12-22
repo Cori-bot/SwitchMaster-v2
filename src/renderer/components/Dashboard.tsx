@@ -8,7 +8,7 @@ import {
   ICON_SIZE_LARGE,
   ACTIVE_SCALE,
   ANIMATION_DURATION_LONG,
-} from "./Modals/constants";
+} from "@/constants/ui";
 
 interface DashboardProps {
   accounts: Account[];

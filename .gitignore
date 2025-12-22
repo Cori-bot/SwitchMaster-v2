@@ -1,5 +1,6 @@
 /node_modules
 dist
+dist-main
 build
 TODO.md
 update.md
