@@ -3,19 +3,7 @@ import { IncomingMessage } from "http";
 
 // Service for fetching account statistics from tracker.gg
 
-const isDev = process.env.NODE_ENV === "development";
-
-function devLog(...args: unknown[]) {
-  if (isDev) {
-    console.log(...args);
-  }
-}
-
-function devError(...args: unknown[]) {
-  if (isDev) {
-    console.error(...args);
-  }
-}
+import { devLog, devError } from "./logger";
 
 interface TrackerSegment {
   attributes?: {
@@ -147,11 +135,9 @@ async function fetchValorantStats(riotId: string) {
       (rankStat.metadata && rankStat.metadata.iconUrl) ||
       "https://trackercdn.com/cdn/tracker.gg/valorant/icons/tiers/0.png";
 
-    if (process.env.NODE_ENV === "development") {
-      console.log(`[DEV-STATS] VALORANT - ${riotId}:`, {
-        rank: rankTierName,
-      });
-    }
+    devLog(`[DEV-STATS] VALORANT - ${riotId}:`, {
+      rank: rankTierName,
+    });
 
     return {
       rank: rankTierName,
@@ -215,11 +201,9 @@ async function fetchLeagueStats(riotId: string) {
       (rankStat.metadata && rankStat.metadata.iconUrl) ||
       "https://trackercdn.com/cdn/tracker.gg/lol/ranks/2023/icons/unranked.svg";
 
-    if (process.env.NODE_ENV === "development") {
-      console.log(`[DEV-STATS] LEAGUE - ${riotId}:`, {
-        rank: rankTierName,
-      });
-    }
+    devLog(`[DEV-STATS] LEAGUE - ${riotId}:`, {
+      rank: rankTierName,
+    });
 
     return {
       rank: rankTierName,

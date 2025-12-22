@@ -6,6 +6,8 @@ import path from "path";
 import fs from "fs-extra";
 import { getConfig } from "./config";
 
+import { devDebug } from "./logger";
+
 const MONITOR_INTERVAL_MS = 10000;
 const GAME_LAUNCH_DELAY_MS = 3000;
 
@@ -24,10 +26,8 @@ export async function monitorRiotProcess(
       }
     } catch (err: unknown) {
       // Ignore errors (typically when tasklist fails or process not found)
-      if (process.env.NODE_ENV === "development") {
-        const message = err instanceof Error ? err.message : String(err);
-        console.debug("Monitor interval error:", message);
-      }
+      const message = err instanceof Error ? err.message : String(err);
+      devDebug("Monitor interval error:", message);
     }
   }, MONITOR_INTERVAL_MS);
 }

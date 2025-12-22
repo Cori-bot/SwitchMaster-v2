@@ -12,6 +12,15 @@ import {
 } from "lucide-react";
 import { Account } from "../hooks/useAccounts";
 
+import {
+  ICON_SIZE_MEDIUM,
+  ICON_SIZE_SMALL,
+  ANIMATION_DURATION,
+  ACTIVE_SCALE,
+  MODAL_ZOOM_IN,
+  Z_INDEX_MODAL,
+} from "./Modals/constants";
+
 interface AddAccountModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -21,9 +30,8 @@ interface AddAccountModalProps {
   editingAccount: Account | null;
 }
 
-const ICON_SIZE_MEDIUM = 20;
-const ICON_SIZE_SMALL = 18;
-const ANIMATION_DURATION = "duration-200";
+import GameSelector from "./AddAccount/GameSelector";
+import ImageSelector from "./AddAccount/ImageSelector";
 
 const AddAccountModal: React.FC<AddAccountModalProps> = ({
   isOpen,
@@ -100,16 +108,14 @@ const AddAccountModal: React.FC<AddAccountModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className={`fixed inset-0 ${Z_INDEX_MODAL} flex items-center justify-center p-6`}>
       <div
-        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
 
       <div
-        className={`relative bg-[#1a1a1a] w-full max-w-lg rounded-3xl border border-white/10 
-          shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in 
-          ${ANIMATION_DURATION}`}
+        className={`relative bg-[#1a1a1a] border border-white/10 rounded-3xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh] shadow-2xl animate-in ${MODAL_ZOOM_IN} ${ANIMATION_DURATION}`}
       >
         <div className="p-6 border-b border-white/5 flex items-center justify-between shrink-0">
           <h2 className="text-xl font-black text-white">
@@ -225,108 +231,19 @@ const AddAccountModal: React.FC<AddAccountModalProps> = ({
               </div>
             </div>
 
-            <div>
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block ml-1">
-                Jeu
-              </label>
-              <div className="grid grid-cols-2 gap-4">
-                <button
-                  type="button"
-                  onClick={() => setGameType("valorant")}
-                  className={`flex-1 flex items-center justify-center gap-3 p-3.5 rounded-xl border-2 
-                    transition-all ${ANIMATION_DURATION} ${
-                      gameType === "valorant"
-                        ? "bg-[#ff4655]/10 border-[#ff4655] text-white shadow-lg shadow-[#ff4655]/10"
-                        : "bg-black/40 border-white/5 text-gray-500 hover:border-white/10"
-                    }`}
-                >
-                  <img
-                    src="src/assets/valorant.png"
-                    alt="Val"
-                    className="w-5 h-5 object-contain"
-                  />
-                  <span className="font-bold">Valorant</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setGameType("league")}
-                  className={`flex-1 flex items-center justify-center gap-3 p-3.5 rounded-xl border-2 
-                    transition-all ${ANIMATION_DURATION} ${
-                      gameType === "league"
-                        ? "bg-blue-600/10 border-blue-600 text-white shadow-lg shadow-blue-600/10"
-                        : "bg-black/40 border-white/5 text-gray-500 hover:border-white/10"
-                    }`}
-                >
-                  <img
-                    src="src/assets/league.png"
-                    alt="LoL"
-                    className="w-5 h-5 object-contain"
-                  />
-                  <span className="font-bold">League of Legends</span>
-                </button>
-              </div>
-            </div>
+            <GameSelector
+              gameType={gameType}
+              setGameType={setGameType}
+              animationDuration={ANIMATION_DURATION}
+            />
 
-            <div>
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block ml-1">
-                Image de fond (URL ou Fichier)
-              </label>
-              <div className="space-y-3">
-                <div className="relative group">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-blue-500 transition-colors">
-                    <ImageIcon size={ICON_SIZE_SMALL} />
-                  </div>
-                  <input
-                    type="text"
-                    value={cardImage.startsWith("http") ? cardImage : ""}
-                    onChange={(e) => setCardImage(e.target.value)}
-                    placeholder="Entrez l'URL de l'image..."
-                    className="w-full bg-black/40 border border-white/10 rounded-xl pl-12 pr-4 py-3.5 
-                      text-white placeholder:text-gray-600 focus:outline-none 
-                      focus:border-blue-500/50 transition-all text-sm"
-                  />
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <div className="h-px flex-1 bg-white/5" />
-                  <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">
-                    Ou
-                  </span>
-                  <div className="h-px flex-1 bg-white/5" />
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleSelectImage}
-                  className="w-full flex items-center justify-between p-3.5 bg-black/40 border 
-                    border-white/10 rounded-xl hover:border-white/20 transition-all group"
-                >
-                  <div className="flex items-center gap-3 overflow-hidden">
-                    <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center text-gray-500 group-hover:text-blue-500 transition-colors shrink-0">
-                      <ImageIcon size={ICON_SIZE_MEDIUM} />
-                    </div>
-                    <div className="text-left overflow-hidden">
-                      <div className="text-sm font-medium text-gray-300">
-                        {!cardImage.startsWith("http") && cardImage
-                          ? "Fichier sélectionné"
-                          : "Sélectionner un fichier local"}
-                      </div>
-                      {!cardImage.startsWith("http") && cardImage && (
-                        <div className="text-[10px] text-gray-500 truncate">
-                          {cardImage}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  {!cardImage.startsWith("http") && cardImage && (
-                    <CheckCircle2
-                      size={ICON_SIZE_SMALL}
-                      className="text-green-500 shrink-0"
-                    />
-                  )}
-                </button>
-              </div>
-            </div>
+            <ImageSelector
+              cardImage={cardImage}
+              setCardImage={setCardImage}
+              onSelectLocal={handleSelectImage}
+              iconSizeMedium={ICON_SIZE_MEDIUM}
+              iconSizeSmall={ICON_SIZE_SMALL}
+            />
           </div>
 
           <div className="flex gap-4 pt-2">
@@ -339,8 +256,8 @@ const AddAccountModal: React.FC<AddAccountModalProps> = ({
             </button>
             <button
               type="submit"
-              className="flex-1 px-6 py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl 
-                font-bold shadow-lg shadow-blue-600/20 transition-all active:scale-95"
+              className={`flex-1 px-6 py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl 
+                font-bold shadow-lg shadow-blue-600/20 transition-all ${ACTIVE_SCALE}`}
             >
               {editingAccount ? "Sauvegarder" : "Ajouter le compte"}
             </button>

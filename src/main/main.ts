@@ -13,15 +13,11 @@ import {
   getStatus,
 } from "./appLogic";
 
+import { devLog } from "./logger";
+
 const isDev = process.env.NODE_ENV === "development" || !app.isPackaged;
 let mainWindow: BrowserWindow | null = null;
 let activeAccountId: string | null = null;
-
-function devLog(...args: unknown[]) {
-  if (isDev) {
-    console.log(...args);
-  }
-}
 
 const STATS_REFRESH_INTERVAL_MS = 60000;
 const INITIAL_STATS_REFRESH_DELAY_MS = 5000;
@@ -58,13 +54,15 @@ async function initApp() {
 
     // Check if we should start minimized
     const isMinimized = process.argv.includes("--minimized");
-    if (!isMinimized && !isDev) {
-      mainWindow?.once("ready-to-show", () => {
-        mainWindow?.show();
-      });
-    } else if (!isMinimized && isDev) {
-      // In dev we show immediately via createWindow
-      mainWindow?.focus();
+    if (!isMinimized) {
+      if (isDev) {
+        // In dev we show immediately via createWindow
+        mainWindow?.focus();
+      } else {
+        mainWindow?.once("ready-to-show", () => {
+          mainWindow?.show();
+        });
+      }
     }
 
     const switchAccountTrigger = async (id: string) => {

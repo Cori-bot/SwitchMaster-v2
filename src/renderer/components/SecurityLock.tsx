@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { Shield, AlertCircle, Delete } from "lucide-react";
 
+import {
+  ICON_SIZE_MEDIUM,
+  ICON_SIZE_NORMAL,
+  ICON_SIZE_LARGE,
+  ICON_SIZE_XSMALL,
+  ANIMATION_DURATION,
+} from "./Modals/constants";
+
 interface SecurityLockProps {
   mode?: "verify" | "set" | "disable";
   onVerify: (pin: string) => Promise<boolean>;
@@ -66,6 +74,12 @@ const SecurityLock: React.FC<SecurityLockProps> = ({
     setLoading(false);
   };
 
+  const getHeaderTitle = () => {
+    if (mode === "verify") return "Verrouillé";
+    if (mode === "disable") return "Désactiver";
+    return step === 1 ? "Définir" : "Confirmer";
+  };
+
   return (
     <div className="fixed inset-0 z-[100] bg-[#0a0a0a] flex flex-col items-center justify-center p-6 overflow-y-auto scrollbar-hide">
       <div className="w-full max-w-[320px] flex flex-col items-center py-4">
@@ -73,16 +87,10 @@ const SecurityLock: React.FC<SecurityLockProps> = ({
           <div
             className={`w-12 h-12 rounded-xl bg-blue-600/10 flex items-center justify-center text-blue-500 shadow-2xl shadow-blue-600/10 ${loading ? "animate-pulse" : ""}`}
           >
-            <Shield size={24} />
+            <Shield size={ICON_SIZE_MEDIUM} />
           </div>
           <h2 className="text-2xl font-black text-white text-center">
-            {mode === "verify"
-              ? "Verrouillé"
-              : mode === "disable"
-                ? "Désactiver"
-                : step === 1
-                  ? "Définir"
-                  : "Confirmer"}
+            {getHeaderTitle()}
           </h2>
         </div>
 
@@ -101,7 +109,7 @@ const SecurityLock: React.FC<SecurityLockProps> = ({
 
         {error && (
           <div className="flex items-center gap-2 text-red-500 text-sm font-bold mb-6 animate-in fade-in slide-in-from-top-2 duration-200">
-            <AlertCircle size={16} />
+            <AlertCircle size={ICON_SIZE_XSMALL} />
             {error}
           </div>
         )}

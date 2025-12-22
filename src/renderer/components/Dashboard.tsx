@@ -3,6 +3,13 @@ import AccountCard from "./AccountCard";
 import { PlusCircle } from "lucide-react";
 import { Account } from "../hooks/useAccounts";
 
+import {
+  ICON_SIZE_XLARGE,
+  ICON_SIZE_LARGE,
+  ACTIVE_SCALE,
+  ANIMATION_DURATION_LONG,
+} from "./Modals/constants";
+
 interface DashboardProps {
   accounts: Account[];
   activeAccountId?: string;
@@ -72,7 +79,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     return (
       <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
         <div className="w-24 h-24 bg-blue-600/10 rounded-full flex items-center justify-center mb-6 text-blue-500">
-          <PlusCircle size={48} />
+          <PlusCircle size={ICON_SIZE_XLARGE} />
         </div>
         <h2 className="text-2xl font-bold text-white mb-2">
           Aucun compte trouvé
@@ -83,7 +90,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         </p>
         <button
           onClick={onAddAccount}
-          className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-xl font-bold transition-all duration-200 shadow-lg shadow-blue-600/20 active:scale-95"
+          className={`bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-xl font-bold transition-all duration-200 shadow-lg shadow-blue-600/20 ${ACTIVE_SCALE}`}
         >
           Ajouter mon premier compte
         </button>
@@ -109,13 +116,12 @@ const Dashboard: React.FC<DashboardProps> = ({
         />
       ))}
 
-      {/* Bouton Ajouter un Compte (Card) */}
       <button
         onClick={onAddAccount}
-        className="group relative h-[220px] rounded-3xl border-2 border-dashed border-white/10 hover:border-blue-500/50 bg-white/[0.02] hover:bg-blue-500/[0.05] transition-all duration-300 flex flex-col items-center justify-center gap-4 overflow-hidden cursor-pointer"
+        className={`group relative h-[220px] rounded-3xl border-2 border-dashed border-white/10 hover:border-blue-500/50 bg-white/[0.02] hover:bg-blue-500/[0.05] transition-all ${ANIMATION_DURATION_LONG} flex flex-col items-center justify-center gap-4 overflow-hidden cursor-pointer`}
       >
-        <div className="w-14 h-14 rounded-2xl bg-white/5 group-hover:bg-blue-500/20 flex items-center justify-center text-gray-400 group-hover:text-blue-400 transition-all duration-300 group-hover:scale-110">
-          <PlusCircle size={32} />
+        <div className={`w-14 h-14 rounded-2xl bg-white/5 group-hover:bg-blue-500/20 flex items-center justify-center text-gray-400 group-hover:text-blue-400 transition-all ${ANIMATION_DURATION_LONG} group-hover:scale-110`}>
+          <PlusCircle size={ICON_SIZE_LARGE} />
         </div>
         <div className="text-center">
           <div className="text-white font-bold text-lg group-hover:text-blue-400 transition-colors">

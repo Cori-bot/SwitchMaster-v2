@@ -1,0 +1,11 @@
+export const ICON_SIZE_XLARGE = 48;
+export const ICON_SIZE_LARGE = 32;
+export const ICON_SIZE_MEDIUM = 24;
+export const ICON_SIZE_NORMAL = 20;
+export const ICON_SIZE_SMALL = 18;
+export const ICON_SIZE_XSMALL = 16;
+export const ANIMATION_DURATION = "duration-200";
+export const ANIMATION_DURATION_LONG = "duration-300";
+export const ACTIVE_SCALE = "active:scale-95";
+export const MODAL_ZOOM_IN = "zoom-in-95";
+export const Z_INDEX_MODAL = "z-[110]";

@@ -30,8 +30,16 @@ export const useConfig = () => {
   }, []);
 
   const updateConfig = async (newConfig: Partial<Config>) => {
-    await window.ipc.invoke("save-config", newConfig);
+    // Optimistic update
     setConfig((prev) => (prev ? { ...prev, ...newConfig } : null));
+    try {
+      await window.ipc.invoke("save-config", newConfig);
+    } catch (err) {
+      console.error("Failed to save config:", err);
+      // Revert on failure
+      fetchConfig();
+      throw err;
+    }
   };
 
   const selectRiotPath = async () => {

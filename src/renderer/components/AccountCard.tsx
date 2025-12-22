@@ -1,6 +1,14 @@
 import React from "react";
 import { MoreVertical, Play, Trash2, Edit2, GripVertical } from "lucide-react";
 import { Account } from "../hooks/useAccounts";
+import { devLog } from "../utils/logger";
+
+import {
+  ICON_SIZE_SMALL,
+  ICON_SIZE_MEDIUM,
+  ANIMATION_DURATION_LONG,
+  ACTIVE_SCALE,
+} from "./Modals/constants";
 
 interface AccountCardProps {
   account: Account;
@@ -16,8 +24,6 @@ interface AccountCardProps {
 }
 
 const GRADIENT_OPACITY = 0.55;
-const ICON_SIZE_SMALL = 16;
-const ICON_SIZE_MEDIUM = 18;
 
 const AccountCard: React.FC<AccountCardProps> = ({
   account,
@@ -35,8 +41,8 @@ const AccountCard: React.FC<AccountCardProps> = ({
 
   // Dev logs for stats debugging
   React.useEffect(() => {
-    if (process.env.NODE_ENV === "development" && stats) {
-      console.log(`[DEV-STATS] ${name}:`, {
+    if (stats) {
+      devLog(`[DEV-STATS] ${name}:`, {
         rank: stats.rank,
       });
     }
@@ -109,7 +115,7 @@ const AccountCard: React.FC<AccountCardProps> = ({
       onDragEnd={(e) => onDragEnd(e)}
       onDragEnter={(e) => onDragEnter(e, id)}
       onDrop={(e) => onDrop(e, id)}
-      className={`group relative bg-[#1a1a1a] rounded-2xl border-2 transition-all duration-300 ease-in-out ${
+      className={`group relative bg-[#1a1a1a] rounded-2xl border-2 transition-all ${ANIMATION_DURATION_LONG} ease-in-out ${
         isActive
           ? "border-green-500 shadow-[0_0_20px_rgba(34,197,94,0.2)]"
           : "border-white/5 hover:border-blue-500/50 hover:shadow-2xl hover:shadow-blue-500/10"
@@ -164,7 +170,7 @@ const AccountCard: React.FC<AccountCardProps> = ({
         <button
           onClick={() => onSwitch(account.id)}
           disabled={isActive}
-          className={`w-full flex items-center justify-center gap-2 font-bold py-3 rounded-xl transition-all duration-200 active:scale-95 group/btn ${
+          className={`w-full flex items-center justify-center gap-2 font-bold py-3 rounded-xl transition-all duration-200 ${ACTIVE_SCALE} group/btn ${
             isActive
               ? "bg-green-500/10 text-green-500 border border-green-500/50 cursor-default"
               : "bg-white text-black hover:bg-gray-200 cursor-pointer"

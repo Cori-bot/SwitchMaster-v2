@@ -18,48 +18,16 @@ import { useNotifications } from "./hooks/useNotifications";
 
 import { Account, Config } from "../shared/types";
 
-interface AppStatus {
-  status: string;
-  accountId?: string;
-  accountName?: string;
-}
-
-interface UpdateInfo {
-  isOpen: boolean;
-  status:
-    | "idle"
-    | "checking"
-    | "available"
-    | "not-available"
-    | "downloading"
-    | "downloaded"
-    | "error";
-  progress: number;
-  version: string;
-  releaseNotes: string;
-  error?: string;
-}
+import { useAppIpc } from "./hooks/useAppIpc";
 
 const App: React.FC = () => {
   const [activeView, setActiveView] = useState("dashboard");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
-  const [status, setStatus] = useState<AppStatus & { accountId?: string }>({
-    status: "Initialisation...",
-  });
   const [securityMode, setSecurityMode] = useState<
     "verify" | "set" | "disable" | null
   >(null);
 
-  // App-level Modal states
-  const [isQuitModalOpen, setIsQuitModalOpen] = useState(false);
-  const [updateInfo, setUpdateInfo] = useState<UpdateInfo>({
-    isOpen: false,
-    status: "idle",
-    progress: 0,
-    version: "",
-    releaseNotes: "",
-  });
   const [launchConfirm, setLaunchConfirm] = useState<{
     isOpen: boolean;
     accountId: string | null;
@@ -79,106 +47,6 @@ const App: React.FC = () => {
   const { notifications, showSuccess, showError, removeNotification } =
     useNotifications();
 
-  useEffect(() => {
-    const init = async () => {
-      const locked = await checkSecurityStatus();
-      if (locked) setSecurityMode("verify");
-
-      const appStatus = await window.ipc.invoke("get-status");
-      void updateStatusDisplay(appStatus);
-    };
-    init();
-
-    const statusUnsubscribe = window.ipc.on(
-      "status-updated",
-      (_event, appStatus) => {
-        updateStatusDisplay(appStatus);
-      },
-    );
-
-    const riotClosedUnsubscribe = window.ipc.on("riot-client-closed", () => {
-      refreshStatus();
-    });
-
-    const quitUnsubscribe = window.ipc.on("show-quit-modal", () => {
-      setIsQuitModalOpen(true);
-    });
-
-    const updateStatusUnsubscribe = window.ipc.on(
-      "update-status",
-      (_event, data) => {
-        setUpdateInfo((prev) => {
-          // Ne pas ouvrir la modale automatiquement si c'est un check de routine sans update
-          const shouldOpen =
-            data.isManual ||
-            (data.status !== "not-available" &&
-              data.status !== "checking" &&
-              data.status !== "idle");
-
-          return {
-            ...prev,
-            isOpen: shouldOpen,
-            status: data.status,
-            version: data.version || prev.version,
-            releaseNotes: data.releaseNotes || prev.releaseNotes,
-            error: data.error,
-          };
-        });
-      },
-    );
-
-    const updateProgressUnsubscribe = window.ipc.on(
-      "update-progress",
-      (_event, data) => {
-        setUpdateInfo((prev) => ({
-          ...prev,
-          status: "downloading",
-          progress: data.percent,
-        }));
-      },
-    );
-
-    const updateDownloadedUnsubscribe = window.ipc.on(
-      "update-downloaded",
-      () => {
-        setUpdateInfo((prev) => ({ ...prev, status: "downloaded" }));
-      },
-    );
-
-    const quickConnectUnsubscribe = window.ipc.on(
-      "quick-connect-triggered",
-      (_event, accountId) => {
-        handleSwitch(accountId, false);
-      },
-    );
-
-    return () => {
-      statusUnsubscribe();
-      riotClosedUnsubscribe();
-      quitUnsubscribe();
-      updateStatusUnsubscribe();
-      updateProgressUnsubscribe();
-      updateDownloadedUnsubscribe();
-      quickConnectUnsubscribe();
-    };
-  }, []);
-
-  const updateStatusDisplay = (appStatus: AppStatus) => {
-    if (appStatus && appStatus.status === "Active") {
-      setStatus({
-        status: `Actif: ${appStatus.accountName}`,
-        accountId: appStatus.accountId,
-      });
-    } else {
-      setStatus({ status: appStatus?.status || "Prêt", accountId: undefined });
-    }
-  };
-
-  const refreshStatus = async () => {
-    const appStatus = await window.ipc.invoke("get-status");
-    void updateStatusDisplay(appStatus);
-  };
-
   const handleSwitch = async (accountId: string, askToLaunch = true) => {
     if (askToLaunch) {
       const account = accounts.find((a) => a.id === accountId);
@@ -194,7 +62,7 @@ const App: React.FC = () => {
       const switchResult = await window.ipc.invoke("switch-account", accountId);
       if (switchResult.success) {
         showSuccess("Changement de compte réussi");
-        refreshStatus();
+        void refreshStatus();
       } else {
         showError(switchResult.error || "Erreur lors du changement de compte");
       }
@@ -202,6 +70,23 @@ const App: React.FC = () => {
       showError("Erreur de communication avec le système");
     }
   };
+
+  const {
+    status,
+    isQuitModalOpen,
+    setIsQuitModalOpen,
+    updateInfo,
+    setUpdateInfo,
+    refreshStatus,
+  } = useAppIpc(handleSwitch);
+
+  useEffect(() => {
+    const init = async () => {
+      const locked = await checkSecurityStatus();
+      if (locked) setSecurityMode("verify");
+    };
+    init();
+  }, []);
 
   const confirmLaunch = async () => {
     const { accountId, gameType } = launchConfirm;
@@ -324,7 +209,7 @@ const App: React.FC = () => {
       <div className="flex-1 flex flex-col relative overflow-hidden">
         <TopBar status={status} />
 
-        <main className="flex-1 overflow-y-auto p-6 scrollbar-hide">
+        <main className="flex-1 overflow-y-auto p-6 custom-scrollbar">
           {activeView === "dashboard" ? (
             <Dashboard
               accounts={accounts}

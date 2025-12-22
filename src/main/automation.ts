@@ -6,6 +6,8 @@ import { clipboard, app } from "electron";
 const execAsync = util.promisify(exec);
 const setTimeoutAsync = util.promisify(setTimeout);
 
+import { devDebug, devError } from "./logger";
+
 const PROCESS_TERMINATION_DELAY = 2000;
 const MAX_WINDOW_CHECK_ATTEMPTS = 30;
 const WINDOW_CHECK_POLLING_MS = 1000;
@@ -24,16 +26,15 @@ export async function killRiotProcesses() {
       );
     } catch (e) {
       // Taskkill failed (processes might not be running), ignore
-      if (isDev)
-        console.debug(
-          "Taskkill ignore (no processes):",
-          e instanceof Error ? e.message : e,
-        );
+      devDebug(
+        "Taskkill ignore (no processes):",
+        e instanceof Error ? e.message : e,
+      );
     }
     await setTimeoutAsync(PROCESS_TERMINATION_DELAY);
   } catch (e) {
     // Cleanup error, ignore
-    if (isDev) console.error("killRiotProcesses cleanup error:", e);
+    devError("killRiotProcesses cleanup error:", e);
   }
 }
 
@@ -84,7 +85,7 @@ export async function performAutomation(username: string, password: string) {
       }
     } catch (e) {
       // Window check attempt failed, ignore and retry
-      if (isDev) console.debug("Window check retry...");
+      devDebug("Window check retry...");
     }
     await setTimeoutAsync(WINDOW_CHECK_POLLING_MS);
     return waitForWindowRecursive(currentAttempt + 1);
