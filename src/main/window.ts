@@ -13,12 +13,17 @@ import { loadAccountsMeta } from "./accounts";
 let mainWindow: BrowserWindow;
 let tray: Tray | null = null;
 
+const DEFAULT_WIDTH = 1000;
+const DEFAULT_HEIGHT = 700;
+const MIN_WIDTH = 600;
+const MIN_HEIGHT = 600;
+
 export function createWindow(isDev: boolean): BrowserWindow {
   mainWindow = new BrowserWindow({
-    width: 1000,
-    height: 700,
-    minWidth: 600,
-    minHeight: 600,
+    width: DEFAULT_WIDTH,
+    height: DEFAULT_HEIGHT,
+    minWidth: MIN_WIDTH,
+    minHeight: MIN_HEIGHT,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -65,8 +70,8 @@ export function createWindow(isDev: boolean): BrowserWindow {
 }
 
 export async function updateTrayMenu(
-  launchGame: (gameId: 'league' | 'valorant') => Promise<void>,
-  switchAccountTrigger: (id: string) => Promise<void>
+  launchGame: (gameId: "league" | "valorant") => Promise<void>,
+  switchAccountTrigger: (id: string) => Promise<void>,
 ) {
   const iconPath = path.join(__dirname, "..", "assets", "logo.png");
   if (!tray) {
@@ -94,13 +99,19 @@ export async function updateTrayMenu(
     const accounts = await loadAccountsMeta();
     const lastAccount = accounts.find((a) => a.id === config.lastAccountId);
     if (lastAccount) {
-      menuItems.push({ type: "separator" }, {
-        label: `Connecter: ${lastAccount.name}`,
-        click: async () => {
-          await switchAccountTrigger(lastAccount.id);
-          mainWindow.webContents.send("quick-connect-triggered", lastAccount.id);
+      menuItems.push(
+        { type: "separator" },
+        {
+          label: `Connecter: ${lastAccount.name}`,
+          click: async () => {
+            await switchAccountTrigger(lastAccount.id);
+            void mainWindow.webContents.send(
+              "quick-connect-triggered",
+              lastAccount.id,
+            );
+          },
         },
-      });
+      );
     }
   }
 

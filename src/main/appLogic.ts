@@ -6,10 +6,18 @@ import path from "path";
 import fs from "fs-extra";
 import { getConfig } from "./config";
 
-export async function monitorRiotProcess(mainWindow: BrowserWindow | null, onClosed?: () => void) {
+const MONITOR_INTERVAL_MS = 10000;
+const GAME_LAUNCH_DELAY_MS = 3000;
+
+export async function monitorRiotProcess(
+  mainWindow: BrowserWindow | null,
+  onClosed?: () => void,
+) {
   setInterval(async () => {
     try {
-      const { stdout } = await execAsync('tasklist /FI "IMAGENAME eq RiotClientServices.exe" /FO CSV');
+      const { stdout } = await execAsync(
+        'tasklist /FI "IMAGENAME eq RiotClientServices.exe" /FO CSV',
+      );
       if (!stdout.includes("RiotClientServices.exe")) {
         if (onClosed) onClosed();
         if (mainWindow) mainWindow.webContents.send("riot-client-closed");
@@ -21,19 +29,25 @@ export async function monitorRiotProcess(mainWindow: BrowserWindow | null, onClo
         console.debug("Monitor interval error:", message);
       }
     }
-  }, 10000);
+  }, MONITOR_INTERVAL_MS);
 }
 
-export async function launchGame(gameId: 'league' | 'valorant') {
+export async function launchGame(gameId: "league" | "valorant") {
   const config = getConfig();
   let clientPath = config.riotPath;
-  
+
   // Ensure we use RiotClientServices.exe
   if (!clientPath.endsWith("RiotClientServices.exe")) {
-    if (await fs.pathExists(clientPath) && (await fs.stat(clientPath)).isDirectory()) {
+    if (
+      (await fs.pathExists(clientPath)) &&
+      (await fs.stat(clientPath)).isDirectory()
+    ) {
       clientPath = path.join(clientPath, "RiotClientServices.exe");
     } else {
-      clientPath = path.join(path.dirname(clientPath), "RiotClientServices.exe");
+      clientPath = path.join(
+        path.dirname(clientPath),
+        "RiotClientServices.exe",
+      );
     }
   }
 
@@ -42,7 +56,7 @@ export async function launchGame(gameId: 'league' | 'valorant') {
   }
 
   // Petit délai pour laisser le temps au client de se stabiliser après le login
-  await new Promise(resolve => setTimeout(resolve, 3000));
+  await new Promise((resolve) => setTimeout(resolve, GAME_LAUNCH_DELAY_MS));
 
   let args: string[] = [];
   if (gameId === "valorant") {
@@ -57,18 +71,18 @@ export async function launchGame(gameId: 'league' | 'valorant') {
 export function setAutoStart(enable: boolean) {
   const config = getConfig();
   const settings: Electron.Settings = { openAtLogin: enable };
-  
+
   if (enable) {
     const args: string[] = [];
     if (!app.isPackaged) {
       settings.path = process.execPath;
       args.push(".");
     }
-    
+
     if (config.startMinimized) {
       args.push("--minimized");
     }
-    
+
     if (args.length > 0) {
       settings.args = args;
     }
@@ -85,12 +99,18 @@ export function getAutoStartStatus() {
   };
 }
 
-export async function getStatus(): Promise<{ status: string; accountId?: string; accountName?: string }> {
+export async function getStatus(): Promise<{
+  status: string;
+  accountId?: string;
+  accountName?: string;
+}> {
   const config = getConfig();
   try {
-    const { stdout } = await execAsync('tasklist /FI "IMAGENAME eq RiotClientServices.exe" /FO CSV');
+    const { stdout } = await execAsync(
+      'tasklist /FI "IMAGENAME eq RiotClientServices.exe" /FO CSV',
+    );
     const isRunning = stdout.includes("RiotClientServices.exe");
-    
+
     if (isRunning && config.lastAccountId) {
       return { status: "Active", accountId: config.lastAccountId };
     }

@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-export type { Account } from '../../shared/types';
-import { Account } from '../../shared/types';
+import { useState, useEffect } from "react";
+export type { Account } from "../../shared/types";
+import { Account } from "../../shared/types";
 
 export const useAccounts = () => {
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -8,10 +8,10 @@ export const useAccounts = () => {
 
   const refreshAccounts = async () => {
     try {
-      const data = await window.ipc.invoke('get-accounts');
+      const data = await window.ipc.invoke("get-accounts");
       setAccounts(data);
     } catch (err) {
-      console.error('Failed to fetch accounts:', err);
+      console.error("Failed to fetch accounts:", err);
     } finally {
       setLoading(false);
     }
@@ -19,34 +19,45 @@ export const useAccounts = () => {
 
   useEffect(() => {
     refreshAccounts();
-    const unsubscribe = window.ipc.on('accounts-updated', (_event, data: Account[]) => {
-      setAccounts(data);
-    });
+    const unsubscribe = window.ipc.on(
+      "accounts-updated",
+      (_event, data: Account[]) => {
+        setAccounts(data);
+      },
+    );
     return () => {
-      if (typeof unsubscribe === 'function') unsubscribe();
+      if (typeof unsubscribe === "function") unsubscribe();
     };
   }, []);
 
   const addAccount = async (data: Partial<Account>) => {
-    await window.ipc.invoke('add-account', data);
+    await window.ipc.invoke("add-account", data);
     await refreshAccounts();
   };
 
   const updateAccount = async (data: Account) => {
-    await window.ipc.invoke('update-account', data);
+    await window.ipc.invoke("update-account", data);
     await refreshAccounts();
   };
 
   const deleteAccount = async (id: string) => {
-    await window.ipc.invoke('delete-account', id);
+    await window.ipc.invoke("delete-account", id);
     await refreshAccounts();
   };
 
   const reorderAccounts = async (ids: string[]) => {
-    await window.ipc.invoke('reorder-accounts', ids);
+    await window.ipc.invoke("reorder-accounts", ids);
     // Optimistic update could be done here
     await refreshAccounts();
   };
 
-  return { accounts, loading, refreshAccounts, addAccount, updateAccount, deleteAccount, reorderAccounts };
+  return {
+    accounts,
+    loading,
+    refreshAccounts,
+    addAccount,
+    updateAccount,
+    deleteAccount,
+    reorderAccounts,
+  };
 };

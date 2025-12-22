@@ -1,6 +1,6 @@
-import React from 'react';
-import { MoreVertical, Play, Trash2, Edit2, GripVertical } from 'lucide-react';
-import { Account } from '../hooks/useAccounts';
+import React from "react";
+import { MoreVertical, Play, Trash2, Edit2, GripVertical } from "lucide-react";
+import { Account } from "../hooks/useAccounts";
 
 interface AccountCardProps {
   account: Account;
@@ -15,65 +15,75 @@ interface AccountCardProps {
   onDrop: (e: React.DragEvent, id: string) => void;
 }
 
-const AccountCard: React.FC<AccountCardProps> = ({ 
-  account, 
+const GRADIENT_OPACITY = 0.55;
+const ICON_SIZE_SMALL = 16;
+const ICON_SIZE_MEDIUM = 18;
+
+const AccountCard: React.FC<AccountCardProps> = ({
+  account,
   isActive,
-  onSwitch, 
-  onDelete, 
-  onEdit, 
-  onDragStart, 
-  onDragOver, 
+  onSwitch,
+  onDelete,
+  onEdit,
+  onDragStart,
+  onDragOver,
   onDragEnd,
   onDragEnter,
-  onDrop 
+  onDrop,
 }) => {
   const { id, name, riotId, gameType, stats, cardImage } = account;
 
   // Dev logs for stats debugging
   React.useEffect(() => {
-    if (process.env.NODE_ENV === 'development' && stats) {
+    if (process.env.NODE_ENV === "development" && stats) {
       console.log(`[DEV-STATS] ${name}:`, {
-        rank: stats.rank
+        rank: stats.rank,
       });
     }
   }, [name, stats]);
 
   const getRankColor = (rank?: string) => {
-    return 'text-gray-300'; // Unification de la couleur
+    return "text-gray-300"; // Unification de la couleur
   };
 
-  const cardStyle = cardImage 
+  const cardStyle = cardImage
     ? {
-        backgroundImage: `linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.9)), url('${
-          cardImage.startsWith('http') 
-            ? cardImage 
-            : `file:///${cardImage.replace(/\\/g, '/')}`
+        backgroundImage: `linear-gradient(rgba(0,0,0,${GRADIENT_OPACITY}), rgba(0,0,0,0.9)), url('${
+          cardImage.startsWith("http")
+            ? cardImage
+            : `file:///${cardImage.replace(/\\/g, "/")}`
         }')`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
+        backgroundSize: "cover",
+        backgroundPosition: "center",
       }
     : {};
 
+  const handleImageError = (
+    e: React.SyntheticEvent<HTMLImageElement, Event>,
+  ) => {
+    (e.currentTarget as HTMLImageElement).style.display = "none";
+  };
+
   const renderStats = () => {
     if (!riotId) return null;
-    
+
     return (
       <div className="bg-black/20 rounded-xl p-3 mb-4 border border-white/5 backdrop-blur-sm">
         {stats ? (
           <div className="flex items-center gap-3">
             {stats.rankIcon && (
-              <img 
-                src={stats.rankIcon} 
-                alt={stats.rank} 
-                className="w-10 h-10 object-contain" 
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
-                }}
+              <img
+                src={stats.rankIcon}
+                alt={stats.rank}
+                className="w-10 h-10 object-contain"
+                onError={handleImageError}
               />
             )}
             <div>
-              <div className={`text-sm font-bold uppercase tracking-wider ${getRankColor(stats.rank)}`}>
-                {stats.rank || 'Unranked'}
+              <div
+                className={`text-sm font-bold uppercase tracking-wider ${getRankColor(stats.rank)}`}
+              >
+                {stats.rank || "Unranked"}
               </div>
             </div>
           </div>
@@ -91,7 +101,7 @@ const AccountCard: React.FC<AccountCardProps> = ({
   };
 
   return (
-    <div 
+    <div
       style={cardStyle}
       draggable
       onDragStart={(e) => onDragStart(e, id)}
@@ -100,45 +110,49 @@ const AccountCard: React.FC<AccountCardProps> = ({
       onDragEnter={(e) => onDragEnter(e, id)}
       onDrop={(e) => onDrop(e, id)}
       className={`group relative bg-[#1a1a1a] rounded-2xl border-2 transition-all duration-300 ease-in-out ${
-        isActive 
-          ? 'border-green-500 shadow-[0_0_20px_rgba(34,197,94,0.2)]' 
-          : 'border-white/5 hover:border-blue-500/50 hover:shadow-2xl hover:shadow-blue-500/10'
-      } overflow-hidden ${cardImage ? 'has-bg' : ''}`}
+        isActive
+          ? "border-green-500 shadow-[0_0_20px_rgba(34,197,94,0.2)]"
+          : "border-white/5 hover:border-blue-500/50 hover:shadow-2xl hover:shadow-blue-500/10"
+      } overflow-hidden ${cardImage ? "has-bg" : ""}`}
     >
       <div className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing">
-        <GripVertical size={16} className="text-gray-500" />
+        <GripVertical size={ICON_SIZE_SMALL} className="text-gray-500" />
       </div>
 
       <div className="p-5">
         <div className="flex justify-between items-start mb-4">
           <div className="flex-1">
-            <h3 className="text-lg font-bold text-white truncate pr-8">{name}</h3>
+            <h3 className="text-lg font-bold text-white truncate pr-8">
+              {name}
+            </h3>
             {riotId && (
-              <p className="text-sm text-gray-400 truncate font-mono">{riotId}</p>
+              <p className="text-sm text-gray-400 truncate font-mono">
+                {riotId}
+              </p>
             )}
           </div>
           <div className="flex items-center gap-3">
-            <img 
-              src={`src/assets/${gameType === 'league' ? 'league' : 'valorant'}.png`} 
+            <img
+              src={`src/assets/${gameType === "league" ? "league" : "valorant"}.png`}
               alt={gameType}
               className="w-6 h-6 object-contain opacity-80"
             />
             <div className="relative group/menu">
               <button className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors">
-                <MoreVertical size={18} />
+                <MoreVertical size={ICON_SIZE_MEDIUM} />
               </button>
               <div className="absolute right-0 top-full mt-2 w-48 bg-[#242424] border border-white/10 rounded-xl shadow-2xl opacity-0 invisible group-hover/menu:opacity-100 group-hover/menu:visible transition-all duration-200 z-10 overflow-hidden">
-                <button 
+                <button
                   onClick={() => onEdit(account)}
                   className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-300 hover:bg-white/5 transition-colors"
                 >
-                  <Edit2 size={16} /> Modifier
+                  <Edit2 size={ICON_SIZE_SMALL} /> Modifier
                 </button>
-                <button 
+                <button
                   onClick={() => onDelete(account.id)}
                   className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
                 >
-                  <Trash2 size={16} /> Supprimer
+                  <Trash2 size={ICON_SIZE_SMALL} /> Supprimer
                 </button>
               </div>
             </div>
@@ -151,9 +165,9 @@ const AccountCard: React.FC<AccountCardProps> = ({
           onClick={() => onSwitch(account.id)}
           disabled={isActive}
           className={`w-full flex items-center justify-center gap-2 font-bold py-3 rounded-xl transition-all duration-200 active:scale-95 group/btn ${
-            isActive 
-              ? 'bg-green-500/10 text-green-500 border border-green-500/50 cursor-default' 
-              : 'bg-white text-black hover:bg-gray-200 cursor-pointer'
+            isActive
+              ? "bg-green-500/10 text-green-500 border border-green-500/50 cursor-default"
+              : "bg-white text-black hover:bg-gray-200 cursor-pointer"
           }`}
         >
           {isActive ? (
@@ -163,7 +177,10 @@ const AccountCard: React.FC<AccountCardProps> = ({
             </>
           ) : (
             <>
-              <Play size={18} className="fill-current group-hover/btn:scale-110 transition-transform" />
+              <Play
+                size={ICON_SIZE_MEDIUM}
+                className="fill-current group-hover/btn:scale-110 transition-transform"
+              />
               Se connecter
             </>
           )}

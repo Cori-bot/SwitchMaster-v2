@@ -15,7 +15,8 @@ const DEV_SIMULATED_UPDATE_DELAY = 2000;
 
 export function setupUpdater(mainWindow: BrowserWindow | null) {
   autoUpdater.on("checking-for-update", () => {
-    if (mainWindow) mainWindow.webContents.send("update-status", { status: "checking" });
+    if (mainWindow)
+      mainWindow.webContents.send("update-status", { status: "checking" });
   });
 
   autoUpdater.on("update-available", (info) => {
@@ -43,14 +44,16 @@ export function setupUpdater(mainWindow: BrowserWindow | null) {
   });
 
   autoUpdater.on("update-not-available", () => {
-    if (mainWindow) mainWindow.webContents.send("update-status", { status: "not-available" });
+    if (mainWindow)
+      mainWindow.webContents.send("update-status", { status: "not-available" });
   });
 
   autoUpdater.on("error", (err) => {
     if (mainWindow) {
       let errorMessage = "Erreur lors de la mise à jour";
       if (err.message.includes("GitHub")) {
-        errorMessage = "Erreur de connexion à GitHub. Vérifiez votre connexion internet.";
+        errorMessage =
+          "Erreur de connexion à GitHub. Vérifiez votre connexion internet.";
       }
       mainWindow.webContents.send("update-status", {
         status: "error",
@@ -89,16 +92,19 @@ export function setupUpdater(mainWindow: BrowserWindow | null) {
   });
 }
 
-export async function handleUpdateCheck(mainWindow: BrowserWindow | null, isManual: boolean = false) {
+export async function handleUpdateCheck(
+  mainWindow: BrowserWindow | null,
+  isManual: boolean = false,
+) {
   if (isDev) {
     await simulateUpdateCheck(mainWindow, isManual);
     return { status: "dev" };
   } else {
     try {
       if (mainWindow) {
-        mainWindow.webContents.send("update-status", { 
+        mainWindow.webContents.send("update-status", {
           status: "checking",
-          isManual 
+          isManual,
         });
       }
       return await autoUpdater.checkForUpdates();
@@ -108,7 +114,7 @@ export async function handleUpdateCheck(mainWindow: BrowserWindow | null, isManu
         mainWindow.webContents.send("update-status", {
           status: "error",
           error: "Impossible de vérifier les mises à jour.",
-          isManual: true
+          isManual: true,
         });
       }
       throw err;
@@ -116,35 +122,39 @@ export async function handleUpdateCheck(mainWindow: BrowserWindow | null, isManu
   }
 }
 
-export async function simulateUpdateCheck(mainWindow: BrowserWindow | null, isManual: boolean = false) {
-  mainWindow?.webContents.send("update-status", { 
+export async function simulateUpdateCheck(
+  mainWindow: BrowserWindow | null,
+  isManual: boolean = false,
+) {
+  mainWindow?.webContents.send("update-status", {
     status: "checking",
-    isManual 
+    isManual,
   });
-  await new Promise((resolve) => setTimeout(resolve, DEV_SIMULATED_UPDATE_DELAY));
+  await new Promise((resolve) =>
+    setTimeout(resolve, DEV_SIMULATED_UPDATE_DELAY),
+  );
 
   // En mode auto, on simule souvent "pas de mise à jour" pour ne pas déranger
   // En mode manuel, on simule une mise à jour 50% du temps
-  const updateAvailable = isManual ? Math.random() > 0.5 : false; 
+  const updateAvailable = isManual ? Math.random() > 0.5 : false;
 
   if (updateAvailable) {
     mainWindow?.webContents.send("update-status", {
       status: "available",
       version: "9.9.9",
       releaseNotes: "Ceci est une mise à jour simulée pour le mode dev.",
-      isManual
+      isManual,
     });
   } else {
-    mainWindow?.webContents.send("update-status", { 
+    mainWindow?.webContents.send("update-status", {
       status: "not-available",
-      isManual 
+      isManual,
     });
   }
 }
 
 export async function downloadUpdate() {
   if (isDev) {
-    console.log("Simulating download in dev mode...");
     return;
   }
   return await autoUpdater.downloadUpdate();
@@ -152,7 +162,6 @@ export async function downloadUpdate() {
 
 export function installUpdate() {
   if (isDev) {
-    console.log("Simulating install in dev mode...");
     app.relaunch();
     app.exit();
     return;

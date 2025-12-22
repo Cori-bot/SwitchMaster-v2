@@ -13,14 +13,18 @@ export async function loadAccountsMeta(): Promise<Account[]> {
       if (content && content.trim() !== "") {
         const accounts = JSON.parse(content);
         // Si le chargement réussit, on met à jour le backup
-        await fs.copy(ACCOUNTS_FILE, ACCOUNTS_BACKUP, { overwrite: true }).catch(() => {});
+        await fs
+          .copy(ACCOUNTS_FILE, ACCOUNTS_BACKUP, { overwrite: true })
+          .catch(() => {});
         return accounts;
       }
     }
 
     // Si le fichier principal est vide ou absent, on tente le backup
     if (await fs.pathExists(ACCOUNTS_BACKUP)) {
-      console.warn("Main accounts file invalid, attempting to restore from backup...");
+      console.warn(
+        "Main accounts file invalid, attempting to restore from backup...",
+      );
       const backupContent = await fs.readFile(ACCOUNTS_BACKUP, "utf-8");
       if (backupContent && backupContent.trim() !== "") {
         const accounts = JSON.parse(backupContent);
@@ -58,7 +62,9 @@ export async function saveAccountsMeta(accounts: Account[]): Promise<void> {
   }
 }
 
-export async function addAccount(accountData: Partial<Account>): Promise<Account> {
+export async function addAccount(
+  accountData: Partial<Account>,
+): Promise<Account> {
   const { name, username, password, riotId, gameType, cardImage } = accountData;
   const id = crypto.randomUUID();
   const encryptedUsername = encryptData(username || "");
@@ -77,10 +83,13 @@ export async function addAccount(accountData: Partial<Account>): Promise<Account
   };
 
   const accounts = await loadAccountsMeta();
-  
+
   if (newAccount.riotId) {
     try {
-      newAccount.stats = await fetchAccountStats(newAccount.riotId, newAccount.gameType);
+      newAccount.stats = await fetchAccountStats(
+        newAccount.riotId,
+        newAccount.gameType,
+      );
     } catch (err) {
       console.error("Error fetching stats on addAccount:", err);
     }
@@ -88,17 +97,22 @@ export async function addAccount(accountData: Partial<Account>): Promise<Account
 
   accounts.push(newAccount);
   await saveAccountsMeta(accounts);
-  
+
   // Notification de mise à jour via IPC
-  const { BrowserWindow } = require('electron');
+  const { BrowserWindow } = require("electron");
   const wins = BrowserWindow.getAllWindows();
-  wins.forEach((win: any) => win.webContents.send('accounts-updated', accounts));
+  wins.forEach((win: any) =>
+    win.webContents.send("accounts-updated", accounts),
+  );
 
   return newAccount;
 }
 
-export async function updateAccount(accountData: Partial<Account>): Promise<Account> {
-  const { id, name, username, password, riotId, gameType, cardImage } = accountData;
+export async function updateAccount(
+  accountData: Partial<Account>,
+): Promise<Account> {
+  const { id, name, username, password, riotId, gameType, cardImage } =
+    accountData;
   const accounts = await loadAccountsMeta();
   const index = accounts.findIndex((a) => a.id === id);
 
@@ -107,8 +121,12 @@ export async function updateAccount(accountData: Partial<Account>): Promise<Acco
   }
 
   const existing = accounts[index];
-  const encryptedUsername = username ? encryptData(username) : existing.username;
-  const encryptedPassword = password ? encryptData(password) : existing.password;
+  const encryptedUsername = username
+    ? encryptData(username)
+    : existing.username;
+  const encryptedPassword = password
+    ? encryptData(password)
+    : existing.password;
 
   const updatedAccount: Account = {
     ...existing,
@@ -122,7 +140,10 @@ export async function updateAccount(accountData: Partial<Account>): Promise<Acco
 
   if (updatedAccount.riotId) {
     try {
-      updatedAccount.stats = await fetchAccountStats(updatedAccount.riotId, updatedAccount.gameType);
+      updatedAccount.stats = await fetchAccountStats(
+        updatedAccount.riotId,
+        updatedAccount.gameType,
+      );
     } catch (err) {
       console.error("Error fetching stats on updateAccount:", err);
     }
@@ -132,9 +153,11 @@ export async function updateAccount(accountData: Partial<Account>): Promise<Acco
   await saveAccountsMeta(accounts);
 
   // Notification de mise à jour via IPC
-  const { BrowserWindow } = require('electron');
+  const { BrowserWindow } = require("electron");
   const wins = BrowserWindow.getAllWindows();
-  wins.forEach((win: any) => win.webContents.send('accounts-updated', accounts));
+  wins.forEach((win: any) =>
+    win.webContents.send("accounts-updated", accounts),
+  );
 
   return updatedAccount;
 }
@@ -142,21 +165,25 @@ export async function updateAccount(accountData: Partial<Account>): Promise<Acco
 export async function deleteAccount(accountId: string): Promise<boolean> {
   const accounts = await loadAccountsMeta();
   const filtered = accounts.filter((a) => a.id !== accountId);
-  
+
   if (filtered.length !== accounts.length) {
     await saveAccountsMeta(filtered);
-    
+
     // Notification de mise à jour via IPC
-    const { BrowserWindow } = require('electron');
+    const { BrowserWindow } = require("electron");
     const wins = BrowserWindow.getAllWindows();
-    wins.forEach((win: any) => win.webContents.send('accounts-updated', filtered));
+    wins.forEach((win: any) =>
+      win.webContents.send("accounts-updated", filtered),
+    );
 
     return true;
   }
   return false;
 }
 
-export async function getAccountCredentials(accountId: string): Promise<Account> {
+export async function getAccountCredentials(
+  accountId: string,
+): Promise<Account> {
   const accounts = await loadAccountsMeta();
   const account = accounts.find((a) => a.id === accountId);
 
@@ -181,15 +208,20 @@ async function refreshAccountStats(account: Account): Promise<boolean> {
     }
   } catch (err) {
     const error = err as Error;
-    console.error(`Failed to refresh stats for ${account.name}:`, error.message);
+    console.error(
+      `Failed to refresh stats for ${account.name}:`,
+      error.message,
+    );
   }
   return false;
 }
 
-export async function refreshAllAccountStats(mainWindow: BrowserWindow | null): Promise<void> {
+export async function refreshAllAccountStats(
+  mainWindow: BrowserWindow | null,
+): Promise<void> {
   const accounts = await loadAccountsMeta();
   const results = await Promise.all(accounts.map(refreshAccountStats));
-  if (results.some(changed => changed)) {
+  if (results.some((changed) => changed)) {
     await saveAccountsMeta(accounts);
     if (mainWindow) mainWindow.webContents.send("accounts-updated", accounts);
   }

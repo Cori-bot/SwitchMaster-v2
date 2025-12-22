@@ -5,7 +5,13 @@ import { refreshAllAccountStats } from "./accounts";
 import { createWindow, updateTrayMenu } from "./window";
 import { setupIpcHandlers } from "./ipc";
 import { setupUpdater, handleUpdateCheck } from "./updater";
-import { monitorRiotProcess, launchGame, setAutoStart, getAutoStartStatus, getStatus } from "./appLogic";
+import {
+  monitorRiotProcess,
+  launchGame,
+  setAutoStart,
+  getAutoStartStatus,
+  getStatus,
+} from "./appLogic";
 
 const isDev = process.env.NODE_ENV === "development" || !app.isPackaged;
 let mainWindow: BrowserWindow | null = null;
@@ -16,6 +22,9 @@ function devLog(...args: unknown[]) {
     console.log(...args);
   }
 }
+
+const STATS_REFRESH_INTERVAL_MS = 60000;
+const INITIAL_STATS_REFRESH_DELAY_MS = 5000;
 
 async function initApp() {
   devLog("Démarrage de l'initialisation de l'application...");
@@ -31,22 +40,22 @@ async function initApp() {
       app.setAppUserModelId("com.switchmaster.app");
     }
     devLog("Mode développement:", isDev);
-    
+
     await app.whenReady();
     devLog("App ready");
     await ensureAppData();
     await loadConfig();
-    
+
     // Register IPC handlers before window creation
     setupIpcHandlers(null, {
       launchGame,
       setAutoStart,
       getAutoStartStatus,
-      getStatus
+      getStatus,
     });
 
     mainWindow = createWindow(isDev);
-    
+
     // Check if we should start minimized
     const isMinimized = process.argv.includes("--minimized");
     if (!isMinimized && !isDev) {
@@ -68,7 +77,7 @@ async function initApp() {
       launchGame,
       setAutoStart,
       getAutoStartStatus,
-      getStatus
+      getStatus,
     });
     setupUpdater(mainWindow);
     await updateTrayMenu(launchGame, switchAccountTrigger);
@@ -78,12 +87,19 @@ async function initApp() {
     });
 
     // Stats refresh
-    setInterval(() => refreshAllAccountStats(mainWindow), 60000);
-    setTimeout(() => refreshAllAccountStats(mainWindow), 5000);
+    setInterval(
+      () => refreshAllAccountStats(mainWindow),
+      STATS_REFRESH_INTERVAL_MS,
+    );
+    setTimeout(
+      () => refreshAllAccountStats(mainWindow),
+      INITIAL_STATS_REFRESH_DELAY_MS,
+    );
 
     // Initial update check
-    handleUpdateCheck(mainWindow).catch(err => console.error("Update check failed:", err));
-
+    handleUpdateCheck(mainWindow).catch((err) =>
+      console.error("Update check failed:", err),
+    );
   } catch (err) {
     console.error("App initialization failed:", err);
   }
@@ -96,6 +112,6 @@ app.on("window-all-closed", () => {
   }
 });
 
-initApp().catch(err => {
+initApp().catch((err) => {
   console.error("Fatal error:", err);
 });

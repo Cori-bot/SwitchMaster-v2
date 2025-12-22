@@ -21,7 +21,7 @@ export interface Config {
 export interface Account {
   id: string;
   name: string;
-  gameType: 'league' | 'valorant';
+  gameType: "league" | "valorant";
   riotId: string;
   username?: string;
   password?: string;

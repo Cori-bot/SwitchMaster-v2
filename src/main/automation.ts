@@ -12,20 +12,28 @@ const WINDOW_CHECK_POLLING_MS = 1000;
 const LOGIN_ACTION_DELAY_MS = 500;
 
 const isDev = process.env.NODE_ENV === "development" || !app.isPackaged;
-export const SCRIPTS_PATH = isDev ?
-  path.join(__dirname, "..", "scripts") :
-  path.join(process.resourcesPath, "scripts");
+export const SCRIPTS_PATH = isDev
+  ? path.join(__dirname, "..", "scripts")
+  : path.join(process.resourcesPath, "scripts");
 
 export async function killRiotProcesses() {
   try {
     try {
-      await execAsync('taskkill /F /IM "RiotClientServices.exe" /IM "LeagueClient.exe" /IM "VALORANT.exe"');
+      await execAsync(
+        'taskkill /F /IM "RiotClientServices.exe" /IM "LeagueClient.exe" /IM "VALORANT.exe"',
+      );
     } catch (e) {
       // Taskkill failed (processes might not be running), ignore
+      if (isDev)
+        console.debug(
+          "Taskkill ignore (no processes):",
+          e instanceof Error ? e.message : e,
+        );
     }
     await setTimeoutAsync(PROCESS_TERMINATION_DELAY);
   } catch (e) {
     // Cleanup error, ignore
+    if (isDev) console.error("killRiotProcesses cleanup error:", e);
   }
 }
 
@@ -44,7 +52,12 @@ export async function performAutomation(username: string, password: string) {
   const runPs = (action: string): Promise<string> => {
     return new Promise((resolve, reject) => {
       const ps = spawn("powershell.exe", [
-        "-ExecutionPolicy", "Bypass", "-File", psScript, "-Action", action,
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        psScript,
+        "-Action",
+        action,
       ]);
       let output = "";
       ps.stdout.on("data", (d) => (output += d.toString()));
@@ -58,7 +71,9 @@ export async function performAutomation(username: string, password: string) {
     });
   };
 
-  async function waitForWindowRecursive(currentAttempt: number = 0): Promise<boolean> {
+  async function waitForWindowRecursive(
+    currentAttempt: number = 0,
+  ): Promise<boolean> {
     if (currentAttempt >= MAX_WINDOW_CHECK_ATTEMPTS) {
       return false;
     }
@@ -69,6 +84,7 @@ export async function performAutomation(username: string, password: string) {
       }
     } catch (e) {
       // Window check attempt failed, ignore and retry
+      if (isDev) console.debug("Window check retry...");
     }
     await setTimeoutAsync(WINDOW_CHECK_POLLING_MS);
     return waitForWindowRecursive(currentAttempt + 1);
@@ -109,7 +125,10 @@ export async function autoDetectPaths() {
     );
 
     if (riotEntry && riotEntry.InstallLocation) {
-      const riotPath = path.join(riotEntry.InstallLocation, "RiotClientServices.exe");
+      const riotPath = path.join(
+        riotEntry.InstallLocation,
+        "RiotClientServices.exe",
+      );
       if (await fs.pathExists(riotPath)) {
         return { riotPath };
       }

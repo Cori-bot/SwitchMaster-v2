@@ -17,10 +17,17 @@ export function getPaths() {
     CONFIG_BACKUP = path.join(APP_DATA_PATH, "config.bak.json");
     ACCOUNTS_BACKUP = path.join(APP_DATA_PATH, "accounts.bak.json");
   }
-  return { APP_DATA_PATH, CONFIG_FILE, ACCOUNTS_FILE, CONFIG_BACKUP, ACCOUNTS_BACKUP };
+  return {
+    APP_DATA_PATH,
+    CONFIG_FILE,
+    ACCOUNTS_FILE,
+    CONFIG_BACKUP,
+    ACCOUNTS_BACKUP,
+  };
 }
 
-export const DEFAULT_RIOT_CLIENT_PATH = "C:\\Riot Games\\Riot Client\\RiotClientServices.exe";
+export const DEFAULT_RIOT_CLIENT_PATH =
+  "C:\\Riot Games\\Riot Client\\RiotClientServices.exe";
 
 let appConfig: Config = {
   riotPath: DEFAULT_RIOT_CLIENT_PATH,
@@ -50,14 +57,18 @@ export async function loadConfig(): Promise<Config> {
         const savedConfig = JSON.parse(content);
         appConfig = { ...appConfig, ...savedConfig };
         // Si le chargement réussit, on met à jour le backup
-        await fs.copy(CONFIG_FILE, CONFIG_BACKUP, { overwrite: true }).catch(() => {});
+        await fs
+          .copy(CONFIG_FILE, CONFIG_BACKUP, { overwrite: true })
+          .catch(() => {});
         return appConfig;
       }
     }
 
     // Tentative de restauration depuis le backup si le fichier principal échoue
     if (await fs.pathExists(CONFIG_BACKUP)) {
-      console.warn("Main config file invalid, attempting to restore from backup...");
+      console.warn(
+        "Main config file invalid, attempting to restore from backup...",
+      );
       const backupContent = await fs.readFile(CONFIG_BACKUP, "utf-8");
       if (backupContent && backupContent.trim() !== "") {
         const savedConfig = JSON.parse(backupContent);
@@ -84,12 +95,12 @@ export async function loadConfig(): Promise<Config> {
 
 export async function saveConfig(newConfig: Partial<Config>): Promise<Config> {
   const { CONFIG_FILE } = getPaths();
-  
+
   // Merge spécial pour la sécurité pour éviter d'écraser pinHash si on ne change que enabled
   if (newConfig.security && appConfig.security) {
     newConfig.security = {
       ...appConfig.security,
-      ...newConfig.security
+      ...newConfig.security,
     };
   }
 

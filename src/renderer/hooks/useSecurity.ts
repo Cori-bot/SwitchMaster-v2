@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback } from "react";
 
 export const useSecurity = () => {
   const [isLocked, setIsLocked] = useState(false);
@@ -7,11 +7,11 @@ export const useSecurity = () => {
 
   const checkSecurityStatus = useCallback(async () => {
     try {
-      const isEnabled = await window.ipc.invoke('get-security-status');
+      const isEnabled = await window.ipc.invoke("get-security-status");
       setIsLocked(isEnabled);
       return isEnabled;
     } catch (err) {
-      console.error('Failed to check security status:', err);
+      console.error("Failed to check security status:", err);
       return false;
     }
   }, []);
@@ -20,15 +20,15 @@ export const useSecurity = () => {
     setLoading(true);
     setError(null);
     try {
-      const isValid = await window.ipc.invoke('verify-pin', pin);
+      const isValid = await window.ipc.invoke("verify-pin", pin);
       if (isValid) {
         setIsLocked(false);
       } else {
-        setError('Code PIN incorrect');
+        setError("Code PIN incorrect");
       }
       return isValid;
     } catch (err) {
-      setError('Erreur lors de la vérification');
+      setError("Erreur lors de la vérification");
       return false;
     } finally {
       setLoading(false);
@@ -39,10 +39,10 @@ export const useSecurity = () => {
     setLoading(true);
     setError(null);
     try {
-      await window.ipc.invoke('set-pin', pin);
+      await window.ipc.invoke("set-pin", pin);
       return true;
     } catch (err) {
-      setError('Erreur lors de la configuration du PIN');
+      setError("Erreur lors de la configuration du PIN");
       return false;
     } finally {
       setLoading(false);
@@ -53,11 +53,11 @@ export const useSecurity = () => {
     setLoading(true);
     setError(null);
     try {
-      const success = await window.ipc.invoke('disable-pin', pin);
-      if (!success) setError('Code PIN incorrect');
+      const success = await window.ipc.invoke("disable-pin", pin);
+      if (!success) setError("Code PIN incorrect");
       return success;
     } catch (err) {
-      setError('Erreur lors de la désactivation');
+      setError("Erreur lors de la désactivation");
       return false;
     } finally {
       setLoading(false);
@@ -72,6 +72,6 @@ export const useSecurity = () => {
     setPin,
     disablePin,
     checkSecurityStatus,
-    setError
+    setError,
   };
 };

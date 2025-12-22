@@ -1,7 +1,7 @@
-import React from 'react';
-import AccountCard from './AccountCard';
-import { PlusCircle } from 'lucide-react';
-import { Account } from '../hooks/useAccounts';
+import React from "react";
+import AccountCard from "./AccountCard";
+import { PlusCircle } from "lucide-react";
+import { Account } from "../hooks/useAccounts";
 
 interface DashboardProps {
   accounts: Account[];
@@ -13,14 +13,14 @@ interface DashboardProps {
   onReorder: (accountIds: string[]) => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ 
-  accounts, 
+const Dashboard: React.FC<DashboardProps> = ({
+  accounts,
   activeAccountId,
-  onSwitch, 
-  onDelete, 
-  onEdit, 
-  onAddAccount, 
-  onReorder 
+  onSwitch,
+  onDelete,
+  onEdit,
+  onAddAccount,
+  onReorder,
 }) => {
   const [draggedId, setDraggedId] = React.useState<string | null>(null);
   const [localAccounts, setLocalAccounts] = React.useState<Account[]>(accounts);
@@ -33,23 +33,23 @@ const Dashboard: React.FC<DashboardProps> = ({
   }, [accounts, draggedId]);
 
   const handleDragStart = (e: React.DragEvent, id: string) => {
-    e.dataTransfer.setData('accountId', id);
+    e.dataTransfer.setData("accountId", id);
     setDraggedId(id);
     // Nécessaire pour certains navigateurs pour permettre le drop
-    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.effectAllowed = "move";
   };
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
+    e.dataTransfer.dropEffect = "move";
   };
 
   const handleDragEnter = (e: React.DragEvent, targetId: string) => {
     if (!draggedId || draggedId === targetId) return;
 
     const newAccounts = [...localAccounts];
-    const sourceIndex = newAccounts.findIndex(a => a.id === draggedId);
-    const targetIndex = newAccounts.findIndex(a => a.id === targetId);
+    const sourceIndex = newAccounts.findIndex((a) => a.id === draggedId);
+    const targetIndex = newAccounts.findIndex((a) => a.id === targetId);
 
     if (sourceIndex !== -1 && targetIndex !== -1) {
       const [removed] = newAccounts.splice(sourceIndex, 1);
@@ -65,7 +65,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setDraggedId(null);
-    onReorder(localAccounts.map(a => a.id));
+    onReorder(localAccounts.map((a) => a.id));
   };
 
   if (accounts.length === 0) {
@@ -74,9 +74,12 @@ const Dashboard: React.FC<DashboardProps> = ({
         <div className="w-24 h-24 bg-blue-600/10 rounded-full flex items-center justify-center mb-6 text-blue-500">
           <PlusCircle size={48} />
         </div>
-        <h2 className="text-2xl font-bold text-white mb-2">Aucun compte trouvé</h2>
+        <h2 className="text-2xl font-bold text-white mb-2">
+          Aucun compte trouvé
+        </h2>
         <p className="text-gray-400 mb-8 max-w-md">
-          Commencez par ajouter votre premier compte League of Legends ou Valorant pour simplifier vos changements de session.
+          Commencez par ajouter votre premier compte League of Legends ou
+          Valorant pour simplifier vos changements de session.
         </p>
         <button
           onClick={onAddAccount}
@@ -115,10 +118,14 @@ const Dashboard: React.FC<DashboardProps> = ({
           <PlusCircle size={32} />
         </div>
         <div className="text-center">
-          <div className="text-white font-bold text-lg group-hover:text-blue-400 transition-colors">Ajouter un compte</div>
-          <div className="text-gray-500 text-sm mt-1">League of Legends / Valorant</div>
+          <div className="text-white font-bold text-lg group-hover:text-blue-400 transition-colors">
+            Ajouter un compte
+          </div>
+          <div className="text-gray-500 text-sm mt-1">
+            League of Legends / Valorant
+          </div>
         </div>
-        
+
         {/* Glow effect on hover */}
         <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
           <div className="absolute -inset-24 bg-blue-500/10 blur-[60px] rounded-full" />

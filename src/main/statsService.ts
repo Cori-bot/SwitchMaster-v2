@@ -21,15 +21,18 @@ interface TrackerSegment {
   attributes?: {
     playlist?: string;
   };
-  stats?: Record<string, {
-    value?: number;
-    displayValue?: string;
-    metadata?: {
-      tierName?: string;
-      rankName?: string;
-      iconUrl?: string;
-    };
-  }>;
+  stats?: Record<
+    string,
+    {
+      value?: number;
+      displayValue?: string;
+      metadata?: {
+        tierName?: string;
+        rankName?: string;
+        iconUrl?: string;
+      };
+    }
+  >;
 }
 
 interface TrackerResponse {
@@ -53,7 +56,9 @@ function httpsGet<T>(url: string, headers: Record<string, string>): Promise<T> {
     https
       .get(url, { headers }, (res) => {
         let responseBody = "";
-        res.on("data", (chunk) => { responseBody += chunk; });
+        res.on("data", (chunk) => {
+          responseBody += chunk;
+        });
         res.on("end", () => handleResponse(res, responseBody, resolve, reject));
       })
       .on("error", (err) => reject(err));
@@ -61,10 +66,10 @@ function httpsGet<T>(url: string, headers: Record<string, string>): Promise<T> {
 }
 
 function handleResponse<T>(
-  res: IncomingMessage, 
-  responseBody: string, 
-  resolve: (val: T) => void, 
-  reject: (err: Error) => void
+  res: IncomingMessage,
+  responseBody: string,
+  resolve: (val: T) => void,
+  reject: (err: Error) => void,
 ) {
   if (res.statusCode !== 200) {
     return reject(new Error(`HTTP ${res.statusCode}: ${responseBody}`));
@@ -107,18 +112,23 @@ async function fetchValorantStats(riotId: string) {
     const segments = apiResponse.data.segments;
 
     // Find competitive segment
+    const VALORANT_PLAYLISTS = [
+      "competitive",
+      "comp",
+      "ranked_solo_5x5",
+      "ranked-solo-5x5",
+    ];
     let competitiveSegment = segments.find(
-      (s) => s.attributes && (
-        s.attributes.playlist?.toLowerCase() === "competitive" || 
-        s.attributes.playlist?.toLowerCase() === "comp" ||
-        s.attributes.playlist?.toLowerCase() === "ranked_solo_5x5" ||
-        s.attributes.playlist?.toLowerCase() === "ranked-solo-5x5"
-      ),
+      (s) =>
+        s.attributes?.playlist &&
+        VALORANT_PLAYLISTS.includes(s.attributes.playlist.toLowerCase()),
     );
 
     // Fallback: search for any segment that has rank/tier info
     if (!competitiveSegment) {
-      competitiveSegment = segments.find(s => s.stats && (s.stats.tier || s.stats.rank));
+      competitiveSegment = segments.find(
+        (s) => s.stats && (s.stats.tier || s.stats.rank),
+      );
     }
 
     if (!competitiveSegment) {
@@ -129,13 +139,17 @@ async function fetchValorantStats(riotId: string) {
 
     // Extraction sécurisée des métadonnées
     const rankStat = stats.tier || stats.rank || {};
-    const rankTierName = (rankStat.metadata && (rankStat.metadata.rankName || rankStat.metadata.tierName)) || "Unranked";
-    const rankIconUrl = (rankStat.metadata && rankStat.metadata.iconUrl) || 
-                       "https://trackercdn.com/cdn/tracker.gg/valorant/icons/tiers/0.png";
+    const rankTierName =
+      (rankStat.metadata &&
+        (rankStat.metadata.rankName || rankStat.metadata.tierName)) ||
+      "Unranked";
+    const rankIconUrl =
+      (rankStat.metadata && rankStat.metadata.iconUrl) ||
+      "https://trackercdn.com/cdn/tracker.gg/valorant/icons/tiers/0.png";
 
     if (process.env.NODE_ENV === "development") {
       console.log(`[DEV-STATS] VALORANT - ${riotId}:`, {
-        rank: rankTierName
+        rank: rankTierName,
       });
     }
 
@@ -166,18 +180,23 @@ async function fetchLeagueStats(riotId: string) {
     const segments = apiResponse.data.segments;
 
     // Find ranked-solo-5x5 segment
+    const LEAGUE_PLAYLISTS = [
+      "ranked_solo_5x5",
+      "ranked-solo-5x5",
+      "ranked-solo",
+      "rank-solo",
+    ];
     let rankedSegment = segments.find(
-      (s) => s.attributes && (
-        s.attributes.playlist?.toLowerCase() === "ranked_solo_5x5" || 
-        s.attributes.playlist?.toLowerCase() === "ranked-solo-5x5" || 
-        s.attributes.playlist?.toLowerCase() === "ranked-solo" ||
-        s.attributes.playlist?.toLowerCase() === "rank-solo"
-      ),
+      (s) =>
+        s.attributes?.playlist &&
+        LEAGUE_PLAYLISTS.includes(s.attributes.playlist.toLowerCase()),
     );
 
     // Fallback: search for any segment that has rank/tier info
     if (!rankedSegment) {
-      rankedSegment = segments.find(s => s.stats && (s.stats.tier || s.stats.rank));
+      rankedSegment = segments.find(
+        (s) => s.stats && (s.stats.tier || s.stats.rank),
+      );
     }
 
     if (!rankedSegment) {
@@ -188,13 +207,17 @@ async function fetchLeagueStats(riotId: string) {
 
     // Extraction sécurisée des métadonnées
     const rankStat = stats.tier || stats.rank || {};
-    const rankTierName = (rankStat.metadata && (rankStat.metadata.rankName || rankStat.metadata.tierName)) || "Unranked";
-    const rankIconUrl = (rankStat.metadata && rankStat.metadata.iconUrl) || 
-                       "https://trackercdn.com/cdn/tracker.gg/lol/ranks/2023/icons/unranked.svg";
+    const rankTierName =
+      (rankStat.metadata &&
+        (rankStat.metadata.rankName || rankStat.metadata.tierName)) ||
+      "Unranked";
+    const rankIconUrl =
+      (rankStat.metadata && rankStat.metadata.iconUrl) ||
+      "https://trackercdn.com/cdn/tracker.gg/lol/ranks/2023/icons/unranked.svg";
 
     if (process.env.NODE_ENV === "development") {
       console.log(`[DEV-STATS] LEAGUE - ${riotId}:`, {
-        rank: rankTierName
+        rank: rankTierName,
       });
     }
 
@@ -210,7 +233,10 @@ async function fetchLeagueStats(riotId: string) {
   }
 }
 
-export async function fetchAccountStats(riotId: string, gameType: 'league' | 'valorant') {
+export async function fetchAccountStats(
+  riotId: string,
+  gameType: "league" | "valorant",
+) {
   devLog(`Fetching ${gameType} stats for ${riotId}...`);
   if (gameType === "league") {
     return await fetchLeagueStats(riotId);
