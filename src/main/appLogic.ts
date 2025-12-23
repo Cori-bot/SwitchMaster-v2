@@ -70,24 +70,28 @@ export async function launchGame(gameId: "league" | "valorant") {
 
 export function setAutoStart(enable: boolean) {
   const config = getConfig();
-  const settings: Electron.Settings = { openAtLogin: enable };
+  const isPackaged = app.isPackaged;
+  const args: string[] = [];
 
   if (enable) {
-    const args: string[] = [];
-    if (!app.isPackaged) {
-      settings.path = process.execPath;
-      args.push(".");
+    if (!isPackaged) {
+      args.push(path.resolve(process.cwd(), "."));
     }
 
+    // Toujours passer --minimized si l'option est activée
+    // Le flag sera vérifié au démarrage pour décider d'afficher ou non
     if (config.startMinimized) {
       args.push("--minimized");
     }
-
-    if (args.length > 0) {
-      settings.args = args;
-    }
   }
 
+  const settings: Electron.Settings = {
+    openAtLogin: enable,
+    path: isPackaged ? process.execPath : undefined,
+    args: args
+  };
+
+  devDebug(`Setting AutoStart: ${enable}, Minimized: ${config.startMinimized}, Args: ${args.join(" ")}`);
   app.setLoginItemSettings(settings);
 }
 

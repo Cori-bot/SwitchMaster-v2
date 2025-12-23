@@ -32,7 +32,7 @@ export function createWindow(isDev: boolean): BrowserWindow {
     },
     backgroundColor: "#121212",
     frame: true,
-    show: isDev, // Show immediately in dev to debug
+    show: false, // Always start hidden and show manually unless minimized
     autoHideMenuBar: true,
     icon: app.isPackaged
       ? path.join(process.resourcesPath, "assets", "logo.png")

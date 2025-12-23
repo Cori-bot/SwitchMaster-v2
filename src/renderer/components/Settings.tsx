@@ -50,6 +50,7 @@ interface CheckboxProps {
   checked: boolean;
   onChange: (checked: boolean) => void;
   subLabel?: string;
+  disabled?: boolean;
 }
 
 const Checkbox: React.FC<CheckboxProps> = ({
@@ -58,10 +59,12 @@ const Checkbox: React.FC<CheckboxProps> = ({
   checked,
   onChange,
   subLabel,
+  disabled,
 }) => (
   <label
     htmlFor={id}
-    className="flex items-start gap-3 cursor-pointer group py-2"
+    className={`flex items-start gap-3 py-2 ${disabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer group"
+      }`}
   >
     <div className="relative flex items-center mt-1">
       <input
@@ -69,9 +72,16 @@ const Checkbox: React.FC<CheckboxProps> = ({
         id={id}
         className="peer sr-only"
         checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
+        onChange={(e) => !disabled && onChange(e.target.checked)}
+        disabled={disabled}
       />
-      <div className="w-5 h-5 border-2 border-gray-600 rounded-md transition-all duration-200 peer-checked:bg-blue-600 peer-checked:border-blue-600 group-hover:border-blue-500" />
+      <div
+        className={`w-5 h-5 border-2 rounded-md transition-all duration-200 
+        ${disabled
+            ? "border-gray-700 bg-gray-800/50"
+            : "border-gray-600 peer-checked:bg-blue-600 peer-checked:border-blue-600 group-hover:border-blue-500"
+          }`}
+      />
       <svg
         className="absolute w-3.5 h-3.5 text-white opacity-0 transition-opacity duration-200 peer-checked:opacity-100 left-[3px]"
         viewBox="0 0 24 24"
@@ -85,11 +95,19 @@ const Checkbox: React.FC<CheckboxProps> = ({
       </svg>
     </div>
     <div className="flex-1">
-      <div className="text-sm font-medium text-gray-300 group-hover:text-white transition-colors">
+      <div
+        className={`text-sm font-medium transition-colors ${disabled ? "text-gray-600" : "text-gray-300 group-hover:text-white"
+          }`}
+      >
         {label}
       </div>
       {subLabel && (
-        <div className="text-[11px] text-gray-500 mt-0.5">{subLabel}</div>
+        <div
+          className={`text-[11px] mt-0.5 ${disabled ? "text-gray-700" : "text-gray-500"
+            }`}
+        >
+          {subLabel}
+        </div>
       )}
     </div>
   </label>
@@ -119,7 +137,11 @@ const Settings: React.FC<SettingsProps> = ({
   };
 
   const handleAutoStartChange = async (enabled: boolean) => {
-    await onUpdate({ autoStart: enabled });
+    const updates: Partial<Config> = { autoStart: enabled };
+    if (!enabled) {
+      updates.startMinimized = false;
+    }
+    await onUpdate(updates);
     window.ipc.invoke("set-auto-start", enabled);
   };
 
@@ -156,24 +178,29 @@ const Settings: React.FC<SettingsProps> = ({
           />
           <Checkbox
             id="minimizeToTray"
-            label="Réduire dans la zone de notification"
+            label="Réduire SwitchMaster dans la barre des taches"
             subLabel="L'application continue de tourner en arrière-plan une fois fermée."
             checked={config.minimizeToTray}
             onChange={(val) => handleChange("minimizeToTray", val)}
           />
           <Checkbox
             id="autoStart"
-            label="Lancer au démarrage"
+            label="Ouvrir SwitchMaster au démarrage"
             subLabel="Démarre automatiquement SwitchMaster à l'ouverture de Windows."
             checked={config.autoStart}
             onChange={handleAutoStartChange}
           />
           <Checkbox
             id="startMinimized"
-            label="Démarrer réduit"
-            subLabel="Lance l'application directement dans la barre système au démarrage."
+            label="Démarrer en arrière-plan"
+            subLabel={
+              config.autoStart
+                ? "L'application démarre cachée dans la barre système."
+                : "Nécessite l'option 'Ouvrir SwitchMaster au démarrage' active."
+            }
             checked={config.startMinimized}
             onChange={handleStartMinimizedChange}
+            disabled={!config.autoStart}
           />
         </div>
       </SettingItem>

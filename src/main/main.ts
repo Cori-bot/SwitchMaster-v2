@@ -116,8 +116,57 @@ async function initApp() {
     mainWindow = createWindow(isDev);
     devLog("Fenêtre créée.");
 
+    // Détection du mode de démarrage en arrière-plan (v4 hybride)
+    // 1. Détection via argument CLI (fiable si le registre est bien lu)
+    const isAutoStartArg = process.argv.includes("--minimized");
+
+    // 2. Détection via "Identifiant de Session" (basé sur l'uptime Windows)
+    // On calcule l'heure approximative du boot (à la minute près)
+    const os = require("os");
+    const fs = require("fs");
+    const uptime = os.uptime();
+    const currentBootTime = Math.floor((Date.now() - uptime * 1000) / 60000);
+
+    let lastBootTime = "";
+    const bootFilePath = path.join(app.getPath("userData"), "last-boot.txt");
+    try {
+      if (fs.existsSync(bootFilePath)) {
+        lastBootTime = fs.readFileSync(bootFilePath, "utf8");
+      }
+      // Sauvegarder le boot time actuel pour les prochains lancements
+      fs.writeFileSync(bootFilePath, currentBootTime.toString());
+    } catch (e) {
+      devError("Erreur gestion boot time:", e);
+    }
+
+    const isNewSession = lastBootTime !== currentBootTime.toString();
+    // On considère que c'est un démarrage auto si c'est la 1ère fois de la session
+    // et que le PC a démarré il y a moins de 5 minutes.
+    const isFirstRunOfSession = isNewSession && uptime < 300;
+
+    const config = getConfig();
+    const isMinimized = config.startMinimized && config.autoStart && (isAutoStartArg || isFirstRunOfSession);
+
+    devLog("Arguments:", process.argv);
+    devLog("isAutoStartArg:", isAutoStartArg);
+    devLog("Windows uptime:", uptime);
+    devLog("isFirstRunOfSession:", isFirstRunOfSession);
+    devLog("config.startMinimized:", config.startMinimized);
+    devLog("Décision Démarrage en arrière-plan:", isMinimized);
+
     // Gestion de la deuxième instance
-    app.on("second-instance", () => {
+    app.on("second-instance", (_event, commandLine) => {
+      devLog("Seconde instance détectée avec arguments:", commandLine);
+
+      // Protection anti-réveil auto : 
+      // Si l'app actuelle a démarré réduite ET que la nouvelle instance a aussi le flag --minimized
+      // ET que le PC a démarré il y a peu de temps, on ignore l'affichage.
+      const isSecondInstanceAuto = commandLine.includes("--minimized") || commandLine.includes("--hidden");
+      if (isMinimized && isSecondInstanceAuto && uptime < 600) {
+        devLog("Appel second-instance ignoré (Démarrage auto en cours).");
+        return;
+      }
+
       if (mainWindow) {
         if (mainWindow.isMinimized()) mainWindow.restore();
         mainWindow.show();
@@ -125,35 +174,31 @@ async function initApp() {
       }
     });
 
-    // Check if we should start minimized
-    const isMinimized = process.argv.includes("--minimized");
-    devLog("Démarrage minimisé:", isMinimized);
-
     if (!isMinimized) {
+      const showWindow = () => {
+        devLog("Tentative d'affichage de la fenêtre (showWindow)...");
+        if (mainWindow) {
+          if (!mainWindow.isVisible()) {
+            mainWindow.show();
+            devLog("mainWindow.show() appelé.");
+          }
+          mainWindow.focus();
+          devLog("mainWindow.focus() appelé.");
+        } else {
+          devLog("mainWindow est null dans showWindow.");
+        }
+      };
+
       if (isDev) {
-        devLog("Mode dev: focus sur la fenêtre.");
-        mainWindow?.focus();
+        devLog("Mode dev: affichage immédiat.");
+        showWindow();
       } else {
         devLog("Mode prod: configuration de l'affichage de la fenêtre.");
-        const showWindow = () => {
-          devLog("Tentative d'affichage de la fenêtre (showWindow)...");
-          if (mainWindow) {
-            if (!mainWindow.isVisible()) {
-              mainWindow.show();
-              devLog("mainWindow.show() appelé.");
-            }
-            mainWindow.focus();
-            devLog("mainWindow.focus() appelé.");
-          } else {
-            devLog("mainWindow est null dans showWindow.");
-          }
-        };
-
         mainWindow?.once("ready-to-show", () => {
           devLog("Événement ready-to-show reçu.");
           showWindow();
         });
-        
+
         // Sécurité supplémentaire pour l'affichage
         mainWindow?.webContents.once("did-finish-load", () => {
           devLog("Événement did-finish-load reçu.");

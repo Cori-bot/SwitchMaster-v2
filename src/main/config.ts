@@ -2,28 +2,22 @@ import { app, safeStorage } from "electron";
 import path from "path";
 import fs from "fs-extra";
 import { Config } from "../shared/types";
-import { devError, devWarn } from "./logger";
+import { devError } from "./logger";
 
 let APP_DATA_PATH: string;
 let CONFIG_FILE: string;
 let ACCOUNTS_FILE: string;
-let CONFIG_BACKUP: string;
-let ACCOUNTS_BACKUP: string;
 
 export function getPaths() {
   if (!APP_DATA_PATH) {
     APP_DATA_PATH = app.getPath("userData");
     CONFIG_FILE = path.join(APP_DATA_PATH, "config.json");
     ACCOUNTS_FILE = path.join(APP_DATA_PATH, "accounts.json");
-    CONFIG_BACKUP = path.join(APP_DATA_PATH, "config.bak.json");
-    ACCOUNTS_BACKUP = path.join(APP_DATA_PATH, "accounts.bak.json");
   }
   return {
     APP_DATA_PATH,
     CONFIG_FILE,
     ACCOUNTS_FILE,
-    CONFIG_BACKUP,
-    ACCOUNTS_BACKUP,
   };
 }
 
@@ -50,46 +44,19 @@ export async function ensureAppData(): Promise<void> {
 }
 
 export async function loadConfig(): Promise<Config> {
-  const { CONFIG_FILE, CONFIG_BACKUP } = getPaths();
+  const { CONFIG_FILE } = getPaths();
   try {
     if (await fs.pathExists(CONFIG_FILE)) {
       const content = await fs.readFile(CONFIG_FILE, "utf-8");
       if (content && content.trim() !== "") {
         const savedConfig = JSON.parse(content);
         appConfig = { ...appConfig, ...savedConfig };
-        // Si le chargement réussit, on met à jour le backup
-        await fs
-          .copy(CONFIG_FILE, CONFIG_BACKUP, { overwrite: true })
-          .catch(() => {});
         return appConfig;
-      }
-    }
-
-    // Tentative de restauration depuis le backup si le fichier principal échoue
-    if (await fs.pathExists(CONFIG_BACKUP)) {
-      devWarn(
-        "Main config file invalid, attempting to restore from backup...",
-      );
-      const backupContent = await fs.readFile(CONFIG_BACKUP, "utf-8");
-      if (backupContent && backupContent.trim() !== "") {
-        const savedConfig = JSON.parse(backupContent);
-        appConfig = { ...appConfig, ...savedConfig };
-        await fs.outputJson(CONFIG_FILE, appConfig, { spaces: 2 });
       }
     }
     return appConfig;
   } catch (e) {
-    devError("Error loading config, trying backup:", e);
-    try {
-      if (await fs.pathExists(CONFIG_BACKUP)) {
-        const backupContent = await fs.readFile(CONFIG_BACKUP, "utf-8");
-        const savedConfig = JSON.parse(backupContent);
-        appConfig = { ...appConfig, ...savedConfig };
-        await fs.outputJson(CONFIG_FILE, appConfig, { spaces: 2 });
-      }
-    } catch (backupErr) {
-      devError("Backup restoration failed:", backupErr);
-    }
+    devError("Error loading config:", e);
     return appConfig;
   }
 }

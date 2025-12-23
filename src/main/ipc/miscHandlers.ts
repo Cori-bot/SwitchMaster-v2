@@ -3,7 +3,7 @@ import { loadAccountsMeta } from "../accounts";
 import { saveConfig } from "../config";
 import { safeHandle } from "./utils";
 import { IpcContext } from "./types";
-
+import { handleUpdateCheck } from "../updater";
 import { devLog } from "../logger";
 
 export function registerMiscHandlers(
@@ -44,14 +44,23 @@ export function registerMiscHandlers(
     return true;
   });
 
-  safeHandle("handle-quit-choice", async (_e, dataRaw) => {
+  safeHandle("check-updates", async () => {
+    if (mainWindow) {
+      await handleUpdateCheck(mainWindow, true);
+    }
+    return true;
+  });
+
+  safeHandle("handle-quit-choice", async (_e, dataRaw: any) => {
     const { action, dontShowAgain } = dataRaw as {
       action: "quit" | "minimize";
       dontShowAgain: boolean;
     };
 
     if (dontShowAgain) {
+      const config = require("../config").getConfig();
       const newConfig = {
+        ...config,
         showQuitModal: false,
         minimizeToTray: action === "minimize",
       };

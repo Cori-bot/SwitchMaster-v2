@@ -17,6 +17,14 @@ body {
   height: 100vh;
 }
 
+button, 
+[role="button"],
+input[type="checkbox"],
+input[type="radio"],
+select {
+  cursor: pointer;
+}
+
 #root {
   height: 100%;
 }

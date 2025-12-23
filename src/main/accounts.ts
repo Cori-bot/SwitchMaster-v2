@@ -4,48 +4,20 @@ import crypto from "crypto";
 import { getPaths, encryptData, decryptData } from "./config";
 import { fetchAccountStats } from "./statsService";
 import { Account } from "../shared/types";
-import { devError, devWarn } from "./logger";
+import { devError } from "./logger";
 
 export async function loadAccountsMeta(): Promise<Account[]> {
-  const { ACCOUNTS_FILE, ACCOUNTS_BACKUP } = getPaths();
+  const { ACCOUNTS_FILE } = getPaths();
   try {
     if (await fs.pathExists(ACCOUNTS_FILE)) {
       const content = await fs.readFile(ACCOUNTS_FILE, "utf-8");
       if (content && content.trim() !== "") {
         const accounts = JSON.parse(content);
-        // Si le chargement réussit, on met à jour le backup
-        await fs
-          .copy(ACCOUNTS_FILE, ACCOUNTS_BACKUP, { overwrite: true })
-          .catch(() => {});
-        return accounts;
-      }
-    }
-
-    // Si le fichier principal est vide ou absent, on tente le backup
-    if (await fs.pathExists(ACCOUNTS_BACKUP)) {
-      devWarn(
-        "Main accounts file invalid, attempting to restore from backup...",
-      );
-      const backupContent = await fs.readFile(ACCOUNTS_BACKUP, "utf-8");
-      if (backupContent && backupContent.trim() !== "") {
-        const accounts = JSON.parse(backupContent);
-        // On restaure le fichier principal à partir du backup
-        await fs.outputJson(ACCOUNTS_FILE, accounts, { spaces: 2 });
         return accounts;
       }
     }
   } catch (e) {
-    devError("Error loading accounts, trying backup:", e);
-    try {
-      if (await fs.pathExists(ACCOUNTS_BACKUP)) {
-        const backupContent = await fs.readFile(ACCOUNTS_BACKUP, "utf-8");
-        const accounts = JSON.parse(backupContent);
-        await fs.outputJson(ACCOUNTS_FILE, accounts, { spaces: 2 });
-        return accounts;
-      }
-    } catch (backupErr) {
-      devError("Backup restoration failed:", backupErr);
-    }
+    devError("Error loading accounts:", e);
   }
   return [];
 }

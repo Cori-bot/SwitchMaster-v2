@@ -6,10 +6,10 @@ import path from "path";
 import { devError } from "./logger";
 
 // Handle different import patterns for ESM/CJS compatibility
-const autoUpdater: AppUpdater = (electronUpdater as any).autoUpdater || 
-                   (electronUpdater as any).default?.autoUpdater || 
-                   (electronUpdater as any).default || 
-                   electronUpdater;
+const autoUpdater: AppUpdater = (electronUpdater as any).autoUpdater ||
+  (electronUpdater as any).default?.autoUpdater ||
+  (electronUpdater as any).default ||
+  electronUpdater;
 
 autoUpdater.logger = log;
 (autoUpdater.logger as any).transports.file.level = "info";
@@ -21,10 +21,15 @@ autoUpdater.fullChangelog = true;
 const isDev = process.env.NODE_ENV === "development" || !app.isPackaged;
 const DEV_SIMULATED_UPDATE_DELAY = 2000;
 
+let isManualCheck = false;
+
 export function setupUpdater(mainWindow: BrowserWindow | null) {
   autoUpdater.on("checking-for-update", () => {
     if (mainWindow)
-      mainWindow.webContents.send("update-status", { status: "checking" });
+      mainWindow.webContents.send("update-status", {
+        status: "checking",
+        isManual: isManualCheck
+      });
   });
 
   const iconPath = app.isPackaged
@@ -37,6 +42,7 @@ export function setupUpdater(mainWindow: BrowserWindow | null) {
         status: "available",
         version: info.version,
         releaseNotes: info.releaseNotes,
+        isManual: isManualCheck,
       });
     }
 
@@ -57,7 +63,10 @@ export function setupUpdater(mainWindow: BrowserWindow | null) {
 
   autoUpdater.on("update-not-available", () => {
     if (mainWindow)
-      mainWindow.webContents.send("update-status", { status: "not-available" });
+      mainWindow.webContents.send("update-status", {
+        status: "not-available",
+        isManual: isManualCheck
+      });
   });
 
   autoUpdater.on("error", (err: Error) => {
@@ -73,7 +82,7 @@ export function setupUpdater(mainWindow: BrowserWindow | null) {
         devError("Semver error ignored (likely bad tag on GitHub):", err.message);
         mainWindow.webContents.send("update-status", {
           status: "not-available",
-          isManual: false,
+          isManual: isManualCheck,
         });
         return;
       }
@@ -82,6 +91,7 @@ export function setupUpdater(mainWindow: BrowserWindow | null) {
         status: "error",
         error: errorMessage,
         details: err.message,
+        isManual: isManualCheck,
       });
     }
   });
@@ -119,6 +129,7 @@ export async function handleUpdateCheck(
   mainWindow: BrowserWindow | null,
   isManual: boolean = false,
 ) {
+  isManualCheck = isManual;
   if (isDev) {
     return await simulateUpdateCheck(mainWindow, isManual);
   } else {
@@ -131,10 +142,12 @@ export async function handleUpdateCheck(
       }
       return await autoUpdater.checkForUpdates();
     } catch (err: any) {
-      devError("Initial update check failed:", err);
+      const msg = err?.message || String(err);
+      devError("Initial update check failed:", msg);
 
       // Handle semver error in manual check too
-      if (err?.message?.includes("Invalid Version")) {
+      if (msg.includes("Invalid Version")) {
+        devError("Semver error detected during update check (likely bad GitHub tag). Ignoring.");
         if (mainWindow && isManual) {
           mainWindow.webContents.send("update-status", {
             status: "not-available",
@@ -151,7 +164,7 @@ export async function handleUpdateCheck(
           isManual: true,
         });
       }
-      throw err;
+      // Don't rethrow to avoid crashing app initialization
     }
   }
 }
