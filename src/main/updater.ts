@@ -72,9 +72,14 @@ export function setupUpdater(mainWindow: BrowserWindow | null) {
   autoUpdater.on("error", (err: Error) => {
     if (mainWindow) {
       let errorMessage = "Erreur lors de la mise à jour";
-      if (err.message.includes("GitHub")) {
-        errorMessage =
-          "Erreur de connexion à GitHub. Vérifiez votre connexion internet.";
+
+      if (err.message.includes("GitHub") || err.message.includes("github")) {
+        errorMessage = "Erreur de connexion à GitHub. Vérifiez votre connexion internet.";
+      }
+
+      if (err.message.includes("404") || err.message.includes("latest.yml")) {
+        errorMessage = "Fichier de mise à jour introuvable sur le serveur (404).";
+        devError("Update file missing on GitHub:", err.message);
       }
 
       // Ignore semver errors from GitHub tags (like "2.2" which is not x.y.z)
