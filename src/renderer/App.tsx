@@ -21,6 +21,7 @@ import { useNotifications } from "./hooks/useNotifications";
 import { Account, Config } from "../shared/types";
 
 import { useAppIpc } from "./hooks/useAppIpc";
+import LoadingScreen from "./components/LoadingScreen";
 
 const pageVariants = {
   initial: { opacity: 0, x: 10 },
@@ -42,6 +43,7 @@ const App: React.FC = () => {
   const [securityMode, setSecurityMode] = useState<
     "verify" | "set" | "disable" | null
   >(null);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   const [launchConfirm, setLaunchConfirm] = useState<{
     isOpen: boolean;
@@ -97,8 +99,13 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const init = async () => {
+      const startTime = Date.now();
       const locked = await checkSecurityStatus();
       if (locked) setSecurityMode("verify");
+
+      const elapsed = Date.now() - startTime;
+      const remaining = Math.max(0, 2000 - elapsed);
+      setTimeout(() => setIsInitialLoading(false), remaining);
     };
     init();
   }, []);
@@ -227,6 +234,10 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-[#0a0a0a] text-white overflow-hidden font-sans">
+      <AnimatePresence>
+        {isInitialLoading && <LoadingScreen />}
+      </AnimatePresence>
+
       {securityMode && (
         <SecurityLock
           mode={securityMode}
@@ -235,7 +246,7 @@ const App: React.FC = () => {
         />
       )}
 
-      {!config?.hasSeenOnboarding && !securityMode && (
+      {!isInitialLoading && config && !config.hasSeenOnboarding && !securityMode && (
         <GuideOnboarding
           config={config}
           onUpdateConfig={handleUpdateConfig}
