@@ -37,6 +37,11 @@ let mainWindow: BrowserWindow | null = null;
 const STATS_REFRESH_INTERVAL_MS = 60000;
 const INITIAL_STATS_REFRESH_DELAY_MS = 5000;
 
+// Set App Name and UserData path before any complex logic
+app.name = "switchmaster";
+const userDataPath = path.join(app.getPath("appData"), "switchmaster");
+app.setPath("userData", userDataPath);
+
 // Single Instance Lock - Appel immédiat au niveau racine
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
@@ -55,11 +60,6 @@ if (!gotTheLock) {
     }
   });
 }
-
-// Set App Name and UserData path before any complex logic
-app.name = "switchmaster";
-const userDataPath = path.join(app.getPath("appData"), "switchmaster");
-app.setPath("userData", userDataPath);
 
 async function initApp() {
   devLog("Démarrage de l'initialisation de l'application...");
