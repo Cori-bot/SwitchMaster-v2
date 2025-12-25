@@ -69,7 +69,10 @@ export function createWindow(isDev: boolean): BrowserWindow {
     const config = getConfig();
     if (config.showQuitModal) {
       event.preventDefault();
-      mainWindow.webContents.send("show-quit-modal");
+      // On s'assure que le message est bien envoyé
+      if (mainWindow.webContents && !mainWindow.webContents.isDestroyed()) {
+        mainWindow.webContents.send("show-quit-modal");
+      }
     } else if (config.minimizeToTray) {
       event.preventDefault();
       mainWindow.hide();

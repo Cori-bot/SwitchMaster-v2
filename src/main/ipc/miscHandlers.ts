@@ -7,11 +7,13 @@ import { handleUpdateCheck } from "../updater";
 import { devLog } from "../logger";
 
 export function registerMiscHandlers(
-  mainWindow: BrowserWindow,
+  getMainWindow: () => BrowserWindow | null,
   context: IpcContext,
 ) {
   safeHandle("select-account-image", async () => {
-    const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
+    const win = getMainWindow();
+    if (!win) return null;
+    const { canceled, filePaths } = await dialog.showOpenDialog(win, {
       properties: ["openFile"],
       filters: [
         { name: "Images", extensions: ["jpg", "png", "gif", "jpeg", "webp"] },
@@ -45,8 +47,9 @@ export function registerMiscHandlers(
   });
 
   safeHandle("check-updates", async () => {
-    if (mainWindow) {
-      await handleUpdateCheck(mainWindow, true);
+    const win = getMainWindow();
+    if (win) {
+      await handleUpdateCheck(win, true);
     }
     return true;
   });
@@ -57,7 +60,8 @@ export function registerMiscHandlers(
       dontShowAgain: boolean;
     };
 
-    if (dontShowAgain) {
+    const win = getMainWindow();
+    if (dontShowAgain && win) {
       const config = require("../config").getConfig();
       const newConfig = {
         ...config,
@@ -65,13 +69,13 @@ export function registerMiscHandlers(
         minimizeToTray: action === "minimize",
       };
       await saveConfig(newConfig);
-      void mainWindow.webContents.send("config-updated", newConfig);
+      void win.webContents.send("config-updated", newConfig);
     }
 
     if (action === "quit") {
       app.quit();
     } else {
-      mainWindow.hide();
+      win?.hide();
     }
     return true;
   });
@@ -81,6 +85,6 @@ export function registerMiscHandlers(
   });
 
   safeHandle("minimize-app", () => {
-    mainWindow.minimize();
+    getMainWindow()?.minimize();
   });
 }

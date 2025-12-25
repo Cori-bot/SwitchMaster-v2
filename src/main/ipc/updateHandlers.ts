@@ -7,14 +7,20 @@ import {
 } from "../updater";
 import { safeHandle } from "./utils";
 
-export function registerUpdateHandlers(mainWindow: BrowserWindow) {
+export function registerUpdateHandlers(getMainWindow: () => BrowserWindow | null) {
   safeHandle("check-updates", async () => {
-    await handleUpdateCheck(mainWindow, true);
+    const win = getMainWindow();
+    if (win) {
+      await handleUpdateCheck(win, true);
+    }
     return true;
   });
 
   safeHandle("simulate-update", async () => {
-    await simulateUpdateCheck(mainWindow, true);
+    const win = getMainWindow();
+    if (win) {
+      await simulateUpdateCheck(win, true);
+    }
     return true;
   });
 

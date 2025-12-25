@@ -56,15 +56,16 @@ if (!gotTheLock) {
   });
 }
 
+// Set App Name and UserData path before any complex logic
+app.name = "switchmaster";
+const userDataPath = path.join(app.getPath("appData"), "switchmaster");
+app.setPath("userData", userDataPath);
+
 async function initApp() {
   devLog("Démarrage de l'initialisation de l'application...");
+  devLog("UserData Path:", userDataPath);
 
   try {
-    // Set App Name and UserData path before ready
-    app.name = "switchmaster";
-    const userDataPath = path.join(app.getPath("appData"), "switchmaster");
-    app.setPath("userData", userDataPath);
-    devLog("UserData Path:", userDataPath);
 
     // Set App User Model ID for Windows notifications
     if (process.platform === "win32") {
@@ -103,8 +104,8 @@ async function initApp() {
     devLog("Chargement de la configuration...");
     await loadConfig();
 
-    devLog("Configuration des IPC handlers (étape 1)...");
-    // Register IPC handlers before window creation
+    devLog("Configuration des IPC handlers...");
+    // Register IPC handlers ALWAYS BEFORE window creation
     setupIpcHandlers(null, {
       launchGame,
       setAutoStart,
@@ -202,7 +203,7 @@ async function initApp() {
 
     (global as any).refreshTray = () => updateTrayMenu(launchGame, switchAccountTrigger);
 
-    // Pass the actual mainWindow to handlers that need it
+    // Pass the actual mainWindow to handlers to complete registration
     setupIpcHandlers(mainWindow, {
       launchGame,
       setAutoStart,

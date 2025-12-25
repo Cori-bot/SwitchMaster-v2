@@ -8,23 +8,28 @@ import { registerUpdateHandlers } from "./ipc/updateHandlers";
 import { IpcContext } from "./ipc/types";
 
 let areHandlersRegistered = false;
+let currentMainWindow: BrowserWindow | null = null;
 
 export function setupIpcHandlers(
   mainWindow: BrowserWindow | null,
   context: IpcContext,
 ) {
-  if (!areHandlersRegistered) {
-    registerAccountHandlers();
-    registerConfigHandlers();
-    registerRiotHandlers(context.launchGame);
-    registerSecurityHandlers();
-    areHandlersRegistered = true;
+  if (mainWindow) {
+    currentMainWindow = mainWindow;
   }
 
-  if (mainWindow) {
-    registerMiscHandlers(mainWindow, context);
-    registerUpdateHandlers(mainWindow);
-  }
+  if (areHandlersRegistered) return;
+
+  const getWin = () => currentMainWindow;
+
+  registerAccountHandlers();
+  registerConfigHandlers();
+  registerRiotHandlers(context.launchGame);
+  registerSecurityHandlers();
+  registerMiscHandlers(getWin, context);
+  registerUpdateHandlers(getWin);
+
+  areHandlersRegistered = true;
 }
 
 export type { IpcContext };
