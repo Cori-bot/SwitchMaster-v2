@@ -2,7 +2,7 @@ import { app, safeStorage } from "electron";
 import path from "path";
 import fs from "fs-extra";
 import { Config } from "../shared/types";
-import { devError } from "./logger";
+import { devLog, devError } from "./logger";
 
 let APP_DATA_PATH: string;
 let CONFIG_FILE: string;
@@ -75,10 +75,9 @@ export async function saveConfig(newConfig: Partial<Config>): Promise<Config> {
 
   appConfig = { ...appConfig, ...newConfig };
   try {
-    // Écriture atomique
-    const tempFile = `${CONFIG_FILE}.tmp`;
-    await fs.outputJson(tempFile, appConfig, { spaces: 2 });
-    await fs.move(tempFile, CONFIG_FILE, { overwrite: true });
+    await fs.ensureDir(path.dirname(CONFIG_FILE));
+    await fs.writeJson(CONFIG_FILE, appConfig, { spaces: 2 });
+    devLog("Config saved successfully to:", CONFIG_FILE);
     return appConfig;
   } catch (e) {
     devError("Error saving config:", e);

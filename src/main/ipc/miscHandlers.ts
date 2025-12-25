@@ -1,10 +1,10 @@
 import { ipcMain, dialog, app, BrowserWindow } from "electron";
 import { loadAccountsMeta } from "../accounts";
-import { saveConfig } from "../config";
+import { saveConfig, getConfig } from "../config";
 import { safeHandle } from "./utils";
 import { IpcContext } from "./types";
 import { handleUpdateCheck } from "../updater";
-import { devLog } from "../logger";
+import { devLog, devError } from "../logger";
 
 export function registerMiscHandlers(
   getMainWindow: () => BrowserWindow | null,
@@ -60,20 +60,34 @@ export function registerMiscHandlers(
       dontShowAgain: boolean;
     };
 
+    if (action === "quit") {
+      (app as any).isQuitting = true;
+      (global as any).isQuitting = true;
+    }
+
     const win = getMainWindow();
-    if (dontShowAgain && win) {
-      const config = require("../config").getConfig();
+    if (dontShowAgain) {
+      const config = getConfig();
       const newConfig = {
         ...config,
         showQuitModal: false,
         minimizeToTray: action === "minimize",
       };
-      await saveConfig(newConfig);
-      void win.webContents.send("config-updated", newConfig);
+
+      try {
+        await saveConfig(newConfig);
+        if (action !== "quit" && win && !win.isDestroyed()) {
+          void win.webContents.send("config-updated", newConfig);
+        }
+      } catch (err) {
+        devError("Failed to save config during quit choice:", err);
+      }
     }
 
     if (action === "quit") {
-      (app as any).isQuitting = true;
+      if (win && !win.isDestroyed()) {
+        win.close();
+      }
       app.quit();
     } else {
       win?.hide();

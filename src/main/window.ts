@@ -65,7 +65,7 @@ export function createWindow(isDev: boolean): BrowserWindow {
   });
 
   mainWindow.on("close", (event) => {
-    if ((app as any).isQuitting) return;
+    if ((app as any).isQuitting || (global as any).isQuitting) return;
     const config = getConfig();
     if (config.showQuitModal) {
       event.preventDefault();
@@ -157,6 +157,7 @@ export async function updateTrayMenu(
       label: "Quitter",
       click: () => {
         (app as any).isQuitting = true;
+        (global as any).isQuitting = true;
         app.quit();
       },
     },
