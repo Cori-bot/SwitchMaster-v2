@@ -191,7 +191,12 @@ async function initApp() {
       }
     }
 
-    const switchAccountTrigger = async (_id: string) => {
+    const switchAccountTrigger = async (id: string) => {
+      // Pour le Tray, on demande au renderer de faire le switch (qui gérera les confirmations si besoin)
+      // Ou on pourrait le faire en direct ici, mais restons cohérents avec le flux UI.
+      if (mainWindow) {
+        mainWindow.webContents.send("quick-connect-triggered", id);
+      }
       await updateTrayMenu(launchGame, switchAccountTrigger);
     };
 

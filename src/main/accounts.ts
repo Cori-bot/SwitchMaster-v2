@@ -94,10 +94,12 @@ export async function updateAccount(
   }
 
   const existing = accounts[index];
-  const encryptedUsername = username
+
+  // N-encrypter que si les identifiants sont différents de ceux déjà cryptés
+  const encryptedUsername = (username && username !== existing.username)
     ? encryptData(username)
     : existing.username;
-  const encryptedPassword = password
+  const encryptedPassword = (password && password !== existing.password)
     ? encryptData(password)
     : existing.password;
 
@@ -112,7 +114,16 @@ export async function updateAccount(
     isFavorite: isFavorite !== undefined ? isFavorite : existing.isFavorite,
   };
 
-  if (updatedAccount.riotId) {
+  // Ne re-fétcher les stats que si le Riot ID ou le type de jeu a changé,
+  // ou si les stats sont manquantes, pour éviter de bloquer l'UI lors d'un simple toggle de favori.
+  const needsStatsRefresh =
+    updatedAccount.riotId && (
+      updatedAccount.riotId !== existing.riotId ||
+      updatedAccount.gameType !== existing.gameType ||
+      !updatedAccount.stats
+    );
+
+  if (needsStatsRefresh && updatedAccount.riotId) {
     try {
       updatedAccount.stats = await fetchAccountStats(
         updatedAccount.riotId,

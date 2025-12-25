@@ -12,7 +12,7 @@ import { loadAccountsMeta } from "./accounts";
 import { devLog, devError } from "./logger";
 
 let mainWindow: BrowserWindow;
-let tray: Tray | null = null;
+
 
 const DEFAULT_WIDTH = 1000;
 const DEFAULT_HEIGHT = 700;
@@ -79,6 +79,8 @@ export function createWindow(isDev: boolean): BrowserWindow {
   return mainWindow;
 }
 
+let trayRef: Tray | null = null;
+
 export async function updateTrayMenu(
   launchGame: (gameId: "league" | "valorant") => Promise<void>,
   switchAccountTrigger: (id: string) => Promise<void>,
@@ -86,10 +88,10 @@ export async function updateTrayMenu(
   const iconPath = app.isPackaged
     ? path.join(process.resourcesPath, "assets", "logo.png")
     : path.join(__dirname, "..", "..", "src", "assets", "logo.png");
-  if (!tray) {
-    tray = new Tray(iconPath);
-    tray.setToolTip("SwitchMaster");
-    tray.on("click", () => {
+  if (!trayRef) {
+    trayRef = new Tray(iconPath);
+    trayRef.setToolTip("SwitchMaster");
+    trayRef.on("click", () => {
       if (mainWindow.isVisible()) {
         mainWindow.focus();
       } else {
@@ -157,7 +159,7 @@ export async function updateTrayMenu(
     },
   );
 
-  tray.setContextMenu(Menu.buildFromTemplate(menuItems));
+  trayRef.setContextMenu(Menu.buildFromTemplate(menuItems));
 }
 
 export function getMainWindow() {
