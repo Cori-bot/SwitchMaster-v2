@@ -1,10 +1,11 @@
 import { BrowserWindow } from "electron";
 import fs from "fs-extra";
+import path from "path";
 import crypto from "crypto";
 import { getPaths, encryptData, decryptData } from "./config";
 import { fetchAccountStats } from "./statsService";
 import { Account } from "../shared/types";
-import { devError } from "./logger";
+import { devLog, devError } from "./logger";
 
 export async function loadAccountsMeta(): Promise<Account[]> {
   const { ACCOUNTS_FILE } = getPaths();
@@ -25,10 +26,10 @@ export async function loadAccountsMeta(): Promise<Account[]> {
 export async function saveAccountsMeta(accounts: Account[]): Promise<void> {
   const { ACCOUNTS_FILE } = getPaths();
   try {
-    // Écriture atomique via un fichier temporaire pour éviter la corruption en cas de crash
-    const tempFile = `${ACCOUNTS_FILE}.tmp`;
-    await fs.outputJson(tempFile, accounts, { spaces: 2 });
-    await fs.move(tempFile, ACCOUNTS_FILE, { overwrite: true });
+    // Utilisation de fs.writeJson directement pour la simplicité et la robustesse en prod
+    await fs.ensureDir(path.dirname(ACCOUNTS_FILE));
+    await fs.writeJson(ACCOUNTS_FILE, accounts, { spaces: 2 });
+    devLog("Accounts saved successfully to:", ACCOUNTS_FILE);
   } catch (e) {
     devError("Error saving accounts:", e);
     throw e;
@@ -72,13 +73,6 @@ export async function addAccount(
   accounts.push(newAccount);
   await saveAccountsMeta(accounts);
 
-  // Notification de mise à jour via IPC
-  const { BrowserWindow } = require("electron");
-  const wins = BrowserWindow.getAllWindows();
-  wins.forEach((win: any) =>
-    win.webContents.send("accounts-updated", accounts),
-  );
-
   return newAccount;
 }
 
@@ -115,13 +109,12 @@ export async function updateAccount(
     isFavorite: isFavorite !== undefined ? isFavorite : existing.isFavorite,
   };
 
-  // Ne re-fétcher les stats que si le Riot ID ou le type de jeu a changé,
-  // ou si les stats sont manquantes, pour éviter de bloquer l'UI lors d'un simple toggle de favori.
+  // Ne re-fétcher les stats que si le Riot ID ou le type de jeu a changé.
+  // On ne le fait plus si !stats pour éviter de bloquer lors d'un toggle favori.
   const needsStatsRefresh =
     updatedAccount.riotId && (
       updatedAccount.riotId !== existing.riotId ||
-      updatedAccount.gameType !== existing.gameType ||
-      !updatedAccount.stats
+      updatedAccount.gameType !== existing.gameType
     );
 
   if (needsStatsRefresh && updatedAccount.riotId) {
@@ -138,13 +131,6 @@ export async function updateAccount(
   accounts[index] = updatedAccount;
   await saveAccountsMeta(accounts);
 
-  // Notification de mise à jour via IPC
-  const { BrowserWindow } = require("electron");
-  const wins = BrowserWindow.getAllWindows();
-  wins.forEach((win: any) =>
-    win.webContents.send("accounts-updated", accounts),
-  );
-
   return updatedAccount;
 }
 
@@ -154,14 +140,6 @@ export async function deleteAccount(accountId: string): Promise<boolean> {
 
   if (filtered.length !== accounts.length) {
     await saveAccountsMeta(filtered);
-
-    // Notification de mise à jour via IPC
-    const { BrowserWindow } = require("electron");
-    const wins = BrowserWindow.getAllWindows();
-    wins.forEach((win: any) =>
-      win.webContents.send("accounts-updated", filtered),
-    );
-
     return true;
   }
   return false;

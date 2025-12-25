@@ -211,10 +211,12 @@ const App: React.FC = () => {
 
   const handleToggleFavorite = async (account: Account) => {
     try {
+      // Appel avec un payload minimal pour éviter tout problème de re-chiffrement en prod
       await updateAccount({
-        ...account,
+        id: account.id,
         isFavorite: !account.isFavorite,
-      });
+      } as Account);
+
       showSuccess(
         !account.isFavorite ? "Ajouté aux favoris" : "Retiré des favoris"
       );

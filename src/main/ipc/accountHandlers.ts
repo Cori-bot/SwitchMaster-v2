@@ -11,7 +11,22 @@ import { fetchAccountStats } from "../statsService";
 import { Account } from "../../shared/types";
 import { safeHandle } from "./utils";
 
-export function registerAccountHandlers() {
+export function registerAccountHandlers(getMainWindow: () => BrowserWindow | null) {
+  const notifyUpdate = async () => {
+    const accounts = await loadAccountsMeta();
+    const mainWin = getMainWindow();
+    if (mainWin && !mainWin.isDestroyed()) {
+      mainWin.webContents.send("accounts-updated", accounts);
+    } else {
+      const wins = BrowserWindow.getAllWindows();
+      wins.forEach((win) => win.webContents.send("accounts-updated", accounts));
+    }
+
+    if ((global as any).refreshTray) {
+      (global as any).refreshTray();
+    }
+  };
+
   safeHandle("get-accounts", async () => await loadAccountsMeta());
   safeHandle(
     "get-account-credentials",
@@ -21,7 +36,7 @@ export function registerAccountHandlers() {
     "add-account",
     async (_e, data) => {
       const acc = await addAccount(data as Partial<Account>);
-      (global as any).refreshTray?.();
+      await notifyUpdate();
       return acc;
     }
   );
@@ -29,7 +44,7 @@ export function registerAccountHandlers() {
     "update-account",
     async (_e, data) => {
       const acc = await updateAccount(data as Account);
-      (global as any).refreshTray?.();
+      await notifyUpdate();
       return acc;
     }
   );
@@ -37,7 +52,7 @@ export function registerAccountHandlers() {
     "delete-account",
     async (_e, id) => {
       const res = await deleteAccount(id as string);
-      (global as any).refreshTray?.();
+      await notifyUpdate();
       return res;
     }
   );
@@ -53,11 +68,7 @@ export function registerAccountHandlers() {
       if (!ids.includes(a.id)) reordered.push(a);
     });
     await saveAccountsMeta(reordered);
-
-    const wins = BrowserWindow.getAllWindows();
-    wins.forEach((win) => win.webContents.send("accounts-updated", reordered));
-    (global as any).refreshTray?.();
-
+    await notifyUpdate();
     return true;
   });
 

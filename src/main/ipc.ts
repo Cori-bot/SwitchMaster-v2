@@ -22,7 +22,7 @@ export function setupIpcHandlers(
 
   const getWin = () => currentMainWindow;
 
-  registerAccountHandlers();
+  registerAccountHandlers(getWin);
   registerConfigHandlers();
   registerRiotHandlers(context.launchGame);
   registerSecurityHandlers();
