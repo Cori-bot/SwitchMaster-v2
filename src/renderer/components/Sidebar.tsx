@@ -9,9 +9,16 @@ import leagueIcon from "@assets/league.png";
 interface SidebarProps {
   activeView: string;
   onViewChange: (view: string) => void;
+  valorantActive?: boolean;
+  onOpenAssistant?: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) => {
+const Sidebar: React.FC<SidebarProps> = ({
+  activeView,
+  onViewChange,
+  valorantActive,
+  onOpenAssistant
+}) => {
   const launchGame = async (gameType: "league" | "valorant") => {
     try {
       await window.ipc.invoke("launch-game", gameType);
@@ -36,11 +43,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) => {
       <nav className="flex-1 px-4 space-y-2 mt-4">
         <button
           onClick={() => onViewChange("dashboard")}
-          className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 cursor-pointer ${
-            activeView === "dashboard"
+          className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 cursor-pointer ${activeView === "dashboard"
               ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
               : "text-gray-400 hover:bg-white/5 hover:text-white"
-          }`}
+            }`}
         >
           <LayoutDashboard size={20} />
           <span className="font-medium">Comptes</span>
@@ -48,15 +54,27 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) => {
 
         <button
           onClick={() => onViewChange("settings")}
-          className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 cursor-pointer ${
-            activeView === "settings"
+          className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 cursor-pointer ${activeView === "settings"
               ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
               : "text-gray-400 hover:bg-white/5 hover:text-white"
-          }`}
+            }`}
         >
           <Settings size={20} />
           <span className="font-medium">Paramètres</span>
         </button>
+
+        {valorantActive && (
+          <button
+            onClick={onOpenAssistant}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 cursor-pointer bg-red-600/10 text-red-500 hover:bg-red-600/20 border border-red-600/20 mt-4 group"
+          >
+            <div className="relative">
+              <Rocket size={20} className="group-hover:rotate-12 transition-transform" />
+              <div className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full border-2 border-[#1a1a1a] animate-pulse" />
+            </div>
+            <span className="font-bold text-xs uppercase tracking-widest">Assistant Live</span>
+          </button>
+        )}
       </nav>
 
       <div className="p-6 mt-auto">

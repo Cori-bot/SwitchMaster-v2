@@ -21,6 +21,7 @@ import { refreshAllAccountStats } from "./accounts";
 import { createWindow, updateTrayMenu } from "./window";
 import { setupIpcHandlers } from "./ipc";
 import { setupUpdater, handleUpdateCheck } from "./updater";
+import { ValorantService } from "./valorant/service";
 import {
   monitorRiotProcess,
   launchGame,
@@ -33,6 +34,7 @@ import { devLog, devError } from "./logger";
 
 const isDev = process.env.NODE_ENV === "development" || !app.isPackaged;
 let mainWindow: BrowserWindow | null = null;
+let valorantService: ValorantService | null = null;
 
 const STATS_REFRESH_INTERVAL_MS = 60000;
 const INITIAL_STATS_REFRESH_DELAY_MS = 5000;
@@ -231,6 +233,12 @@ async function initApp() {
     handleUpdateCheck(mainWindow).catch((err) =>
       devError("Update check failed:", err),
     );
+
+    // Initialisation et démarrage du service Valorant
+    devLog("Démarrage du service Valorant...");
+    valorantService = new ValorantService(() => mainWindow);
+    valorantService.start();
+
   } catch (err) {
     devError("App initialization failed:", err);
   }
@@ -239,8 +247,13 @@ async function initApp() {
 app.on("window-all-closed", () => {
   const config = getConfig();
   if (process.platform !== "darwin" && !config.minimizeToTray) {
+    if (valorantService) valorantService.stop();
     app.quit();
   }
+});
+// Also stop on before-quit if strictly quitting
+app.on("before-quit", () => {
+  if (valorantService) valorantService.stop();
 });
 
 

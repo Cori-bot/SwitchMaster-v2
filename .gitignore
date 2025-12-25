@@ -2,6 +2,6 @@
 dist
 dist-main
 build
-TODO.md
+__tests__
 update.md
 vitest.config.js

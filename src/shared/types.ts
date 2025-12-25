@@ -17,6 +17,7 @@ export interface Config {
     pinHash?: string | null;
   };
   hasSeenOnboarding: boolean;
+  valorantAutoLockAgent?: string | null;
 }
 
 export interface Account {
