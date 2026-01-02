@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 import AccountCard from "./AccountCard";
 import { PlusCircle } from "lucide-react";
@@ -73,14 +73,14 @@ const Dashboard: React.FC<DashboardProps> = ({
     return true;
   });
 
-  const handleDragStart = (e: React.DragEvent, id: string) => {
+  const handleDragStart = useCallback((e: React.DragEvent, id: string) => {
     if (filter !== "all") return;
     e.dataTransfer.setData("accountId", id);
     setDraggedId(id);
     e.dataTransfer.effectAllowed = "move";
-  };
+  }, [filter]);
 
-  const handleDragOver = (e: React.DragEvent, targetId: string) => {
+  const handleDragOver = useCallback((e: React.DragEvent, targetId: string) => {
     if (filter !== "all") return;
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
@@ -112,17 +112,22 @@ const Dashboard: React.FC<DashboardProps> = ({
         setLocalAccounts(newAccounts);
       }
     }
-  };
+  }, [filter, draggedId, localAccounts]);
 
-  const handleDragEnd = () => {
+  const handleDragEnd = useCallback((e: React.DragEvent) => {
     setDraggedId(null);
-  };
+  }, []);
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = useCallback((e: React.DragEvent, id: string) => {
     e.preventDefault();
     setDraggedId(null);
     onReorder(localAccounts.map((a) => a.id));
-  };
+  }, [localAccounts, onReorder]);
+
+  const handleDragEnter = useCallback((e: React.DragEvent, id: string) => {
+    e.preventDefault();
+  }, []);
+
 
   if (accounts.length === 0) {
     return (
@@ -177,9 +182,9 @@ const Dashboard: React.FC<DashboardProps> = ({
                 onEdit={onEdit}
                 onToggleFavorite={onToggleFavorite}
                 onDragStart={handleDragStart}
-                onDragOver={(e) => handleDragOver(e, account.id)}
+                onDragOver={handleDragOver}
                 onDragEnd={handleDragEnd}
-                onDragEnter={(e) => e.preventDefault()}
+                onDragEnter={handleDragEnter}
                 onDrop={handleDrop}
               />
             </motion.div>

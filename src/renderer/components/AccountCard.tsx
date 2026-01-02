@@ -21,7 +21,7 @@ interface AccountCardProps {
   onEdit: (account: Account) => void;
   onToggleFavorite: (account: Account) => void;
   onDragStart: (e: React.DragEvent, id: string) => void;
-  onDragOver: (e: React.DragEvent) => void;
+  onDragOver: (e: React.DragEvent, id: string) => void;
   onDragEnd: (e: React.DragEvent) => void;
   onDragEnter: (e: React.DragEvent, id: string) => void;
   onDrop: (e: React.DragEvent, id: string) => void;
@@ -29,7 +29,7 @@ interface AccountCardProps {
 
 const GRADIENT_OPACITY = 0.55;
 
-const AccountCard: React.FC<AccountCardProps> = ({
+const AccountCard: React.FC<AccountCardProps> = React.memo(({
   account,
   isActive,
   onSwitch,
@@ -115,7 +115,7 @@ const AccountCard: React.FC<AccountCardProps> = ({
       style={cardStyle}
       draggable
       onDragStart={(e) => onDragStart(e, id)}
-      onDragOver={(e) => onDragOver(e)}
+      onDragOver={(e) => onDragOver(e, id)}
       onDragEnd={(e) => onDragEnd(e)}
       onDragEnter={(e) => onDragEnter(e, id)}
       onDrop={(e) => onDrop(e, id)}
@@ -210,6 +210,6 @@ const AccountCard: React.FC<AccountCardProps> = ({
       </div>
     </div>
   );
-};
+});
 
 export default AccountCard;

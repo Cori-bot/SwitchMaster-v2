@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence, Transition } from "framer-motion";
 import Sidebar from "./components/Sidebar";
 import TopBar from "./components/TopBar";
@@ -75,7 +75,11 @@ const App: React.FC = () => {
   const { notifications, showSuccess, showError, removeNotification } =
     useNotifications();
 
-  const handleSwitch = async (accountId: string, askToLaunch = true) => {
+  // Use a ref to hold refreshStatus to avoid circular dependencies
+  const refreshStatusRef = React.useRef<() => Promise<void>>(async () => { });
+
+  // Memoized handlers
+  const handleSwitch = useCallback(async (accountId: string, askToLaunch = true) => {
     if (askToLaunch) {
       const account = accounts.find((a) => a.id === accountId);
       setLaunchConfirm({
@@ -90,14 +94,14 @@ const App: React.FC = () => {
       const switchResult = await window.ipc.invoke("switch-account", accountId);
       if (switchResult.success) {
         showSuccess("Changement de compte réussi");
-        void refreshStatus();
+        void refreshStatusRef.current();
       } else {
         showError(switchResult.error || "Erreur lors du changement de compte");
       }
     } catch (err) {
       showError("Erreur de communication avec le système");
     }
-  };
+  }, [accounts, showSuccess, showError]);
 
   const {
     status,
@@ -107,6 +111,11 @@ const App: React.FC = () => {
     setUpdateInfo,
     refreshStatus,
   } = useAppIpc(handleSwitch);
+
+  // Update ref when refreshStatus changes
+  useEffect(() => {
+    refreshStatusRef.current = refreshStatus;
+  }, [refreshStatus]);
 
   useEffect(() => {
     const init = async () => {
@@ -138,7 +147,7 @@ const App: React.FC = () => {
     };
   }, []);
 
-  const confirmLaunch = async () => {
+  const confirmLaunch = useCallback(async () => {
     const { accountId, gameType } = launchConfirm;
     setLaunchConfirm({ ...launchConfirm, isOpen: false });
 
@@ -154,9 +163,9 @@ const App: React.FC = () => {
     } catch (err) {
       showError("Erreur lors du lancement du jeu");
     }
-  };
+  }, [launchConfirm, refreshStatus, showSuccess, showError]);
 
-  const cancelLaunch = async () => {
+  const cancelLaunch = useCallback(async () => {
     const { accountId } = launchConfirm;
     setLaunchConfirm({ ...launchConfirm, isOpen: false });
 
@@ -171,9 +180,9 @@ const App: React.FC = () => {
     } catch (err) {
       showError("Erreur lors du changement de compte");
     }
-  };
+  }, [launchConfirm, refreshStatus, showSuccess, showError]);
 
-  const handleAddOrUpdate = async (accountData: Partial<Account>) => {
+  const handleAddOrUpdate = useCallback(async (accountData: Partial<Account>) => {
     try {
       if (accountData.id) {
         await updateAccount(accountData as Account);
@@ -186,24 +195,24 @@ const App: React.FC = () => {
     } catch (err) {
       showError("Erreur lors de l'enregistrement");
     }
-  };
+  }, [updateAccount, addAccount, showSuccess, refreshAccounts, showError]);
 
-  const handleDelete = async (accountId: string) => {
+  const handleDelete = useCallback(async (accountId: string) => {
     if (confirm("Voulez-vous vraiment supprimer ce compte ?")) {
       await deleteAccount(accountId);
       showSuccess("Compte supprimé");
     }
-  };
+  }, [deleteAccount, showSuccess]);
 
-  const handleOpenAdd = () => {
+  const handleOpenAdd = useCallback(() => {
     setEditingAccount(null);
     setIsAddModalOpen(true);
-  };
+  }, []);
 
-  const handleOpenEdit = (account: Account) => {
+  const handleOpenEdit = useCallback((account: Account) => {
     setEditingAccount(account);
     setIsAddModalOpen(true);
-  };
+  }, []);
 
   const handleVerifyPin = async (pin: string) => {
     if (securityMode === "disable") {
@@ -244,7 +253,7 @@ const App: React.FC = () => {
     }
   };
 
-  const handleToggleFavorite = async (account: Account) => {
+  const handleToggleFavorite = useCallback(async (account: Account) => {
     try {
       // Appel avec un payload minimal pour éviter tout problème de re-chiffrement en prod
       await updateAccount({
@@ -258,7 +267,7 @@ const App: React.FC = () => {
     } catch (err) {
       showError("Erreur lors de la mise à jour du favori");
     }
-  };
+  }, [updateAccount, showSuccess, showError]);
 
   return (
     <div className="flex h-screen bg-[#0a0a0a] text-white overflow-hidden font-sans">
