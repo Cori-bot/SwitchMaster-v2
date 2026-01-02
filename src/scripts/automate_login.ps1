@@ -5,6 +5,15 @@ param (
 
 Add-Type -AssemblyName System.Windows.Forms
 
+# Check for stdin input if Text is empty
+if ([string]::IsNullOrEmpty($Text) -and [Console]::IsInputRedirected) {
+    try {
+        $Text = [Console]::In.ReadLine()
+    } catch {
+        # Ignore error if reading fails, Text remains empty
+    }
+}
+
 # Helper pour exclure de l'historique Windows (Win+V) et du Cloud
 function Set-SecureClipboard {
     param([string]$Content)

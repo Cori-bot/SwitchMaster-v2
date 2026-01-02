@@ -60,11 +60,27 @@ export async function performAutomation(username: string, password: string) {
         "-Action",
         action,
       ];
-      if (text) {
+
+      // Use stdin for sensitive data (SetSecure action) to avoid process list exposure
+      // Always use stdin for SetSecure to maintain consistent behavior, even if text is empty
+      const useStdin = action === "SetSecure";
+
+      if (text && !useStdin) {
         args.push("-Text", text);
       }
 
       const ps = spawn("powershell.exe", args);
+
+      if (useStdin) {
+        // Pass sensitive text via stdin
+        if (text) {
+          ps.stdin.write(text + "\n");
+        }
+      }
+
+      // ALWAYS close stdin to prevent PowerShell from hanging waiting for input
+      ps.stdin.end();
+
       let output = "";
       ps.stdout.on("data", (d) => (output += d.toString()));
       ps.on("close", (code) => {
@@ -73,6 +89,11 @@ export async function performAutomation(username: string, password: string) {
         } else {
           reject(new Error(`PS Action ${action} failed`));
         }
+      });
+
+      ps.on("error", (err) => {
+          devError(`PS Action ${action} spawn error:`, err);
+          reject(err);
       });
     });
   };
