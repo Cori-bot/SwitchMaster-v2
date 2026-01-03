@@ -51,8 +51,12 @@ const Sidebar: React.FC<SidebarProps> = ({
             />
           </div>
           <span className="font-medium">Visper</span>
-          <div className="ml-auto px-1.5 py-0.5 bg-blue-600/10 border border-blue-600/20 rounded-md">
-            <span className="text-[8px] font-bold text-blue-500 uppercase">Beta</span>
+          <div className="ml-auto relative group/beta">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full blur opacity-20 group-hover/beta:opacity-60 transition duration-500"></div>
+            <div className="relative px-2 py-0.5 bg-black/40 border border-blue-500/30 rounded-full backdrop-blur-sm flex items-center">
+              <span className="w-1 h-1 rounded-full bg-blue-400 mr-1.5 animate-[pulse_2s_ease-in-out_infinite] shadow-[0_0_4px_rgba(96,165,250,0.6)]"></span>
+              <span className="text-[9px] font-black tracking-widest text-blue-200 uppercase drop-shadow-sm">Beta</span>
+            </div>
           </div>
         </button>
 
