@@ -37,6 +37,7 @@ import {
   setAutoStart,
   getAutoStartStatus,
   getStatus,
+  isValorantRunning,
 } from "./appLogic";
 
 const isDev = process.env.NODE_ENV === "development" || !app.isPackaged;
@@ -117,6 +118,7 @@ async function initApp() {
       setAutoStart,
       getAutoStartStatus,
       getStatus,
+      isValorantRunning,
     });
 
     mainWindow = createWindow(isDev);
@@ -185,6 +187,7 @@ async function initApp() {
       setAutoStart,
       getAutoStartStatus,
       getStatus,
+      isValorantRunning,
     });
 
     setupUpdater(mainWindow);

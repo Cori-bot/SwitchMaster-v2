@@ -114,4 +114,6 @@ export function registerMiscHandlers(
     createVisperWindow(isDev);
     return true;
   });
+
+  safeHandle("is-valorant-running", () => context.isValorantRunning());
 }

@@ -17,7 +17,16 @@ body {
   height: 100vh;
 }
 
-button, 
+/* Electron Window Drag Regions */
+.drag {
+  -webkit-app-region: drag;
+}
+
+.no-drag {
+  -webkit-app-region: no-drag;
+}
+
+button,
 [role="button"],
 input[type="checkbox"],
 input[type="radio"],

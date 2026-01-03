@@ -123,3 +123,14 @@ export async function getStatus(): Promise<{
     return { status: "Prêt" };
   }
 }
+
+export async function isValorantRunning(): Promise<boolean> {
+  try {
+    const { stdout } = await execAsync(
+      'tasklist /FI "IMAGENAME eq VALORANT-Win64-Shipping.exe" /FO CSV',
+    );
+    return stdout.includes("VALORANT-Win64-Shipping.exe");
+  } catch {
+    return false;
+  }
+}

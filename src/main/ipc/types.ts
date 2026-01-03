@@ -7,4 +7,5 @@ export interface IpcContext {
     accountId?: string;
     accountName?: string;
   }>;
+  isValorantRunning: () => Promise<boolean>;
 }
