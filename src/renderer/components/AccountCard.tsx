@@ -27,7 +27,6 @@ interface AccountCardProps {
   onDrop: (e: React.DragEvent, id: string) => void;
 }
 
-
 const AccountCard: React.FC<AccountCardProps> = ({
   account,
   isActive,
@@ -58,13 +57,14 @@ const AccountCard: React.FC<AccountCardProps> = ({
 
   const cardStyle = cardImage
     ? {
-      backgroundImage: `url('${cardImage.startsWith("http")
-        ? cardImage
-        : `sm-img://${cardImage.replace(/\\/g, "/")}`
+        backgroundImage: `url('${
+          cardImage.startsWith("http")
+            ? cardImage
+            : `sm-img://${cardImage.replace(/\\/g, "/")}`
         }')`,
-      backgroundSize: "cover",
-      backgroundPosition: "center",
-    }
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }
     : {};
 
   const handleImageError = (
@@ -117,18 +117,16 @@ const AccountCard: React.FC<AccountCardProps> = ({
       onDragEnd={(e) => onDragEnd(e)}
       onDragEnter={(e) => onDragEnter(e, id)}
       onDrop={(e) => onDrop(e, id)}
-      className={`group relative bg-[#1a1a1a] rounded-2xl border-2 transition-all ${ANIMATION_DURATION_LONG} ease-in-out cursor-grab active:cursor-grabbing active:scale-[0.98] active:opacity-80 ${isActive
-        ? "border-green-500 shadow-[0_0_20px_rgba(34,197,94,0.2)]"
-        : "border-transparent hover:border-blue-500/50 hover:shadow-2xl hover:shadow-blue-500/10"
-        } overflow-hidden`}
+      className={`group relative bg-[#1a1a1a] rounded-2xl border-2 transition-all ${ANIMATION_DURATION_LONG} ease-in-out cursor-grab active:cursor-grabbing active:scale-[0.98] active:opacity-80 ${
+        isActive
+          ? "border-green-500 shadow-[0_0_20px_rgba(34,197,94,0.2)]"
+          : "border-transparent hover:border-blue-500/50 hover:shadow-2xl hover:shadow-blue-500/10"
+      } overflow-hidden`}
     >
       {/* Background image + voile dans un wrapper interne */}
       {cardImage && (
         <>
-          <div
-            className="absolute inset-0"
-            style={cardStyle}
-          />
+          <div className="absolute inset-0" style={cardStyle} />
           <div className="absolute inset-0 bg-linear-to-b from-black/55 to-black/90" />
         </>
       )}
@@ -145,10 +143,14 @@ const AccountCard: React.FC<AccountCardProps> = ({
                   e.stopPropagation();
                   onToggleFavorite(account);
                 }}
-                className={`p-1 rounded-md transition-all duration-200 hover:scale-110 ${isFavorite
-                  ? "text-yellow-400"
-                  : "text-gray-500 hover:text-yellow-400"
-                  }`}
+                aria-label={
+                  isFavorite ? "Remove from favorites" : "Add to favorites"
+                }
+                className={`p-1 rounded-md transition-all duration-200 hover:scale-110 ${
+                  isFavorite
+                    ? "text-yellow-400"
+                    : "text-gray-500 hover:text-yellow-400"
+                }`}
               >
                 <Star size={16} fill={isFavorite ? "currentColor" : "none"} />
               </button>
@@ -166,10 +168,14 @@ const AccountCard: React.FC<AccountCardProps> = ({
               className="w-6 h-6 object-contain opacity-80"
             />
             <div className="relative group/menu">
-              <button className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors">
+              <button
+                aria-label="Account options"
+                aria-haspopup="true"
+                className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+              >
                 <MoreVertical size={ICON_SIZE_MEDIUM} />
               </button>
-              <div className="absolute right-0 top-full mt-2 w-48 bg-[#242424] border border-white/10 rounded-xl shadow-2xl opacity-0 invisible group-hover/menu:opacity-100 group-hover/menu:visible transition-all duration-200 z-10 overflow-hidden">
+              <div className="absolute right-0 top-full mt-2 w-48 bg-[#242424] border border-white/10 rounded-xl shadow-2xl opacity-0 invisible group-hover/menu:opacity-100 group-hover/menu:visible group-focus-within/menu:opacity-100 group-focus-within/menu:visible transition-all duration-200 z-10 overflow-hidden">
                 <button
                   onClick={() => onEdit(account)}
                   className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-300 hover:bg-white/5 transition-colors"
@@ -192,10 +198,11 @@ const AccountCard: React.FC<AccountCardProps> = ({
         <button
           onClick={() => onSwitch(account.id)}
           disabled={isActive}
-          className={`w-full flex items-center justify-center gap-2 font-bold py-3 rounded-xl transition-all duration-200 ${ACTIVE_SCALE} group/btn ${isActive
-            ? "bg-green-500/10 text-green-500 border border-green-500/50 cursor-default"
-            : "bg-white text-black hover:bg-gray-200 cursor-pointer"
-            }`}
+          className={`w-full flex items-center justify-center gap-2 font-bold py-3 rounded-xl transition-all duration-200 ${ACTIVE_SCALE} group/btn ${
+            isActive
+              ? "bg-green-500/10 text-green-500 border border-green-500/50 cursor-default"
+              : "bg-white text-black hover:bg-gray-200 cursor-pointer"
+          }`}
         >
           {isActive ? (
             <>
