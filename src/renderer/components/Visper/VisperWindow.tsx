@@ -234,10 +234,7 @@ const VisperWindow: React.FC = () => {
                     </div>
                 ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                        <div className="text-center space-y-4 opacity-20">
-                            <div className="text-4xl font-black uppercase italic tracking-tighter">Ready for Duty</div>
-                            <div className="text-[10px] font-bold uppercase tracking-[0.5em]">System Standby</div>
-                        </div>
+                        {/* Contenu futur des widgets Visper */}
                     </div>
                 )}
             </div>
