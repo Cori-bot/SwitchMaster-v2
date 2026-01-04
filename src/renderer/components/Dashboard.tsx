@@ -45,6 +45,8 @@ const itemVariants: Variants = {
   },
 };
 
+const preventDefault = (e: React.DragEvent) => e.preventDefault();
+
 const Dashboard: React.FC<DashboardProps> = ({
   accounts,
   filter,
@@ -58,6 +60,12 @@ const Dashboard: React.FC<DashboardProps> = ({
 }) => {
   const [draggedId, setDraggedId] = React.useState<string | null>(null);
   const [localAccounts, setLocalAccounts] = React.useState<Account[]>(accounts);
+  const localAccountsRef = React.useRef(accounts);
+
+  // Update ref when localAccounts changes
+  React.useEffect(() => {
+    localAccountsRef.current = localAccounts;
+  }, [localAccounts]);
 
   // Synchroniser localAccounts avec les props quand on ne drag pas
   React.useEffect(() => {
@@ -75,7 +83,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     });
   }, [localAccounts, filter]);
 
-  const handleDragStart = (e: React.DragEvent, id: string) => {
+  const handleDragStart = React.useCallback((e: React.DragEvent, id: string) => {
     if (filter !== "all") return;
     e.dataTransfer.setData("accountId", id);
     setDraggedId(id);
@@ -87,51 +95,64 @@ const Dashboard: React.FC<DashboardProps> = ({
     document.body.appendChild(ghost);
     e.dataTransfer.setDragImage(ghost, 0, 0);
     setTimeout(() => document.body.removeChild(ghost), 0);
-  };
+  }, [filter]);
 
-  const handleDragOver = (e: React.DragEvent, targetId: string) => {
+  const handleDragOver = React.useCallback((e: React.DragEvent, targetId: string) => {
     if (filter !== "all") return;
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
 
-    if (!draggedId || draggedId === targetId) return;
+    // draggedId is state, but if we assume it doesn't change *during* a drag over (it's set at start), we can include it.
+    // However, we need to access the LATEST localAccounts without depending on it.
 
-    const sourceIndex = localAccounts.findIndex((a) => a.id === draggedId);
-    const targetIndex = localAccounts.findIndex((a) => a.id === targetId);
-    if (sourceIndex === -1 || targetIndex === -1) return;
+    // We can't access state inside callback without dependency or ref.
+    // But we can't update state based on stale state.
 
-    const targetElement = e.currentTarget as HTMLElement;
-    const rect = targetElement.getBoundingClientRect();
-    const relativeX = (e.clientX - rect.left) / rect.width;
-    const relativeY = (e.clientY - rect.top) / rect.height;
+    // Actually, draggedId is set once at start.
 
-    const shouldSwap = sourceIndex < targetIndex
-      ? relativeX > 0.33 || relativeY > 0.33
-      : relativeX < 0.67 || relativeY < 0.67;
+    setDraggedId((currentDraggedId) => {
+      if (!currentDraggedId || currentDraggedId === targetId) return currentDraggedId;
 
-    if (shouldSwap) {
-      const newAccounts = [...localAccounts];
-      const [removed] = newAccounts.splice(sourceIndex, 1);
-      newAccounts.splice(targetIndex, 0, removed);
+      const currentLocalAccounts = localAccountsRef.current;
+      const sourceIndex = currentLocalAccounts.findIndex((a) => a.id === currentDraggedId);
+      const targetIndex = currentLocalAccounts.findIndex((a) => a.id === targetId);
 
-      const currentIds = localAccounts.map(a => a.id).join(',');
-      const newIds = newAccounts.map(a => a.id).join(',');
+      if (sourceIndex === -1 || targetIndex === -1) return currentDraggedId;
 
-      if (currentIds !== newIds) {
-        setLocalAccounts(newAccounts);
+      const targetElement = e.currentTarget as HTMLElement;
+      const rect = targetElement.getBoundingClientRect();
+      const relativeX = (e.clientX - rect.left) / rect.width;
+      const relativeY = (e.clientY - rect.top) / rect.height;
+
+      const shouldSwap = sourceIndex < targetIndex
+        ? relativeX > 0.33 || relativeY > 0.33
+        : relativeX < 0.67 || relativeY < 0.67;
+
+      if (shouldSwap) {
+        const newAccounts = [...currentLocalAccounts];
+        const [removed] = newAccounts.splice(sourceIndex, 1);
+        newAccounts.splice(targetIndex, 0, removed);
+
+        const currentIds = currentLocalAccounts.map(a => a.id).join(',');
+        const newIds = newAccounts.map(a => a.id).join(',');
+
+        if (currentIds !== newIds) {
+           setLocalAccounts(newAccounts);
+        }
       }
-    }
-  };
+      return currentDraggedId;
+    });
+  }, [filter]);
 
-  const handleDragEnd = () => {
+  const handleDragEnd = React.useCallback(() => {
     setDraggedId(null);
-  };
+  }, []);
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = React.useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setDraggedId(null);
-    onReorder(localAccounts.map((a) => a.id));
-  };
+    onReorder(localAccountsRef.current.map((a) => a.id));
+  }, [onReorder]);
 
   if (accounts.length === 0) {
     return (
@@ -187,9 +208,9 @@ const Dashboard: React.FC<DashboardProps> = ({
                 onEdit={onEdit}
                 onToggleFavorite={onToggleFavorite}
                 onDragStart={handleDragStart}
-                onDragOver={(e) => handleDragOver(e, account.id)}
+                onDragOver={handleDragOver}
                 onDragEnd={handleDragEnd}
-                onDragEnter={(e) => e.preventDefault()}
+                onDragEnter={preventDefault}
                 onDrop={handleDrop}
               />
             </motion.div>

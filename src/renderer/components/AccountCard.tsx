@@ -21,7 +21,7 @@ interface AccountCardProps {
   onEdit: (account: Account) => void;
   onToggleFavorite: (account: Account) => void;
   onDragStart: (e: React.DragEvent, id: string) => void;
-  onDragOver: (e: React.DragEvent) => void;
+  onDragOver: (e: React.DragEvent, id: string) => void;
   onDragEnd: (e: React.DragEvent) => void;
   onDragEnter: (e: React.DragEvent, id: string) => void;
   onDrop: (e: React.DragEvent, id: string) => void;
@@ -49,16 +49,17 @@ const AccountCard: React.FC<AccountCardProps> = ({
     return "text-gray-300"; // Unification de la couleur
   };
 
-  const cardStyle = cardImage
-    ? {
+  const cardStyle = React.useMemo(() => {
+    if (!cardImage) return {};
+    return {
       backgroundImage: `url('${cardImage.startsWith("http")
         ? cardImage
         : `sm-img://${cardImage.replace(/\\/g, "/")}`
         }')`,
       backgroundSize: "cover",
       backgroundPosition: "center",
-    }
-    : {};
+    };
+  }, [cardImage]);
 
   const handleImageError = (
     e: React.SyntheticEvent<HTMLImageElement, Event>,
@@ -106,7 +107,7 @@ const AccountCard: React.FC<AccountCardProps> = ({
     <div
       draggable
       onDragStart={(e) => onDragStart(e, id)}
-      onDragOver={(e) => onDragOver(e)}
+      onDragOver={(e) => onDragOver(e, id)}
       onDragEnd={(e) => onDragEnd(e)}
       onDragEnter={(e) => onDragEnter(e, id)}
       onDrop={(e) => onDrop(e, id)}
