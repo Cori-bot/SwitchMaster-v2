@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import visperLogo from "@assets/visper_logo.png";
 import { useVisperAuth } from "../../hooks/useVisperAuth";
+import PartyWidget from "./widgets/PartyWidget";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, Plus, Trash2 } from "lucide-react";
 
@@ -233,8 +234,8 @@ const VisperWindow: React.FC = () => {
                         </button>
                     </div>
                 ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                        {/* Contenu futur des widgets Visper */}
+                    <div className="w-full h-full flex items-center justify-center p-8">
+                        <PartyWidget session={session} />
                     </div>
                 )}
             </div>

@@ -19,8 +19,8 @@ const DEFAULT_HEIGHT = 700;
 const MIN_WIDTH = 600;
 const MIN_HEIGHT = 600;
 
-const VISPER_WIDTH = 1200;
-const VISPER_HEIGHT = 800;
+const VISPER_WIDTH = 1300;
+const VISPER_HEIGHT = 850;
 
 export function createWindow(isDev: boolean): BrowserWindow {
   mainWindow = new BrowserWindow({
