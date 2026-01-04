@@ -1,0 +1,3 @@
+## 2024-05-24 - Inline Handlers break React.memo
+**Learning:** React components wrapped in `React.memo` will still re-render if their props are new function instances on every render. This defeats the purpose of memoization and can cause significant performance degradation in list views (O(N) re-renders).
+**Action:** When passing event handlers to memoized components in a list, always ensure the handlers are stable (using `useCallback`) and avoid inline arrow functions in the JSX (e.g., `onClick={(e) => handler(e, id)}`). Instead, pass the ID as a prop or curry the handler if necessary, or modify the child component to pass the ID back.
