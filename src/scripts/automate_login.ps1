@@ -6,6 +6,21 @@ param (
 )
 
 Add-Type -AssemblyName System.Windows.Forms
+Add-Type -AssemblyName System.Web.Extensions
+
+# Lecture depuis stdin si redirigé
+if ([Console]::IsInputRedirected) {
+    try {
+        $inputData = [Console]::In.ReadToEnd()
+        $json = New-Object System.Web.Script.Serialization.JavaScriptSerializer
+        $data = $json.DeserializeObject($inputData)
+        if ($data.containsKey("username")) { $Username = $data["username"] }
+        if ($data.containsKey("password")) { $Password = $data["password"] }
+    } catch {
+        Write-Host "ERROR: Failed to parse input"
+        exit 1
+    }
+}
 
 # Constantes de timing optimisées
 $FOCUS_MAX_ATTEMPTS = 30
