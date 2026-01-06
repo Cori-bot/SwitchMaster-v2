@@ -58,13 +58,23 @@ const Dashboard: React.FC<DashboardProps> = ({
 }) => {
   const [draggedId, setDraggedId] = React.useState<string | null>(null);
   const [localAccounts, setLocalAccounts] = React.useState<Account[]>(accounts);
+  // Use a ref to access the current accounts in the drag handler without adding it as a dependency.
+  // This prevents the handleDragOver function from being recreated on every reorder,
+  // which in turn prevents all AccountCard components from re-rendering during drag.
+  const localAccountsRef = React.useRef(localAccounts);
 
-  // Synchroniser localAccounts avec les props quand on ne drag pas
+  // Sync localAccounts with props when not dragging
   React.useEffect(() => {
     if (!draggedId) {
       setLocalAccounts(accounts);
+      localAccountsRef.current = accounts;
     }
   }, [accounts, draggedId]);
+
+  // Keep ref in sync with state
+  React.useEffect(() => {
+    localAccountsRef.current = localAccounts;
+  }, [localAccounts]);
 
   const filteredAccounts = React.useMemo(() => {
     return localAccounts.filter((acc) => {
@@ -75,29 +85,31 @@ const Dashboard: React.FC<DashboardProps> = ({
     });
   }, [localAccounts, filter]);
 
-  const handleDragStart = (e: React.DragEvent, id: string) => {
+  const handleDragStart = React.useCallback((e: React.DragEvent, id: string) => {
     if (filter !== "all") return;
     e.dataTransfer.setData("accountId", id);
     setDraggedId(id);
     e.dataTransfer.effectAllowed = "move";
 
-    // Créer une image de drag transparente pour un effet plus propre
+    // Create a transparent drag image
     const ghost = document.createElement("div");
     ghost.style.opacity = "0";
     document.body.appendChild(ghost);
     e.dataTransfer.setDragImage(ghost, 0, 0);
     setTimeout(() => document.body.removeChild(ghost), 0);
-  };
+  }, [filter]);
 
-  const handleDragOver = (e: React.DragEvent, targetId: string) => {
+  const handleDragOver = React.useCallback((e: React.DragEvent, targetId: string) => {
     if (filter !== "all") return;
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
 
+    // draggedId is stable during the drag (only changes at start/end)
     if (!draggedId || draggedId === targetId) return;
 
-    const sourceIndex = localAccounts.findIndex((a) => a.id === draggedId);
-    const targetIndex = localAccounts.findIndex((a) => a.id === targetId);
+    const currentLocalAccounts = localAccountsRef.current;
+    const sourceIndex = currentLocalAccounts.findIndex((a) => a.id === draggedId);
+    const targetIndex = currentLocalAccounts.findIndex((a) => a.id === targetId);
     if (sourceIndex === -1 || targetIndex === -1) return;
 
     const targetElement = e.currentTarget as HTMLElement;
@@ -110,28 +122,35 @@ const Dashboard: React.FC<DashboardProps> = ({
       : relativeX < 0.67 || relativeY < 0.67;
 
     if (shouldSwap) {
-      const newAccounts = [...localAccounts];
+      const newAccounts = [...currentLocalAccounts];
       const [removed] = newAccounts.splice(sourceIndex, 1);
       newAccounts.splice(targetIndex, 0, removed);
 
-      const currentIds = localAccounts.map(a => a.id).join(',');
+      const currentIds = currentLocalAccounts.map(a => a.id).join(',');
       const newIds = newAccounts.map(a => a.id).join(',');
 
       if (currentIds !== newIds) {
         setLocalAccounts(newAccounts);
+        // Immediately update ref to ensure subsequent events in the same tick
+        // (or before effect runs) see the updated order.
+        localAccountsRef.current = newAccounts;
       }
     }
-  };
+  }, [draggedId, filter]);
 
-  const handleDragEnd = () => {
+  const handleDragEnd = React.useCallback(() => {
     setDraggedId(null);
-  };
+  }, []);
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = React.useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setDraggedId(null);
-    onReorder(localAccounts.map((a) => a.id));
-  };
+    onReorder(localAccountsRef.current.map((a) => a.id));
+  }, [onReorder]);
+
+  const handleDragEnter = React.useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+  }, []);
 
   if (accounts.length === 0) {
     return (
@@ -187,9 +206,9 @@ const Dashboard: React.FC<DashboardProps> = ({
                 onEdit={onEdit}
                 onToggleFavorite={onToggleFavorite}
                 onDragStart={handleDragStart}
-                onDragOver={(e) => handleDragOver(e, account.id)}
+                onDragOver={handleDragOver}
                 onDragEnd={handleDragEnd}
-                onDragEnter={(e) => e.preventDefault()}
+                onDragEnter={handleDragEnter}
                 onDrop={handleDrop}
               />
             </motion.div>
