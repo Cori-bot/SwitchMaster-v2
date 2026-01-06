@@ -1,7 +1,8 @@
 import { app } from "electron";
 import log from "electron-log";
 
-const isDev = process.env.NODE_ENV === "development" || (app && !app.isPackaged);
+const isDev =
+  process.env.NODE_ENV === "development" || (app && !app.isPackaged);
 
 // Configure electron-log
 log.transports.file.level = "info";

@@ -82,7 +82,10 @@ function parseRiotId(riotId: string) {
 }
 
 // Helper to find the best segment in Tracker response
-function findBestSegment(segments: TrackerSegment[], preferredPlaylists: string[]) {
+function findBestSegment(
+  segments: TrackerSegment[],
+  preferredPlaylists: string[],
+) {
   let segment = segments.find(
     (s) =>
       s.attributes?.playlist &&
@@ -101,7 +104,10 @@ function extractRankInfo(segment: TrackerSegment, defaultIcon: string) {
   const stats = segment.stats || {};
   const rankStat = stats.tier || stats.rank || {};
 
-  const rank = (rankStat.metadata && (rankStat.metadata.rankName || rankStat.metadata.tierName)) || "Unranked";
+  const rank =
+    (rankStat.metadata &&
+      (rankStat.metadata.rankName || rankStat.metadata.tierName)) ||
+    "Unranked";
   const icon = (rankStat.metadata && rankStat.metadata.iconUrl) || defaultIcon;
 
   return { rank, icon };
@@ -116,9 +122,20 @@ async function fetchValorantStats(riotId: string) {
     const apiResponse = await httpsGet<TrackerResponse>(url, HEADERS);
     if (!apiResponse.data?.segments) throw new Error("Invalid response");
 
-    const VALORANT_PLAYLISTS = ["competitive", "comp", "ranked_solo_5x5", "ranked-solo-5x5"];
-    const segment = findBestSegment(apiResponse.data.segments, VALORANT_PLAYLISTS);
-    const { rank, icon } = extractRankInfo(segment, "https://trackercdn.com/cdn/tracker.gg/valorant/icons/tiers/0.png");
+    const VALORANT_PLAYLISTS = [
+      "competitive",
+      "comp",
+      "ranked_solo_5x5",
+      "ranked-solo-5x5",
+    ];
+    const segment = findBestSegment(
+      apiResponse.data.segments,
+      VALORANT_PLAYLISTS,
+    );
+    const { rank, icon } = extractRankInfo(
+      segment,
+      "https://trackercdn.com/cdn/tracker.gg/valorant/icons/tiers/0.png",
+    );
 
     devLog(`[DEV-STATS] VALORANT - ${riotId}: { rank: '${rank}' }`);
 
@@ -138,9 +155,20 @@ async function fetchLeagueStats(riotId: string) {
     const apiResponse = await httpsGet<TrackerResponse>(url, HEADERS);
     if (!apiResponse.data?.segments) throw new Error("Invalid response");
 
-    const LEAGUE_PLAYLISTS = ["ranked_solo_5x5", "ranked-solo-5x5", "ranked-solo", "rank-solo"];
-    const segment = findBestSegment(apiResponse.data.segments, LEAGUE_PLAYLISTS);
-    const { rank, icon } = extractRankInfo(segment, "https://trackercdn.com/cdn/tracker.gg/lol/ranks/2023/icons/unranked.svg");
+    const LEAGUE_PLAYLISTS = [
+      "ranked_solo_5x5",
+      "ranked-solo-5x5",
+      "ranked-solo",
+      "rank-solo",
+    ];
+    const segment = findBestSegment(
+      apiResponse.data.segments,
+      LEAGUE_PLAYLISTS,
+    );
+    const { rank, icon } = extractRankInfo(
+      segment,
+      "https://trackercdn.com/cdn/tracker.gg/lol/ranks/2023/icons/unranked.svg",
+    );
 
     devLog(`[DEV-STATS] LEAGUE - ${riotId}: { rank: '${rank}' }`);
 

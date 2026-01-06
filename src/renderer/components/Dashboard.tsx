@@ -105,17 +105,18 @@ const Dashboard: React.FC<DashboardProps> = ({
     const relativeX = (e.clientX - rect.left) / rect.width;
     const relativeY = (e.clientY - rect.top) / rect.height;
 
-    const shouldSwap = sourceIndex < targetIndex
-      ? relativeX > 0.33 || relativeY > 0.33
-      : relativeX < 0.67 || relativeY < 0.67;
+    const shouldSwap =
+      sourceIndex < targetIndex
+        ? relativeX > 0.33 || relativeY > 0.33
+        : relativeX < 0.67 || relativeY < 0.67;
 
     if (shouldSwap) {
       const newAccounts = [...localAccounts];
       const [removed] = newAccounts.splice(sourceIndex, 1);
       newAccounts.splice(targetIndex, 0, removed);
 
-      const currentIds = localAccounts.map(a => a.id).join(',');
-      const newIds = newAccounts.map(a => a.id).join(',');
+      const currentIds = localAccounts.map((a) => a.id).join(",");
+      const newIds = newAccounts.map((a) => a.id).join(",");
 
       if (currentIds !== newIds) {
         setLocalAccounts(newAccounts);
@@ -177,7 +178,11 @@ const Dashboard: React.FC<DashboardProps> = ({
               initial="hidden"
               animate="visible"
               exit={{ scale: 0.8, opacity: 0 }}
-              className={draggedId === account.id ? "opacity-50 scale-95 transition-all duration-200" : "transition-all duration-200"}
+              className={
+                draggedId === account.id
+                  ? "opacity-50 scale-95 transition-all duration-200"
+                  : "transition-all duration-200"
+              }
             >
               <AccountCard
                 account={account}
@@ -203,7 +208,9 @@ const Dashboard: React.FC<DashboardProps> = ({
           onClick={onAddAccount}
           className={`group relative h-[220px] rounded-3xl border-2 border-dashed border-white/10 hover:border-blue-500/50 bg-white/2 transition-all ${ANIMATION_DURATION_LONG} flex flex-col items-center justify-center gap-4 overflow-hidden cursor-pointer`}
         >
-          <div className={`w-14 h-14 rounded-2xl bg-white/5 group-hover:bg-blue-500/20 flex items-center justify-center text-gray-400 group-hover:text-blue-400 transition-all ${ANIMATION_DURATION_LONG}`}>
+          <div
+            className={`w-14 h-14 rounded-2xl bg-white/5 group-hover:bg-blue-500/20 flex items-center justify-center text-gray-400 group-hover:text-blue-400 transition-all ${ANIMATION_DURATION_LONG}`}
+          >
             <PlusCircle size={ICON_SIZE_LARGE} />
           </div>
           <div className="text-center">

@@ -7,10 +7,10 @@ export default defineConfig({
     emptyOutDir: true,
     target: "node18",
     lib: {
-        entry: path.join(__dirname, "src/main/main.ts"),
-        formats: ["cjs"],
-        fileName: () => "main.js",
-      },
+      entry: path.join(__dirname, "src/main/main.ts"),
+      formats: ["cjs"],
+      fileName: () => "main.js",
+    },
     rollupOptions: {
       external: [
         "electron",

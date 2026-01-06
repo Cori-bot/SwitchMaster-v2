@@ -86,7 +86,6 @@ export async function performAutomation(username: string, password: string) {
   });
 }
 
-
 interface DetectionResult {
   DisplayName?: string;
   InstallLocation?: string;

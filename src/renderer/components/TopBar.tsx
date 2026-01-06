@@ -12,7 +12,7 @@ const TopBar: React.FC<TopBarProps> = ({
   status,
   currentFilter = "all",
   onFilterChange,
-  showFilters
+  showFilters,
 }) => {
   const statusText = status.status || "Initialisation...";
   const isActive = statusText.includes("Actif");
@@ -22,10 +22,11 @@ const TopBar: React.FC<TopBarProps> = ({
   const renderFilterButton = (id: typeof currentFilter, label: string) => (
     <button
       onClick={() => onFilterChange?.(id)}
-      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 ${currentFilter === id
-        ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
-        : "bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white"
-        }`}
+      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 ${
+        currentFilter === id
+          ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
+          : "bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white"
+      }`}
     >
       {label}
     </button>

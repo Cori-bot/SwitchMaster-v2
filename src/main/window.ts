@@ -66,10 +66,14 @@ export function createWindow(isDev: boolean): BrowserWindow {
     });
 
     mainWindow.webContents.on("before-input-event", (event, input) => {
-      if ((input.control || input.meta) && input.shift && input.key.toLowerCase() === 'i') {
+      if (
+        (input.control || input.meta) &&
+        input.shift &&
+        input.key.toLowerCase() === "i"
+      ) {
         event.preventDefault();
       }
-      if (input.key === 'F12') {
+      if (input.key === "F12") {
         event.preventDefault();
       }
     });
@@ -130,7 +134,9 @@ export function createVisperWindow(isDev: boolean): BrowserWindow {
   if (isDev) {
     visperWindow.loadURL(visperUrl);
   } else {
-    visperWindow.loadFile(path.join(__dirname, "..", "dist", "index.html"), { hash: "/visper" });
+    visperWindow.loadFile(path.join(__dirname, "..", "dist", "index.html"), {
+      hash: "/visper",
+    });
   }
 
   visperWindow.once("ready-to-show", () => {
@@ -152,7 +158,6 @@ export function createVisperWindow(isDev: boolean): BrowserWindow {
 
   return visperWindow;
 }
-
 
 let trayRef: Tray | null = null;
 
@@ -204,7 +209,10 @@ export async function updateTrayMenu(
     });
   }
 
-  if (config.lastAccountId && !favoriteAccounts.some(a => a.id === config.lastAccountId)) {
+  if (
+    config.lastAccountId &&
+    !favoriteAccounts.some((a) => a.id === config.lastAccountId)
+  ) {
     const lastAccount = accounts.find((a) => a.id === config.lastAccountId);
     if (lastAccount) {
       menuItems.push(
