@@ -12,10 +12,9 @@ async function buildMain() {
     // 2. Copy preload.js to dist-main
     const srcPreload = path.join(__dirname, "../src/main/preload.js");
     const distPreload = path.join(__dirname, "../dist-main/preload.js");
-    
+
     await fs.copy(srcPreload, distPreload);
     console.log("Preload script copied to dist-main");
-
   } catch (err) {
     console.error("Error building main process:", err);
     process.exit(1);

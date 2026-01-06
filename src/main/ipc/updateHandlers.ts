@@ -7,7 +7,9 @@ import {
 } from "../updater";
 import { safeHandle } from "./utils";
 
-export function registerUpdateHandlers(getMainWindow: () => BrowserWindow | null) {
+export function registerUpdateHandlers(
+  getMainWindow: () => BrowserWindow | null,
+) {
   safeHandle("check-updates", async () => {
     const win = getMainWindow();
     if (win) {

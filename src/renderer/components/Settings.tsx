@@ -1,11 +1,5 @@
 import React from "react";
-import {
-  FolderOpen,
-  Shield,
-  Monitor,
-  Info,
-  RefreshCw,
-} from "lucide-react";
+import { FolderOpen, Shield, Monitor, Info, RefreshCw } from "lucide-react";
 import { Config } from "../hooks/useConfig";
 import logoImg from "@assets/logo.png";
 
@@ -63,8 +57,9 @@ const Checkbox: React.FC<CheckboxProps> = ({
 }) => (
   <label
     htmlFor={id}
-    className={`flex items-start gap-3 py-2 ${disabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer group"
-      }`}
+    className={`flex items-start gap-3 py-2 ${
+      disabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer group"
+    }`}
   >
     <div className="relative flex items-center mt-1">
       <input
@@ -77,10 +72,11 @@ const Checkbox: React.FC<CheckboxProps> = ({
       />
       <div
         className={`w-5 h-5 border-2 rounded-md transition-all duration-200 
-        ${disabled
+        ${
+          disabled
             ? "border-gray-700 bg-gray-800/50"
             : "border-gray-600 peer-checked:bg-blue-600 peer-checked:border-blue-600 group-hover:border-blue-500"
-          }`}
+        }`}
       />
       <svg
         className="absolute w-3.5 h-3.5 text-white opacity-0 transition-opacity duration-200 peer-checked:opacity-100 left-[3px]"
@@ -96,15 +92,17 @@ const Checkbox: React.FC<CheckboxProps> = ({
     </div>
     <div className="flex-1">
       <div
-        className={`text-sm font-medium transition-colors ${disabled ? "text-gray-600" : "text-gray-300 group-hover:text-white"
-          }`}
+        className={`text-sm font-medium transition-colors ${
+          disabled ? "text-gray-600" : "text-gray-300 group-hover:text-white"
+        }`}
       >
         {label}
       </div>
       {subLabel && (
         <div
-          className={`text-[11px] mt-0.5 ${disabled ? "text-gray-700" : "text-gray-500"
-            }`}
+          className={`text-[11px] mt-0.5 ${
+            disabled ? "text-gray-700" : "text-gray-500"
+          }`}
         >
           {subLabel}
         </div>

@@ -88,10 +88,12 @@ export function setAutoStart(enable: boolean) {
   const settings: Electron.Settings = {
     openAtLogin: enable,
     path: isPackaged ? process.execPath : undefined,
-    args: args
+    args: args,
   };
 
-  devDebug(`Setting AutoStart: ${enable}, Minimized: ${config.startMinimized}, Args: ${args.join(" ")}`);
+  devDebug(
+    `Setting AutoStart: ${enable}, Minimized: ${config.startMinimized}, Args: ${args.join(" ")}`,
+  );
   app.setLoginItemSettings(settings);
 }
 

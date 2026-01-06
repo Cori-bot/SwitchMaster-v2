@@ -77,13 +77,17 @@ export const UpdateModal: React.FC<UpdateModalProps> = ({
   };
 
   return (
-    <div className={`fixed inset-0 ${Z_INDEX_MODAL} bg-black/60 backdrop-blur-sm flex items-center justify-center p-6`}>
+    <div
+      className={`fixed inset-0 ${Z_INDEX_MODAL} bg-black/60 backdrop-blur-sm flex items-center justify-center p-6`}
+    >
       <div
         className={`bg-[#1a1a1a] border border-white/10 rounded-3xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh] shadow-2xl animate-in ${MODAL_ZOOM_IN} ${ANIMATION_DURATION}`}
       >
         <div className="p-8 overflow-y-auto scrollbar-hide">
           <div className="flex justify-between items-start mb-6">
-            <div className={`w-12 h-12 ${getIconBgColor()} rounded-xl flex items-center justify-center`}>
+            <div
+              className={`w-12 h-12 ${getIconBgColor()} rounded-xl flex items-center justify-center`}
+            >
               {getIcon()}
             </div>
             <button

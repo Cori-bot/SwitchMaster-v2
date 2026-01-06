@@ -46,11 +46,7 @@ const GameSelector: React.FC<GameSelectorProps> = ({
                 : "bg-black/40 border-white/5 text-gray-500 hover:border-white/10"
             }`}
         >
-          <img
-            src={leagueIcon}
-            alt="LoL"
-            className="w-5 h-5 object-contain"
-          />
+          <img src={leagueIcon} alt="LoL" className="w-5 h-5 object-contain" />
           <span className="font-bold">League of Legends</span>
         </button>
       </div>

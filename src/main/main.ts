@@ -144,11 +144,15 @@ async function initApp() {
     const isNewSession = lastBootTime !== currentBootTime.toString();
     const isFirstRunOfSession = isNewSession && uptime < 300;
     const config = getConfig();
-    const isMinimized = config.startMinimized && config.autoStart && (isAutoStartArg || isFirstRunOfSession);
+    const isMinimized =
+      config.startMinimized &&
+      config.autoStart &&
+      (isAutoStartArg || isFirstRunOfSession);
 
     // Gestion de la deuxième instance
     app.on("second-instance", (_event, commandLine) => {
-      const isSecondInstanceAuto = commandLine.includes("--minimized") || commandLine.includes("--hidden");
+      const isSecondInstanceAuto =
+        commandLine.includes("--minimized") || commandLine.includes("--hidden");
       if (isMinimized && isSecondInstanceAuto && uptime < 600) return;
 
       if (mainWindow) {
@@ -180,7 +184,8 @@ async function initApp() {
       await updateTrayMenu(launchGame, switchAccountTrigger);
     };
 
-    (global as any).refreshTray = () => updateTrayMenu(launchGame, switchAccountTrigger);
+    (global as any).refreshTray = () =>
+      updateTrayMenu(launchGame, switchAccountTrigger);
 
     setupIpcHandlers(mainWindow, {
       launchGame,
@@ -193,15 +198,20 @@ async function initApp() {
     setupUpdater(mainWindow);
     await (global as any).refreshTray();
 
-    monitorRiotProcess(mainWindow, () => { });
+    monitorRiotProcess(mainWindow, () => {});
 
-    setInterval(() => refreshAllAccountStats(mainWindow), STATS_REFRESH_INTERVAL_MS);
-    setTimeout(() => refreshAllAccountStats(mainWindow), INITIAL_STATS_REFRESH_DELAY_MS);
+    setInterval(
+      () => refreshAllAccountStats(mainWindow),
+      STATS_REFRESH_INTERVAL_MS,
+    );
+    setTimeout(
+      () => refreshAllAccountStats(mainWindow),
+      INITIAL_STATS_REFRESH_DELAY_MS,
+    );
 
     handleUpdateCheck(mainWindow).catch((err) =>
       devError("Update check failed:", err),
     );
-
   } catch (err) {
     devError("App initialization failed:", err);
   }

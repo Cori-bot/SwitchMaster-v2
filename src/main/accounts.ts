@@ -79,8 +79,16 @@ export async function addAccount(
 export async function updateAccount(
   accountData: Partial<Account>,
 ): Promise<Account> {
-  const { id, name, username, password, riotId, gameType, cardImage, isFavorite } =
-    accountData;
+  const {
+    id,
+    name,
+    username,
+    password,
+    riotId,
+    gameType,
+    cardImage,
+    isFavorite,
+  } = accountData;
   const accounts = await loadAccountsMeta();
   const index = accounts.findIndex((a) => a.id === id);
 
@@ -91,12 +99,14 @@ export async function updateAccount(
   const existing = accounts[index];
 
   // N-encrypter que si les identifiants sont différents de ceux déjà cryptés
-  const encryptedUsername = (username && username !== existing.username)
-    ? encryptData(username)
-    : existing.username;
-  const encryptedPassword = (password && password !== existing.password)
-    ? encryptData(password)
-    : existing.password;
+  const encryptedUsername =
+    username && username !== existing.username
+      ? encryptData(username)
+      : existing.username;
+  const encryptedPassword =
+    password && password !== existing.password
+      ? encryptData(password)
+      : existing.password;
 
   const updatedAccount: Account = {
     ...existing,
@@ -112,10 +122,9 @@ export async function updateAccount(
   // Ne re-fétcher les stats que si le Riot ID ou le type de jeu a changé.
   // On ne le fait plus si !stats pour éviter de bloquer lors d'un toggle favori.
   const needsStatsRefresh =
-    updatedAccount.riotId && (
-      updatedAccount.riotId !== existing.riotId ||
-      updatedAccount.gameType !== existing.gameType
-    );
+    updatedAccount.riotId &&
+    (updatedAccount.riotId !== existing.riotId ||
+      updatedAccount.gameType !== existing.gameType);
 
   if (needsStatsRefresh && updatedAccount.riotId) {
     try {

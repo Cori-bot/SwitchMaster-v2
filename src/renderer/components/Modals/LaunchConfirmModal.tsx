@@ -28,7 +28,9 @@ export const LaunchConfirmModal: React.FC<LaunchConfirmModalProps> = ({
 }) => {
   if (!isOpen) return null;
   return (
-    <div className={`fixed inset-0 ${Z_INDEX_MODAL} bg-black/60 backdrop-blur-sm flex items-center justify-center p-6`}>
+    <div
+      className={`fixed inset-0 ${Z_INDEX_MODAL} bg-black/60 backdrop-blur-sm flex items-center justify-center p-6`}
+    >
       <div
         className={`bg-[#1a1a1a] border border-white/10 rounded-3xl w-full max-w-sm overflow-hidden flex flex-col max-h-[90vh] shadow-2xl animate-in ${MODAL_ZOOM_IN} ${ANIMATION_DURATION} relative`}
       >

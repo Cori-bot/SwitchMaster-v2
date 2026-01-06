@@ -6,7 +6,8 @@ import path from "path";
 import { devError } from "./logger";
 
 // Handle different import patterns for ESM/CJS compatibility
-const autoUpdater: AppUpdater = (electronUpdater as any).autoUpdater ||
+const autoUpdater: AppUpdater =
+  (electronUpdater as any).autoUpdater ||
   (electronUpdater as any).default?.autoUpdater ||
   (electronUpdater as any).default ||
   electronUpdater;
@@ -28,7 +29,7 @@ export function setupUpdater(mainWindow: BrowserWindow | null) {
     if (mainWindow)
       mainWindow.webContents.send("update-status", {
         status: "checking",
-        isManual: isManualCheck
+        isManual: isManualCheck,
       });
   });
 
@@ -65,7 +66,7 @@ export function setupUpdater(mainWindow: BrowserWindow | null) {
     if (mainWindow)
       mainWindow.webContents.send("update-status", {
         status: "not-available",
-        isManual: isManualCheck
+        isManual: isManualCheck,
       });
   });
 
@@ -74,17 +75,22 @@ export function setupUpdater(mainWindow: BrowserWindow | null) {
       let errorMessage = "Erreur lors de la mise à jour";
 
       if (err.message.includes("GitHub") || err.message.includes("github")) {
-        errorMessage = "Erreur de connexion à GitHub. Vérifiez votre connexion internet.";
+        errorMessage =
+          "Erreur de connexion à GitHub. Vérifiez votre connexion internet.";
       }
 
       if (err.message.includes("404") || err.message.includes("latest.yml")) {
-        errorMessage = "Fichier de mise à jour introuvable sur le serveur (404).";
+        errorMessage =
+          "Fichier de mise à jour introuvable sur le serveur (404).";
         devError("Update file missing on GitHub:", err.message);
       }
 
       // Ignore semver errors from GitHub tags (like "2.2" which is not x.y.z)
       if (err.message.includes("Invalid Version")) {
-        devError("Semver error ignored (likely bad tag on GitHub):", err.message);
+        devError(
+          "Semver error ignored (likely bad tag on GitHub):",
+          err.message,
+        );
         mainWindow.webContents.send("update-status", {
           status: "not-available",
           isManual: isManualCheck,
@@ -152,7 +158,9 @@ export async function handleUpdateCheck(
 
       // Handle semver error in manual check too
       if (msg.includes("Invalid Version")) {
-        devError("Semver error detected during update check (likely bad GitHub tag). Ignoring.");
+        devError(
+          "Semver error detected during update check (likely bad GitHub tag). Ignoring.",
+        );
         if (mainWindow && isManual) {
           mainWindow.webContents.send("update-status", {
             status: "not-available",

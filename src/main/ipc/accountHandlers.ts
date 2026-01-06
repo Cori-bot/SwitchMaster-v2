@@ -11,7 +11,9 @@ import { fetchAccountStats } from "../statsService";
 import { Account } from "../../shared/types";
 import { safeHandle } from "./utils";
 
-export function registerAccountHandlers(getMainWindow: () => BrowserWindow | null) {
+export function registerAccountHandlers(
+  getMainWindow: () => BrowserWindow | null,
+) {
   const notifyUpdate = async () => {
     const accounts = await loadAccountsMeta();
     const mainWin = getMainWindow();
@@ -32,30 +34,21 @@ export function registerAccountHandlers(getMainWindow: () => BrowserWindow | nul
     "get-account-credentials",
     async (_e, id) => await getAccountCredentials(id as string),
   );
-  safeHandle(
-    "add-account",
-    async (_e, data) => {
-      const acc = await addAccount(data as Partial<Account>);
-      await notifyUpdate();
-      return acc;
-    }
-  );
-  safeHandle(
-    "update-account",
-    async (_e, data) => {
-      const acc = await updateAccount(data as Account);
-      await notifyUpdate();
-      return acc;
-    }
-  );
-  safeHandle(
-    "delete-account",
-    async (_e, id) => {
-      const res = await deleteAccount(id as string);
-      await notifyUpdate();
-      return res;
-    }
-  );
+  safeHandle("add-account", async (_e, data) => {
+    const acc = await addAccount(data as Partial<Account>);
+    await notifyUpdate();
+    return acc;
+  });
+  safeHandle("update-account", async (_e, data) => {
+    const acc = await updateAccount(data as Account);
+    await notifyUpdate();
+    return acc;
+  });
+  safeHandle("delete-account", async (_e, id) => {
+    const res = await deleteAccount(id as string);
+    await notifyUpdate();
+    return res;
+  });
 
   safeHandle("reorder-accounts", async (_e, idsRaw) => {
     const ids = idsRaw as string[];

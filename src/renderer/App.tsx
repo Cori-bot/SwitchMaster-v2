@@ -47,7 +47,9 @@ const App: React.FC = () => {
   }
 
   const [activeView, setActiveView] = useState("dashboard");
-  const [filter, setFilter] = useState<"all" | "favorite" | "valorant" | "league">("all");
+  const [filter, setFilter] = useState<
+    "all" | "favorite" | "valorant" | "league"
+  >("all");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
   const [securityMode, setSecurityMode] = useState<
@@ -84,28 +86,36 @@ const App: React.FC = () => {
   const { notifications, showSuccess, showError, removeNotification } =
     useNotifications();
 
-  const handleSwitch = useCallback(async (accountId: string, askToLaunch = true) => {
-    if (askToLaunch) {
-      const account = accounts.find((a) => a.id === accountId);
-      setLaunchConfirm({
-        isOpen: true,
-        accountId,
-        gameType: account?.gameType || "valorant",
-      });
-      return;
-    }
-
-    try {
-      const switchResult = await window.ipc.invoke("switch-account", accountId);
-      if (switchResult.success) {
-        showSuccess("Changement de compte réussi");
-      } else {
-        showError(switchResult.error || "Erreur lors du changement de compte");
+  const handleSwitch = useCallback(
+    async (accountId: string, askToLaunch = true) => {
+      if (askToLaunch) {
+        const account = accounts.find((a) => a.id === accountId);
+        setLaunchConfirm({
+          isOpen: true,
+          accountId,
+          gameType: account?.gameType || "valorant",
+        });
+        return;
       }
-    } catch (err) {
-      showError("Erreur de communication avec le système");
-    }
-  }, [accounts, showSuccess, showError]);
+
+      try {
+        const switchResult = await window.ipc.invoke(
+          "switch-account",
+          accountId,
+        );
+        if (switchResult.success) {
+          showSuccess("Changement de compte réussi");
+        } else {
+          showError(
+            switchResult.error || "Erreur lors du changement de compte",
+          );
+        }
+      } catch (err) {
+        showError("Erreur de communication avec le système");
+      }
+    },
+    [accounts, showSuccess, showError],
+  );
 
   const {
     status,
@@ -164,20 +174,23 @@ const App: React.FC = () => {
     }
   };
 
-  const handleAddOrUpdate = useCallback(async (accountData: Partial<Account>) => {
-    try {
-      if (accountData.id) {
-        await updateAccount(accountData as Account);
-        showSuccess("Compte mis à jour");
-      } else {
-        await addAccount(accountData);
-        showSuccess("Compte ajouté avec succès");
+  const handleAddOrUpdate = useCallback(
+    async (accountData: Partial<Account>) => {
+      try {
+        if (accountData.id) {
+          await updateAccount(accountData as Account);
+          showSuccess("Compte mis à jour");
+        } else {
+          await addAccount(accountData);
+          showSuccess("Compte ajouté avec succès");
+        }
+        // refreshAccounts() supprimé car géré par le hook via IPC
+      } catch (err) {
+        showError("Erreur lors de l'enregistrement");
       }
-      // refreshAccounts() supprimé car géré par le hook via IPC
-    } catch (err) {
-      showError("Erreur lors de l'enregistrement");
-    }
-  }, [updateAccount, addAccount, showSuccess, showError]);
+    },
+    [updateAccount, addAccount, showSuccess, showError],
+  );
 
   const handleDelete = useCallback((accountId: string) => {
     setDeleteConfirm({ isOpen: true, accountId });
@@ -201,44 +214,53 @@ const App: React.FC = () => {
     setIsAddModalOpen(true);
   }, []);
 
-  const handleVerifyPin = useCallback(async (pin: string) => {
-    if (securityMode === "disable") {
-      const success = await disablePin(pin);
-      if (success) {
+  const handleVerifyPin = useCallback(
+    async (pin: string) => {
+      if (securityMode === "disable") {
+        const success = await disablePin(pin);
+        if (success) {
+          setSecurityMode(null);
+          showSuccess("Protection par PIN désactivée");
+          await refreshConfig();
+          return true;
+        }
+        return false;
+      }
+
+      const isValid = await verifyPin(pin);
+      if (isValid) {
         setSecurityMode(null);
-        showSuccess("Protection par PIN désactivée");
-        await refreshConfig();
+        showSuccess("Accès autorisé");
         return true;
       }
       return false;
-    }
+    },
+    [securityMode, disablePin, verifyPin, showSuccess, refreshConfig],
+  );
 
-    const isValid = await verifyPin(pin);
-    if (isValid) {
-      setSecurityMode(null);
-      showSuccess("Accès autorisé");
-      return true;
-    }
-    return false;
-  }, [securityMode, disablePin, verifyPin, showSuccess, refreshConfig]);
+  const handleSetPin = useCallback(
+    async (pin: string) => {
+      const success = await setPin(pin);
+      if (success) {
+        setSecurityMode(null);
+        showSuccess("Code PIN configuré avec succès");
+        await refreshConfig();
+      }
+    },
+    [setPin, showSuccess, refreshConfig],
+  );
 
-  const handleSetPin = useCallback(async (pin: string) => {
-    const success = await setPin(pin);
-    if (success) {
-      setSecurityMode(null);
-      showSuccess("Code PIN configuré avec succès");
-      await refreshConfig();
-    }
-  }, [setPin, showSuccess, refreshConfig]);
-
-  const handleUpdateConfig = useCallback(async (newConfig: Partial<Config>) => {
-    try {
-      await updateConfig(newConfig);
-      showSuccess("Paramètres mis à jour");
-    } catch (err) {
-      showError("Erreur de mise à jour");
-    }
-  }, [updateConfig, showSuccess, showError]);
+  const handleUpdateConfig = useCallback(
+    async (newConfig: Partial<Config>) => {
+      try {
+        await updateConfig(newConfig);
+        showSuccess("Paramètres mis à jour");
+      } catch (err) {
+        showError("Erreur de mise à jour");
+      }
+    },
+    [updateConfig, showSuccess, showError],
+  );
 
   const confirmGPUChange = useCallback(async () => {
     try {
@@ -250,29 +272,28 @@ const App: React.FC = () => {
     }
   }, [gpuConfirm, updateConfig, showError]);
 
-  const handleToggleFavorite = useCallback(async (account: Account) => {
-    try {
-      // Appel avec un payload minimal pour éviter tout problème de re-chiffrement en prod
-      await updateAccount({
-        id: account.id,
-        isFavorite: !account.isFavorite,
-      } as Account);
+  const handleToggleFavorite = useCallback(
+    async (account: Account) => {
+      try {
+        // Appel avec un payload minimal pour éviter tout problème de re-chiffrement en prod
+        await updateAccount({
+          id: account.id,
+          isFavorite: !account.isFavorite,
+        } as Account);
 
-      showSuccess(
-        !account.isFavorite ? "Ajouté aux favoris" : "Retiré des favoris"
-      );
-    } catch (err) {
-      showError("Erreur lors de la mise à jour du favori");
-    }
-  }, [updateAccount, showSuccess, showError]);
+        showSuccess(
+          !account.isFavorite ? "Ajouté aux favoris" : "Retiré des favoris",
+        );
+      } catch (err) {
+        showError("Erreur lors de la mise à jour du favori");
+      }
+    },
+    [updateAccount, showSuccess, showError],
+  );
 
   return (
     <div className="flex h-screen bg-[#0a0a0a] text-white overflow-hidden font-sans">
-      <AnimatePresence>
-        {isInitialLoading && <LoadingScreen />}
-      </AnimatePresence>
-
-
+      <AnimatePresence>{isInitialLoading && <LoadingScreen />}</AnimatePresence>
 
       {securityMode && (
         <SecurityLock
@@ -283,19 +304,19 @@ const App: React.FC = () => {
         />
       )}
 
-      {!isInitialLoading && config && !config.hasSeenOnboarding && !securityMode && (
-        <GuideOnboarding
-          config={config}
-          onUpdateConfig={handleUpdateConfig}
-          onSelectRiotPath={selectRiotPath}
-          onFinish={refreshAccounts}
-        />
-      )}
+      {!isInitialLoading &&
+        config &&
+        !config.hasSeenOnboarding &&
+        !securityMode && (
+          <GuideOnboarding
+            config={config}
+            onUpdateConfig={handleUpdateConfig}
+            onSelectRiotPath={selectRiotPath}
+            onFinish={refreshAccounts}
+          />
+        )}
 
-      <Sidebar
-        activeView={activeView}
-        onViewChange={setActiveView}
-      />
+      <Sidebar activeView={activeView} onViewChange={setActiveView} />
 
       <div className="flex-1 flex flex-col relative overflow-hidden">
         <TopBar

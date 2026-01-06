@@ -1,13 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  X,
-  User,
-  Hash,
-  Key,
-  Lock,
-  Eye,
-  EyeOff,
-} from "lucide-react";
+import { X, User, Hash, Key, Lock, Eye, EyeOff } from "lucide-react";
 import { Account } from "../hooks/useAccounts";
 
 import {
@@ -108,7 +100,9 @@ const AddAccountModal: React.FC<AddAccountModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className={`fixed inset-0 ${Z_INDEX_MODAL} flex items-center justify-center p-6`}>
+    <div
+      className={`fixed inset-0 ${Z_INDEX_MODAL} flex items-center justify-center p-6`}
+    >
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
