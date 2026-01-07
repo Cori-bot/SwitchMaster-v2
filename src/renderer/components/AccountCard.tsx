@@ -21,8 +21,8 @@ interface AccountCardProps {
   onEdit: (account: Account) => void;
   onToggleFavorite: (account: Account) => void;
   onDragStart: (e: React.DragEvent, id: string) => void;
-  onDragOver: (e: React.DragEvent) => void;
-  onDragEnd: (e: React.DragEvent) => void;
+  onDragOver: (e: React.DragEvent, id: string) => void;
+  onDragEnd: (e: React.DragEvent, id: string) => void;
   onDragEnter: (e: React.DragEvent, id: string) => void;
   onDrop: (e: React.DragEvent, id: string) => void;
 }
@@ -106,8 +106,8 @@ const AccountCard: React.FC<AccountCardProps> = ({
     <div
       draggable
       onDragStart={(e) => onDragStart(e, id)}
-      onDragOver={(e) => onDragOver(e)}
-      onDragEnd={(e) => onDragEnd(e)}
+      onDragOver={(e) => onDragOver(e, id)}
+      onDragEnd={(e) => onDragEnd(e, id)}
       onDragEnter={(e) => onDragEnter(e, id)}
       onDrop={(e) => onDrop(e, id)}
       className={`group relative bg-[#1a1a1a] rounded-2xl border-2 transition-all ${ANIMATION_DURATION_LONG} ease-in-out cursor-grab active:cursor-grabbing active:scale-[0.98] active:opacity-80 ${isActive

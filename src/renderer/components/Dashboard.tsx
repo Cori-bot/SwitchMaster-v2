@@ -59,6 +59,16 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [draggedId, setDraggedId] = React.useState<string | null>(null);
   const [localAccounts, setLocalAccounts] = React.useState<Account[]>(accounts);
 
+  // Synchronous refs to access latest state in callbacks without re-creating them
+  const localAccountsRef = React.useRef(localAccounts);
+  localAccountsRef.current = localAccounts;
+
+  const draggedIdRef = React.useRef(draggedId);
+  draggedIdRef.current = draggedId;
+
+  const filterRef = React.useRef(filter);
+  filterRef.current = filter;
+
   // Synchroniser localAccounts avec les props quand on ne drag pas
   React.useEffect(() => {
     if (!draggedId) {
@@ -75,8 +85,8 @@ const Dashboard: React.FC<DashboardProps> = ({
     });
   }, [localAccounts, filter]);
 
-  const handleDragStart = (e: React.DragEvent, id: string) => {
-    if (filter !== "all") return;
+  const handleDragStart = React.useCallback((e: React.DragEvent, id: string) => {
+    if (filterRef.current !== "all") return;
     e.dataTransfer.setData("accountId", id);
     setDraggedId(id);
     e.dataTransfer.effectAllowed = "move";
@@ -87,17 +97,19 @@ const Dashboard: React.FC<DashboardProps> = ({
     document.body.appendChild(ghost);
     e.dataTransfer.setDragImage(ghost, 0, 0);
     setTimeout(() => document.body.removeChild(ghost), 0);
-  };
+  }, []);
 
-  const handleDragOver = (e: React.DragEvent, targetId: string) => {
-    if (filter !== "all") return;
+  const handleDragOver = React.useCallback((e: React.DragEvent, targetId: string) => {
+    if (filterRef.current !== "all") return;
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
 
-    if (!draggedId || draggedId === targetId) return;
+    const currentDraggedId = draggedIdRef.current;
+    if (!currentDraggedId || currentDraggedId === targetId) return;
 
-    const sourceIndex = localAccounts.findIndex((a) => a.id === draggedId);
-    const targetIndex = localAccounts.findIndex((a) => a.id === targetId);
+    const currentAccounts = localAccountsRef.current;
+    const sourceIndex = currentAccounts.findIndex((a) => a.id === currentDraggedId);
+    const targetIndex = currentAccounts.findIndex((a) => a.id === targetId);
     if (sourceIndex === -1 || targetIndex === -1) return;
 
     const targetElement = e.currentTarget as HTMLElement;
@@ -110,28 +122,32 @@ const Dashboard: React.FC<DashboardProps> = ({
       : relativeX < 0.67 || relativeY < 0.67;
 
     if (shouldSwap) {
-      const newAccounts = [...localAccounts];
+      const newAccounts = [...currentAccounts];
       const [removed] = newAccounts.splice(sourceIndex, 1);
       newAccounts.splice(targetIndex, 0, removed);
 
-      const currentIds = localAccounts.map(a => a.id).join(',');
+      const currentIds = currentAccounts.map(a => a.id).join(',');
       const newIds = newAccounts.map(a => a.id).join(',');
 
       if (currentIds !== newIds) {
         setLocalAccounts(newAccounts);
       }
     }
-  };
+  }, []);
 
-  const handleDragEnd = () => {
+  const handleDragEnd = React.useCallback(() => {
     setDraggedId(null);
-  };
+  }, []);
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = React.useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setDraggedId(null);
-    onReorder(localAccounts.map((a) => a.id));
-  };
+    onReorder(localAccountsRef.current.map((a) => a.id));
+  }, [onReorder]);
+
+  const handleDragEnter = React.useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+  }, []);
 
   if (accounts.length === 0) {
     return (
@@ -187,9 +203,9 @@ const Dashboard: React.FC<DashboardProps> = ({
                 onEdit={onEdit}
                 onToggleFavorite={onToggleFavorite}
                 onDragStart={handleDragStart}
-                onDragOver={(e) => handleDragOver(e, account.id)}
+                onDragOver={handleDragOver}
                 onDragEnd={handleDragEnd}
-                onDragEnter={(e) => e.preventDefault()}
+                onDragEnter={handleDragEnter}
                 onDrop={handleDrop}
               />
             </motion.div>
