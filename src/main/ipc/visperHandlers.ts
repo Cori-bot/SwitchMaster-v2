@@ -46,7 +46,7 @@ export function registerVisperHandlers(getWin: () => BrowserWindow | null) {
     });
 
     // --- PARTY HANDLERS ---
-    
+
     safeHandle("visper-get-party", async (_event, session: VisperAuthSession) => {
         return await RiotService.getPartyState(session);
     });
@@ -63,6 +63,11 @@ export function registerVisperHandlers(getWin: () => BrowserWindow | null) {
 
     safeHandle("visper-set-preferred-pods", async (_event, session: VisperAuthSession, partyId: string, podIds: string[]) => {
         await RiotService.setPreferredPods(session, partyId, podIds);
+        return true;
+    });
+
+    safeHandle("visper-refresh-pings", async (_event, session: VisperAuthSession, partyId: string) => {
+        await RiotService.refreshPings(session, partyId);
         return true;
     });
 
@@ -87,6 +92,7 @@ export function registerVisperHandlers(getWin: () => BrowserWindow | null) {
     });
 
     safeHandle("visper-generate-code", async (_event, session: VisperAuthSession, partyId: string) => {
+        devLog("[IPC] visper-generate-code called for party:", partyId);
         await RiotService.generatePartyCode(session, partyId);
         return true;
     });
@@ -108,5 +114,19 @@ export function registerVisperHandlers(getWin: () => BrowserWindow | null) {
 
     safeHandle("visper-get-friends", async (_event, session: VisperAuthSession) => {
         return await RiotService.getFriends(session);
+    });
+
+    // --- AGENT SELECTION ---
+
+    safeHandle("visper-get-pregame-match", async (_event, session: VisperAuthSession) => {
+        return await RiotService.getPregameMatchId(session);
+    });
+
+    safeHandle("visper-select-agent", async (_event, session: VisperAuthSession, matchId: string, agentId: string) => {
+        return await RiotService.selectAgent(session, matchId, agentId);
+    });
+
+    safeHandle("visper-lock-agent", async (_event, session: VisperAuthSession, matchId: string, agentId: string) => {
+        return await RiotService.lockAgent(session, matchId, agentId);
     });
 }
