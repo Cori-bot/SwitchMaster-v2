@@ -3,6 +3,7 @@ import path from "path";
 import { pathToFileURL } from "url";
 import { ensureAppData, loadConfig, getConfig, loadConfigSync } from "./config";
 import { devLog, devError } from "./logger";
+import { isValidImageExtension } from "./securityUtils";
 
 // Capture globale des erreurs fatales (Production Stability)
 process.on("uncaughtException", (err) => {
@@ -100,6 +101,13 @@ async function initApp() {
 
         if (process.platform === "win32" && decodedPath.startsWith("/")) {
           decodedPath = decodedPath.substring(1);
+        }
+
+        if (!isValidImageExtension(decodedPath)) {
+          devError(
+            `[sm-img] Security Warning: Blocked access to non-image file: ${decodedPath}`,
+          );
+          return new Response("Forbidden", { status: 403 });
         }
 
         const fileUrl = pathToFileURL(decodedPath).toString();
