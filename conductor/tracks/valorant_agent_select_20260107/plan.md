@@ -6,7 +6,7 @@ Ce plan suit le workflow TDD (Test-Driven Development) défini dans `conductor/w
 
 ## Phase 1: Logique Backend & Intégration API
 
-### [~] Task: Implémenter la méthode de verrouillage d'agent dans `riotService`
+### [x] 362c38e Task: Implémenter la méthode de verrouillage d'agent dans `riotService`
 - [ ] Sous-tâche: Écrire les tests unitaires pour la méthode `lockAgent` dans `riotService.test.ts`
 - [ ] Sous-tâche: Implémenter la méthode `lockAgent` dans `src/main/visper/riotService.ts`
 - [ ] Sous-tâche: Vérifier que les tests passent et la couverture > 80%
