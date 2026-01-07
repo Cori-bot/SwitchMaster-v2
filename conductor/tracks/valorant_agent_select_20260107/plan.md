@@ -11,7 +11,7 @@ Ce plan suit le workflow TDD (Test-Driven Development) défini dans `conductor/w
 - [ ] Sous-tâche: Implémenter la méthode `lockAgent` dans `src/main/visper/riotService.ts`
 - [ ] Sous-tâche: Vérifier que les tests passent et la couverture > 80%
 
-### [~] Task: Configurer les gestionnaires IPC pour la sélection d'agent
+### [x] a63f92a Task: Configurer les gestionnaires IPC pour la sélection d'agent
 - [ ] Sous-tâche: Écrire les tests pour les nouveaux IPC handlers dans `visperHandlers.test.ts`
 - [ ] Sous-tâche: Ajouter les handlers `visper:lock-agent` dans `src/main/ipc/visperHandlers.ts`
 - [ ] Sous-tâche: Mettre à jour les types partagés dans `src/shared/visper-types.ts`
