@@ -5,6 +5,22 @@ param (
     [string]$Password = ""
 )
 
+# Gestion de l'input via STDIN (Sécurité: éviter les arguments de ligne de commande)
+if ([Console]::IsInputRedirected) {
+    try {
+        $inputData = [Console]::In.ReadToEnd()
+        if (-not [string]::IsNullOrWhiteSpace($inputData)) {
+            $jsonInput = $inputData | ConvertFrom-Json
+            if ($jsonInput.Username) { $Username = $jsonInput.Username }
+            if ($jsonInput.Password) { $Password = $jsonInput.Password }
+        }
+    }
+    catch {
+        Write-Host "ERROR: Failed to parse input"
+        exit 1
+    }
+}
+
 Add-Type -AssemblyName System.Windows.Forms
 
 # Constantes de timing optimisées
