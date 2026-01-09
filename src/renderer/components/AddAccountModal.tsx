@@ -124,6 +124,8 @@ const AddAccountModal: React.FC<AddAccountModalProps> = ({
           <button
             onClick={onClose}
             className="p-2 hover:bg-white/5 rounded-xl text-gray-400 hover:text-white transition-colors"
+            aria-label="Fermer"
+            title="Fermer"
           >
             <X size={ICON_SIZE_MEDIUM} />
           </button>
@@ -199,6 +201,8 @@ const AddAccountModal: React.FC<AddAccountModalProps> = ({
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+                    aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                    title={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
                   >
                     {showPassword ? (
                       <EyeOff size={ICON_SIZE_SMALL} />
