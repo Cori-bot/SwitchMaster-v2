@@ -5,6 +5,3 @@ build
 __tests__
 update.md
 vitest.config.js
-endpoints.md
-endpoints-explain.md
-gemini.md

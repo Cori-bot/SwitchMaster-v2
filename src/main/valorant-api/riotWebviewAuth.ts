@@ -14,6 +14,7 @@ export interface VisperAuthSession {
     competitiveTier?: number;
     playerCardId?: string;
     region?: string;
+    clientVersion?: string;
 }
 
 export class RiotWebviewAuth {
@@ -87,10 +88,10 @@ export class RiotWebviewAuth {
             loginWin.webContents.on("did-finish-load", async () => {
                 if (loginWin.webContents.getURL().includes("auth.riotgames.com")) {
                     try {
-                        const logoPath = app.isPackaged 
+                        const logoPath = app.isPackaged
                             ? path.join(process.resourcesPath, "assets", "visper_logo.png")
                             : path.join(process.cwd(), "src", "assets", "visper_logo.png");
-                        
+
                         if (fs.existsSync(logoPath)) {
                             const logoBase64 = fs.readFileSync(logoPath).toString("base64");
                             const logoDataUri = `data:image/png;base64,${logoBase64}`;
@@ -339,7 +340,8 @@ export class RiotWebviewAuth {
                 accountLevel,
                 competitiveTier,
                 playerCardId,
-                region
+                region,
+                clientVersion
             };
         } catch (error) {
             devError("[VisperAuth] Fatal error during finishAuth:", error);

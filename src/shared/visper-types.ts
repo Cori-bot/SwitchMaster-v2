@@ -11,6 +11,7 @@ export interface PartyMember {
         HideAccountLevel: boolean;
     };
     IsReady: boolean;
+    IsOwner?: boolean;
     Pings: { Ping: number; GamePodID: string }[];
 }
 
@@ -61,6 +62,23 @@ export interface Friend {
     status: "chat" | "dnd" | "away" | "offline" | "mobile";
     otherGame?: boolean; // Si sur LoL ou autre
     note?: string;
+
+    // Rich Presence Data
+    product?: "valorant" | "league_of_legends" | "riot_client" | "unknown";
+    richPresence?: {
+        partySize?: number;
+        partyMaxSize?: number;
+        partyState?: "MENUS" | "PREGAME" | "INGAME" | "UNKNOWN";
+        matchScore?: string; // "13-12"
+        mapId?: string;
+        mapName?: string; // "Haven"
+        gameMode?: string; // "Competitive", "Unrated"
+        championId?: string;
+        playerCardId?: string;
+        playerTitleId?: string;
+        level?: number;
+        rank?: number;
+    }
 }
 
 export const QUEUES = [

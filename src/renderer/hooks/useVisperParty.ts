@@ -10,31 +10,41 @@ export const useVisperParty = (session: VisperAuthSession | null) => {
     const [initialLoading, setInitialLoading] = useState(true);
     const [isPolling, setIsPolling] = useState(false);
     const [retryCountdown, setRetryCountdown] = useState(0);
-    
+
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
     const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const friendsIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
     const fetchParty = useCallback(async () => {
         if (!session) return;
-        
-        // Si on est en erreur, on affiche l'état de polling
+
+        // Si on est en erreur, on affiche l'état de polling visuel
         if (error) {
             setIsPolling(true);
-            await new Promise(r => setTimeout(r, 3500)); // Augmenté à 3.5s pour durer ~4s avec l'IPC
+            await new Promise(r => setTimeout(r, 3500));
         }
 
         try {
             const data = await (window as any).ipc.invoke("visper-get-party", session);
             if (data) {
-                setParty(data);
+                // Si c'est la première fois qu'on charge la party, on lance un refresh pings
+                if (!party && data.partyId) {
+                    (window as any).ipc.invoke("visper-refresh-pings", session, data.partyId).catch(() => { });
+                }
+
+                // On met à jour l'état même si on pense qu'il est identique, pour capter les changements subtils (leader, ready)
+                setParty(prev => {
+                    // Petite optimisation : si JSON stringify est identique, on ne trigger pas de re-render inutile
+                    // Mais ici, on veut être sûr d'avoir la dernière version
+                    return data;
+                });
                 setError(null);
                 setInitialLoading(false);
-                setRetryCountdown(0); // Reset countdown on success
+                setRetryCountdown(0);
             } else {
                 setParty(null);
                 setError("SESSION_NOT_FOUND");
-                if (!error) setRetryCountdown(10); // Start countdown if new error
+                if (!error) setRetryCountdown(10);
             }
         } catch (err: any) {
             const errorMessage = err?.message || String(err);
@@ -49,7 +59,7 @@ export const useVisperParty = (session: VisperAuthSession | null) => {
         } finally {
             setIsPolling(false);
         }
-    }, [session, error]);
+    }, [session, error]); // Dépendance à error pour le retry
 
     const fetchFriends = useCallback(async () => {
         if (!session) return;
@@ -69,16 +79,15 @@ export const useVisperParty = (session: VisperAuthSession | null) => {
         return () => clearTimeout(timer);
     }, []);
 
-    // Gestion du compte à rebours
+    // Gestion du compte à rebours (uniquement si erreur)
     useEffect(() => {
         if (error === "SESSION_NOT_FOUND" && !isPolling) {
-            setRetryCountdown(10); // Reset à 10s au début de l'attente
+            setRetryCountdown(10);
             countdownIntervalRef.current = setInterval(() => {
                 setRetryCountdown(prev => {
                     if (prev <= 1) {
-                        // À la fin du compte à rebours, on déclenche un fetch
                         fetchParty();
-                        return 10; // Reset pour le prochain cycle (sera écrasé si fetch réussit)
+                        return 10;
                     }
                     return prev - 1;
                 });
@@ -90,7 +99,7 @@ export const useVisperParty = (session: VisperAuthSession | null) => {
         return () => {
             if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
         };
-    }, [error, isPolling, fetchParty]); // Dépendance à isPolling pour pauser le countdown pendant le fetch
+    }, [error, isPolling, fetchParty]);
 
     // Initial fetch only
     useEffect(() => {
@@ -113,8 +122,21 @@ export const useVisperParty = (session: VisperAuthSession | null) => {
         };
     }, [session, fetchFriends]);
 
+    // Polling Party SYSTÉMATIQUE (5s) si pas d'erreur
+    // C'est ici que ça manquait peut-être de robustesse si le composant re-rendait
+    useEffect(() => {
+        if (session && !error) {
+            intervalRef.current = setInterval(fetchParty, 5000);
+        } else {
+            if (intervalRef.current) clearInterval(intervalRef.current);
+        }
+        return () => {
+            if (intervalRef.current) clearInterval(intervalRef.current);
+        };
+    }, [session, error, fetchParty]);
 
-    // Actions
+
+    // Actions (inchangées)
     const setReady = async (isReady: boolean) => {
         if (!session || !party) return;
         try {
@@ -236,13 +258,23 @@ export const useVisperParty = (session: VisperAuthSession | null) => {
         }
     };
 
+    const refreshPings = async () => {
+        if (!session || !party) return;
+        try {
+            await (window as any).ipc.invoke("visper-refresh-pings", session, party.partyId);
+            // Pas besoin de fetchParty immédiat, le prochain tick le prendra, ou le client mettra qques secondes
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
     return {
         party,
         friends,
         loading,
         initialLoading,
         isPolling,
-        retryCountdown, // Exposé pour l'UI
+        retryCountdown,
         error,
         refresh: fetchParty,
         refreshFriends: fetchFriends,
@@ -257,7 +289,8 @@ export const useVisperParty = (session: VisperAuthSession | null) => {
             generateCode,
             removeCode,
             inviteByName,
-            joinByCode
+            joinByCode,
+            refreshPings
         }
     };
 };
