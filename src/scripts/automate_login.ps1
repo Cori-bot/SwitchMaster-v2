@@ -5,6 +5,19 @@ param (
     [string]$Password = ""
 )
 
+# Lire les identifiants depuis stdin si disponible
+if ([Console]::IsInputRedirected) {
+    try {
+        $inputData = [Console]::In.ReadToEnd() | ConvertFrom-Json
+        if ($inputData.Username) { $Username = $inputData.Username }
+        if ($inputData.Password) { $Password = $inputData.Password }
+    }
+    catch {
+        Write-Host "ERROR: Failed to read from stdin"
+        exit 1
+    }
+}
+
 Add-Type -AssemblyName System.Windows.Forms
 
 # Constantes de timing optimisées
