@@ -5,6 +5,19 @@ param (
     [string]$Password = ""
 )
 
+# Support reading credentials from stdin (JSON format)
+if ([Console]::IsInputRedirected) {
+    try {
+        $inputData = [Console]::In.ReadToEnd() | ConvertFrom-Json
+        if ($inputData.username) { $Username = $inputData.username }
+        if ($inputData.password) { $Password = $inputData.password }
+    }
+    catch {
+        # Log error but continue (might have been provided via args)
+        Write-Host "WARNING: Failed to read from stdin"
+    }
+}
+
 Add-Type -AssemblyName System.Windows.Forms
 
 # Constantes de timing optimisées
