@@ -123,6 +123,8 @@ const AddAccountModal: React.FC<AddAccountModalProps> = ({
           </h2>
           <button
             onClick={onClose}
+            aria-label="Fermer"
+            title="Fermer"
             className="p-2 hover:bg-white/5 rounded-xl text-gray-400 hover:text-white transition-colors"
           >
             <X size={ICON_SIZE_MEDIUM} />
@@ -135,7 +137,10 @@ const AddAccountModal: React.FC<AddAccountModalProps> = ({
         >
           <div className="space-y-4">
             <div>
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block ml-1">
+              <label
+                htmlFor="account-name"
+                className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block ml-1"
+              >
                 Nom du compte
               </label>
               <div className="relative group">
@@ -143,6 +148,7 @@ const AddAccountModal: React.FC<AddAccountModalProps> = ({
                   <User size={ICON_SIZE_SMALL} />
                 </div>
                 <input
+                  id="account-name"
                   type="text"
                   required
                   value={name}
@@ -157,7 +163,10 @@ const AddAccountModal: React.FC<AddAccountModalProps> = ({
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block ml-1">
+                <label
+                  htmlFor="account-username"
+                  className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block ml-1"
+                >
                   Nom d'utilisateur
                 </label>
                 <div className="relative group">
@@ -165,6 +174,7 @@ const AddAccountModal: React.FC<AddAccountModalProps> = ({
                     <Key size={ICON_SIZE_SMALL} />
                   </div>
                   <input
+                    id="account-username"
                     type="text"
                     required
                     value={username}
@@ -178,7 +188,10 @@ const AddAccountModal: React.FC<AddAccountModalProps> = ({
               </div>
 
               <div>
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block ml-1">
+                <label
+                  htmlFor="account-password"
+                  className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block ml-1"
+                >
                   Mot de passe
                 </label>
                 <div className="relative group">
@@ -186,6 +199,7 @@ const AddAccountModal: React.FC<AddAccountModalProps> = ({
                     <Lock size={ICON_SIZE_SMALL} />
                   </div>
                   <input
+                    id="account-password"
                     type={showPassword ? "text" : "password"}
                     required
                     value={password}
@@ -198,6 +212,8 @@ const AddAccountModal: React.FC<AddAccountModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                    title={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
                   >
                     {showPassword ? (
@@ -211,7 +227,10 @@ const AddAccountModal: React.FC<AddAccountModalProps> = ({
             </div>
 
             <div>
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block ml-1">
+              <label
+                htmlFor="account-riot-id"
+                className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block ml-1"
+              >
                 Riot ID
               </label>
               <div className="relative group">
@@ -219,6 +238,7 @@ const AddAccountModal: React.FC<AddAccountModalProps> = ({
                   <Hash size={ICON_SIZE_SMALL} />
                 </div>
                 <input
+                  id="account-riot-id"
                   type="text"
                   required
                   value={riotId}
