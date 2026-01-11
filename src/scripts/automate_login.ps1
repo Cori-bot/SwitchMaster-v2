@@ -5,6 +5,18 @@ param (
     [string]$Password = ""
 )
 
+# Read input from stdin if piped (Overrides params for security)
+if ([Console]::IsInputRedirected) {
+    try {
+        $inputJson = [Console]::In.ReadToEnd() | ConvertFrom-Json
+        if ($inputJson.Username) { $Username = $inputJson.Username }
+        if ($inputJson.Password) { $Password = $inputJson.Password }
+    } catch {
+        Write-Host "ERROR: Invalid JSON input"
+        exit 1
+    }
+}
+
 Add-Type -AssemblyName System.Windows.Forms
 
 # Constantes de timing optimisées
