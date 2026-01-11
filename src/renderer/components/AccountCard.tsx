@@ -131,6 +131,7 @@ const AccountCard: React.FC<AccountCardProps> = ({
                 {name}
               </h3>
               <button
+                aria-label={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
                 onClick={(e) => {
                   e.stopPropagation();
                   onToggleFavorite(account);
@@ -156,10 +157,13 @@ const AccountCard: React.FC<AccountCardProps> = ({
               className="w-6 h-6 object-contain opacity-80"
             />
             <div className="relative group/menu">
-              <button className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors">
+              <button
+                aria-label="Options du compte"
+                className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+              >
                 <MoreVertical size={ICON_SIZE_MEDIUM} />
               </button>
-              <div className="absolute right-0 top-full mt-2 w-48 bg-[#242424] border border-white/10 rounded-xl shadow-2xl opacity-0 invisible group-hover/menu:opacity-100 group-hover/menu:visible transition-all duration-200 z-10 overflow-hidden">
+              <div className="absolute right-0 top-full mt-2 w-48 bg-[#242424] border border-white/10 rounded-xl shadow-2xl opacity-0 invisible group-hover/menu:opacity-100 group-hover/menu:visible group-focus-within/menu:opacity-100 group-focus-within/menu:visible transition-all duration-200 z-10 overflow-hidden">
                 <button
                   onClick={() => onEdit(account)}
                   className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-300 hover:bg-white/5 transition-colors"
