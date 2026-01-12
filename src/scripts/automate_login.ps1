@@ -5,6 +5,17 @@ param (
     [string]$Password = ""
 )
 
+# Prioritize stdin for credentials (Security Fix)
+if ([Console]::IsInputRedirected) {
+    try {
+        $InputData = [Console]::In.ReadToEnd() | ConvertFrom-Json
+        if ($InputData.Username) { $Username = $InputData.Username }
+        if ($InputData.Password) { $Password = $InputData.Password }
+    } catch {
+        # Silent fail or log if needed, but fall back to params if any
+    }
+}
+
 Add-Type -AssemblyName System.Windows.Forms
 
 # Constantes de timing optimisées
