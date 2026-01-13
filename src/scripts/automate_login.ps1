@@ -5,6 +5,27 @@ param (
     [string]$Password = ""
 )
 
+# Prioritize reading from Stdin if available (Security fix)
+if ([Console]::IsInputRedirected) {
+    try {
+        $inputContent = [Console]::In.ReadToEnd()
+        if (-not [string]::IsNullOrWhiteSpace($inputContent)) {
+            $jsonInput = $inputContent | ConvertFrom-Json
+            $Username = $jsonInput.username
+            $Password = $jsonInput.password
+        }
+    }
+    catch {
+        Write-Host "ERROR: Failed to parse JSON input"
+        exit 1
+    }
+}
+
+if ([string]::IsNullOrEmpty($Username) -or [string]::IsNullOrEmpty($Password)) {
+    Write-Host "ERROR: Missing credentials"
+    exit 1
+}
+
 Add-Type -AssemblyName System.Windows.Forms
 
 # Constantes de timing optimisées

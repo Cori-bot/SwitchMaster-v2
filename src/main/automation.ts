@@ -47,18 +47,22 @@ export async function performAutomation(username: string, password: string) {
   const psScript = path.join(SCRIPTS_PATH, "automate_login.ps1");
 
   return new Promise<void>((resolve, reject) => {
+    // SECURITY: Pass credentials via stdin instead of command line arguments
+    // to prevent them from appearing in process lists (e.g. Task Manager)
     const args = [
       "-ExecutionPolicy",
       "Bypass",
       "-File",
       psScript,
-      "-Username",
-      username,
-      "-Password",
-      password,
     ];
 
     const ps = spawn("powershell.exe", args);
+
+    // Write credentials to stdin
+    const inputData = JSON.stringify({ username, password });
+    ps.stdin.write(inputData);
+    ps.stdin.end();
+
     let output = "";
     let errorOutput = "";
 
