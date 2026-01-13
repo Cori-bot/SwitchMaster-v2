@@ -1,13 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  X,
-  User,
-  Hash,
-  Key,
-  Lock,
-  Eye,
-  EyeOff,
-} from "lucide-react";
+import { X, User, Hash, Key, Lock, Eye, EyeOff } from "lucide-react";
 import { Account } from "../hooks/useAccounts";
 
 import {
@@ -108,7 +100,9 @@ const AddAccountModal: React.FC<AddAccountModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className={`fixed inset-0 ${Z_INDEX_MODAL} flex items-center justify-center p-6`}>
+    <div
+      className={`fixed inset-0 ${Z_INDEX_MODAL} flex items-center justify-center p-6`}
+    >
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
@@ -123,6 +117,8 @@ const AddAccountModal: React.FC<AddAccountModalProps> = ({
           </h2>
           <button
             onClick={onClose}
+            aria-label="Fermer"
+            title="Fermer"
             className="p-2 hover:bg-white/5 rounded-xl text-gray-400 hover:text-white transition-colors"
           >
             <X size={ICON_SIZE_MEDIUM} />
@@ -198,6 +194,16 @@ const AddAccountModal: React.FC<AddAccountModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
+                    aria-label={
+                      showPassword
+                        ? "Masquer le mot de passe"
+                        : "Afficher le mot de passe"
+                    }
+                    title={
+                      showPassword
+                        ? "Masquer le mot de passe"
+                        : "Afficher le mot de passe"
+                    }
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
                   >
                     {showPassword ? (
