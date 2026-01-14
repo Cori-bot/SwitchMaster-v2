@@ -5,6 +5,19 @@ param (
     [string]$Password = ""
 )
 
+# Sécurité: Lecture des identifiants depuis stdin si disponible pour éviter les arguments de ligne de commande
+if ([Console]::IsInputRedirected) {
+    try {
+        $inputData = [Console]::In.ReadToEnd() | ConvertFrom-Json
+        if ($inputData.username) { $Username = $inputData.username }
+        if ($inputData.password) { $Password = $inputData.password }
+    }
+    catch {
+        Write-Host "ERROR: Invalid input data"
+        exit 1
+    }
+}
+
 Add-Type -AssemblyName System.Windows.Forms
 
 # Constantes de timing optimisées

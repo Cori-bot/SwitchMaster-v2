@@ -47,18 +47,15 @@ export async function performAutomation(username: string, password: string) {
   const psScript = path.join(SCRIPTS_PATH, "automate_login.ps1");
 
   return new Promise<void>((resolve, reject) => {
-    const args = [
-      "-ExecutionPolicy",
-      "Bypass",
-      "-File",
-      psScript,
-      "-Username",
-      username,
-      "-Password",
-      password,
-    ];
+    const args = ["-ExecutionPolicy", "Bypass", "-File", psScript];
 
     const ps = spawn("powershell.exe", args);
+
+    // Write credentials to stdin securely to avoid exposing them in process arguments
+    const payload = JSON.stringify({ username, password });
+    ps.stdin.write(payload);
+    ps.stdin.end();
+
     let output = "";
     let errorOutput = "";
 
@@ -85,7 +82,6 @@ export async function performAutomation(username: string, password: string) {
     });
   });
 }
-
 
 interface DetectionResult {
   DisplayName?: string;
