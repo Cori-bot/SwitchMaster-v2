@@ -1,0 +1,3 @@
+## 2025-02-23 - Stable Event Handlers in Drag-and-Drop
+**Learning:** React re-renders can destroy drag-and-drop performance if event handlers are recreated on every frame. Using inline arrow functions (e.g., `onDragOver={(e) => handleDragOver(e, id)}`) defeats `React.memo`.
+**Action:** Use `useRef` to hold mutable state (like list items or drag status) and `useLayoutEffect` to keep them fresh. This allows `useCallback` to return stable function references that can be passed to memoized children. The children should accept the `id` as an argument (e.g. `onDragOver(e, id)`) so the parent doesn't need to create a closure.
