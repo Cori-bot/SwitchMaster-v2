@@ -4,5 +4,9 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     globals: true,
+    alias: {
+      "@": "/src/renderer",
+      "@assets": "/src/assets",
+    },
   },
 });
