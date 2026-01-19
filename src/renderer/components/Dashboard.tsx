@@ -59,6 +59,14 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [draggedId, setDraggedId] = React.useState<string | null>(null);
   const [localAccounts, setLocalAccounts] = React.useState<Account[]>(accounts);
 
+  const localAccountsRef = React.useRef(localAccounts);
+  const draggedIdRef = React.useRef(draggedId);
+
+  React.useLayoutEffect(() => {
+    localAccountsRef.current = localAccounts;
+    draggedIdRef.current = draggedId;
+  }, [localAccounts, draggedId]);
+
   // Synchroniser localAccounts avec les props quand on ne drag pas
   React.useEffect(() => {
     if (!draggedId) {
@@ -75,63 +83,84 @@ const Dashboard: React.FC<DashboardProps> = ({
     });
   }, [localAccounts, filter]);
 
-  const handleDragStart = (e: React.DragEvent, id: string) => {
-    if (filter !== "all") return;
-    e.dataTransfer.setData("accountId", id);
-    setDraggedId(id);
-    e.dataTransfer.effectAllowed = "move";
+  const handleDragStart = React.useCallback(
+    (e: React.DragEvent, id: string) => {
+      if (filter !== "all") return;
+      e.dataTransfer.setData("accountId", id);
+      setDraggedId(id);
+      e.dataTransfer.effectAllowed = "move";
 
-    // Créer une image de drag transparente pour un effet plus propre
-    const ghost = document.createElement("div");
-    ghost.style.opacity = "0";
-    document.body.appendChild(ghost);
-    e.dataTransfer.setDragImage(ghost, 0, 0);
-    setTimeout(() => document.body.removeChild(ghost), 0);
-  };
+      // Créer une image de drag transparente pour un effet plus propre
+      const ghost = document.createElement("div");
+      ghost.style.opacity = "0";
+      document.body.appendChild(ghost);
+      e.dataTransfer.setDragImage(ghost, 0, 0);
+      setTimeout(() => document.body.removeChild(ghost), 0);
+    },
+    [filter],
+  );
 
-  const handleDragOver = (e: React.DragEvent, targetId: string) => {
-    if (filter !== "all") return;
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
+  const handleDragOver = React.useCallback(
+    (e: React.DragEvent, targetId: string) => {
+      if (filter !== "all") return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
 
-    if (!draggedId || draggedId === targetId) return;
+      const currentDraggedId = draggedIdRef.current;
+      const currentLocalAccounts = localAccountsRef.current;
 
-    const sourceIndex = localAccounts.findIndex((a) => a.id === draggedId);
-    const targetIndex = localAccounts.findIndex((a) => a.id === targetId);
-    if (sourceIndex === -1 || targetIndex === -1) return;
+      if (!currentDraggedId || currentDraggedId === targetId) return;
 
-    const targetElement = e.currentTarget as HTMLElement;
-    const rect = targetElement.getBoundingClientRect();
-    const relativeX = (e.clientX - rect.left) / rect.width;
-    const relativeY = (e.clientY - rect.top) / rect.height;
+      const sourceIndex = currentLocalAccounts.findIndex(
+        (a) => a.id === currentDraggedId,
+      );
+      const targetIndex = currentLocalAccounts.findIndex(
+        (a) => a.id === targetId,
+      );
+      if (sourceIndex === -1 || targetIndex === -1) return;
 
-    const shouldSwap = sourceIndex < targetIndex
-      ? relativeX > 0.33 || relativeY > 0.33
-      : relativeX < 0.67 || relativeY < 0.67;
+      const targetElement = e.currentTarget as HTMLElement;
+      const rect = targetElement.getBoundingClientRect();
+      const relativeX = (e.clientX - rect.left) / rect.width;
+      const relativeY = (e.clientY - rect.top) / rect.height;
 
-    if (shouldSwap) {
-      const newAccounts = [...localAccounts];
-      const [removed] = newAccounts.splice(sourceIndex, 1);
-      newAccounts.splice(targetIndex, 0, removed);
+      const shouldSwap =
+        sourceIndex < targetIndex
+          ? relativeX > 0.33 || relativeY > 0.33
+          : relativeX < 0.67 || relativeY < 0.67;
 
-      const currentIds = localAccounts.map(a => a.id).join(',');
-      const newIds = newAccounts.map(a => a.id).join(',');
+      if (shouldSwap) {
+        const newAccounts = [...currentLocalAccounts];
+        const [removed] = newAccounts.splice(sourceIndex, 1);
+        newAccounts.splice(targetIndex, 0, removed);
 
-      if (currentIds !== newIds) {
-        setLocalAccounts(newAccounts);
+        const currentIds = currentLocalAccounts.map((a) => a.id).join(",");
+        const newIds = newAccounts.map((a) => a.id).join(",");
+
+        if (currentIds !== newIds) {
+          setLocalAccounts(newAccounts);
+        }
       }
-    }
-  };
+    },
+    [filter],
+  );
 
-  const handleDragEnd = () => {
+  const handleDragEnd = React.useCallback(() => {
     setDraggedId(null);
-  };
+  }, []);
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = React.useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setDraggedId(null);
+      onReorder(localAccountsRef.current.map((a) => a.id));
+    },
+    [onReorder],
+  );
+
+  const handleDragEnter = React.useCallback((e: React.DragEvent) => {
     e.preventDefault();
-    setDraggedId(null);
-    onReorder(localAccounts.map((a) => a.id));
-  };
+  }, []);
 
   if (accounts.length === 0) {
     return (
@@ -177,7 +206,11 @@ const Dashboard: React.FC<DashboardProps> = ({
               initial="hidden"
               animate="visible"
               exit={{ scale: 0.8, opacity: 0 }}
-              className={draggedId === account.id ? "opacity-50 scale-95 transition-all duration-200" : "transition-all duration-200"}
+              className={
+                draggedId === account.id
+                  ? "opacity-50 scale-95 transition-all duration-200"
+                  : "transition-all duration-200"
+              }
             >
               <AccountCard
                 account={account}
@@ -187,9 +220,9 @@ const Dashboard: React.FC<DashboardProps> = ({
                 onEdit={onEdit}
                 onToggleFavorite={onToggleFavorite}
                 onDragStart={handleDragStart}
-                onDragOver={(e) => handleDragOver(e, account.id)}
+                onDragOver={handleDragOver}
                 onDragEnd={handleDragEnd}
-                onDragEnter={(e) => e.preventDefault()}
+                onDragEnter={handleDragEnter}
                 onDrop={handleDrop}
               />
             </motion.div>
@@ -203,7 +236,9 @@ const Dashboard: React.FC<DashboardProps> = ({
           onClick={onAddAccount}
           className={`group relative h-[220px] rounded-3xl border-2 border-dashed border-white/10 hover:border-blue-500/50 bg-white/2 transition-all ${ANIMATION_DURATION_LONG} flex flex-col items-center justify-center gap-4 overflow-hidden cursor-pointer`}
         >
-          <div className={`w-14 h-14 rounded-2xl bg-white/5 group-hover:bg-blue-500/20 flex items-center justify-center text-gray-400 group-hover:text-blue-400 transition-all ${ANIMATION_DURATION_LONG}`}>
+          <div
+            className={`w-14 h-14 rounded-2xl bg-white/5 group-hover:bg-blue-500/20 flex items-center justify-center text-gray-400 group-hover:text-blue-400 transition-all ${ANIMATION_DURATION_LONG}`}
+          >
             <PlusCircle size={ICON_SIZE_LARGE} />
           </div>
           <div className="text-center">
