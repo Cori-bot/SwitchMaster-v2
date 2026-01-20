@@ -68,6 +68,17 @@
   ],
   "author": "Coridor",
   "license": "ISC",
+  "pnpm": {
+    "ignoredBuiltDependencies": [
+      "keysender"
+    ],
+    "onlyBuiltDependencies": [
+      "electron",
+      "electron-winstaller",
+      "esbuild",
+      "registry-js"
+    ]
+  },
   "dependencies": {
     "chokidar": "5.0.0",
     "clsx": "^2.1.1",
