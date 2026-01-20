@@ -21,6 +21,14 @@ const MIN_HEIGHT = 600;
 
 
 
+export function resetWindowModuleForTests() {
+  mainWindow = undefined as any;
+  if (trayRef) {
+    trayRef.destroy();
+    trayRef = null;
+  }
+}
+
 export function createWindow(isDev: boolean): BrowserWindow {
   mainWindow = new BrowserWindow({
     width: DEFAULT_WIDTH,
