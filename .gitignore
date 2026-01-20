@@ -5,3 +5,4 @@ build
 __tests__
 update.md
 vitest.config.js
+/coverage
