@@ -8,7 +8,7 @@
 
 ## Phase 2: Security Hardening & Validation
 
-- [ ] Task: Implement Strict Input Validation for Accounts
+- [x] Task: Implement Strict Input Validation for Accounts 4aa1f13
     - [ ] Write failing tests for invalid account data injection.
     - [ ] Define Zod schemas (or equivalent) for `Account` types in `src/shared/types.ts`.
     - [ ] Integrate validation in `src/main/ipc/accountHandlers.ts`.
