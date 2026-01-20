@@ -9,6 +9,7 @@ import {
 } from "../accounts";
 import { fetchAccountStats } from "../statsService";
 import { Account } from "../../shared/types";
+import { accountSchema } from "../../shared/validation";
 import { safeHandle } from "./utils";
 
 export function registerAccountHandlers(getMainWindow: () => BrowserWindow | null) {
@@ -35,7 +36,8 @@ export function registerAccountHandlers(getMainWindow: () => BrowserWindow | nul
   safeHandle(
     "add-account",
     async (_e, data) => {
-      const acc = await addAccount(data as Partial<Account>);
+      const validatedData = accountSchema.parse(data);
+      const acc = await addAccount(validatedData as Partial<Account>);
       await notifyUpdate();
       return acc;
     }
@@ -43,7 +45,8 @@ export function registerAccountHandlers(getMainWindow: () => BrowserWindow | nul
   safeHandle(
     "update-account",
     async (_e, data) => {
-      const acc = await updateAccount(data as Account);
+      const validatedData = accountSchema.parse(data);
+      const acc = await updateAccount(validatedData as Account);
       await notifyUpdate();
       return acc;
     }
