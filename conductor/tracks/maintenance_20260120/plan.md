@@ -13,7 +13,7 @@
     - [ ] Define Zod schemas (or equivalent) for `Account` types in `src/shared/types.ts`.
     - [ ] Integrate validation in `src/main/ipc/accountHandlers.ts`.
     - [ ] Ensure 100% test coverage for validation logic.
-- [ ] Task: Harden Security Handlers
+- [x] Task: Harden Security Handlers e2d4aa6
     - [ ] Write failing tests for edge cases in `src/main/ipc/securityHandlers.ts` (decryption errors, empty keys).
     - [ ] Improve error handling and logging in security handlers.
     - [ ] Ensure 100% test coverage for encryption/decryption flows.
