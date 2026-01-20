@@ -40,7 +40,7 @@ let appConfig: Config = {
   enableGPU: false,
 };
 
-export function resetConfigForTests() {
+export function resetConfigForTests(fullClean = false) {
   appConfig = {
     riotPath: DEFAULT_RIOT_CLIENT_PATH,
     theme: "dark",
@@ -49,7 +49,7 @@ export function resetConfigForTests() {
     autoStart: false,
     startMinimized: false,
     lastAccountId: null,
-    security: {
+    security: fullClean ? undefined : {
       enabled: false,
       pinHash: null,
     },
@@ -66,9 +66,11 @@ export async function ensureAppData(): Promise<void> {
 export async function loadConfig(): Promise<Config> {
   const { CONFIG_FILE } = getPaths();
   try {
-    if (await fs.pathExists(CONFIG_FILE)) {
+    const exists = await fs.pathExists(CONFIG_FILE);
+    if (exists) {
       const content = await fs.readFile(CONFIG_FILE, "utf-8");
-      if (content && content.trim() !== "") {
+      const trimmed = content ? content.trim() : "";
+      if (trimmed !== "") {
         const savedConfig = JSON.parse(content);
         appConfig = { ...appConfig, ...savedConfig };
         return appConfig;
@@ -86,7 +88,8 @@ export function loadConfigSync(): Config {
   try {
     if (fs.existsSync(CONFIG_FILE)) {
       const content = fs.readFileSync(CONFIG_FILE, "utf-8");
-      if (content && content.trim() !== "") {
+      const trimmed = content ? content.trim() : "";
+      if (trimmed !== "") {
         const savedConfig = JSON.parse(content);
         appConfig = { ...appConfig, ...savedConfig };
         return appConfig;
@@ -103,11 +106,13 @@ export async function saveConfig(newConfig: Partial<Config>): Promise<Config> {
   const { CONFIG_FILE } = getPaths();
 
   // Merge spécial pour la sécurité pour éviter d'écraser pinHash si on ne change que enabled
-  if (newConfig.security && appConfig.security) {
-    newConfig.security = {
-      ...appConfig.security,
-      ...newConfig.security,
-    };
+  if (newConfig.security) {
+    if (appConfig.security) {
+      newConfig.security = {
+        ...appConfig.security,
+        ...newConfig.security,
+      };
+    }
   }
 
   appConfig = { ...appConfig, ...newConfig };
