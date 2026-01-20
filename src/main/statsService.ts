@@ -109,10 +109,10 @@ function extractRankInfo(segment: TrackerSegment, defaultIcon: string) {
 
 //Fetch Valorant account statistics
 async function fetchValorantStats(riotId: string) {
-  const { name, tag } = parseRiotId(riotId);
-  const url = `https://api.tracker.gg/api/v2/valorant/standard/profile/riot/${name}%23${tag}?source=web`;
-
   try {
+    const { name, tag } = parseRiotId(riotId);
+    const url = `https://api.tracker.gg/api/v2/valorant/standard/profile/riot/${name}%23${tag}?source=web`;
+
     const apiResponse = await httpsGet<TrackerResponse>(url, HEADERS);
     if (!apiResponse.data?.segments) throw new Error("Invalid response");
 
@@ -136,10 +136,10 @@ async function fetchValorantStats(riotId: string) {
 
 // Fetch League of Legends account statistics
 async function fetchLeagueStats(riotId: string) {
-  const { name, tag } = parseRiotId(riotId);
-  const url = `https://api.tracker.gg/api/v2/lol/standard/profile/riot/${name}%23${tag}`;
-
   try {
+    const { name, tag } = parseRiotId(riotId);
+    const url = `https://api.tracker.gg/api/v2/lol/standard/profile/riot/${name}%23${tag}`;
+
     const apiResponse = await httpsGet<TrackerResponse>(url, HEADERS);
     if (!apiResponse.data?.segments) throw new Error("Invalid response");
 
