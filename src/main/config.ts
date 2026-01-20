@@ -40,6 +40,24 @@ let appConfig: Config = {
   enableGPU: false,
 };
 
+export function resetConfigForTests() {
+  appConfig = {
+    riotPath: DEFAULT_RIOT_CLIENT_PATH,
+    theme: "dark",
+    minimizeToTray: false,
+    showQuitModal: true,
+    autoStart: false,
+    startMinimized: false,
+    lastAccountId: null,
+    security: {
+      enabled: false,
+      pinHash: null,
+    },
+    hasSeenOnboarding: false,
+    enableGPU: false,
+  };
+}
+
 export async function ensureAppData(): Promise<void> {
   const { APP_DATA_PATH } = getPaths();
   await fs.ensureDir(APP_DATA_PATH);
