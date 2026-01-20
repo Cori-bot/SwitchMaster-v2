@@ -24,7 +24,7 @@ import { Account, Config } from "../shared/types";
 
 import { useAppIpc } from "./hooks/useAppIpc";
 import LoadingScreen from "./components/LoadingScreen";
-import VisperWindow from "./components/Visper/VisperWindow";
+
 
 const pageVariants = {
   initial: { opacity: 0, x: 10 },
@@ -39,12 +39,7 @@ const pageTransition: Transition = {
 };
 
 const App: React.FC = () => {
-  const isVisper = window.location.hash === "#/visper";
 
-  if (isVisper) {
-    document.title = "Visper";
-    return <VisperWindow />;
-  }
 
   const [activeView, setActiveView] = useState("dashboard");
   const [filter, setFilter] = useState<"all" | "favorite" | "valorant" | "league">("all");

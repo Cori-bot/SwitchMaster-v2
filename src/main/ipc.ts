@@ -5,7 +5,7 @@ import { registerRiotHandlers } from "./ipc/riotHandlers";
 import { registerSecurityHandlers } from "./ipc/securityHandlers";
 import { registerMiscHandlers } from "./ipc/miscHandlers";
 import { registerUpdateHandlers } from "./ipc/updateHandlers";
-import { registerVisperHandlers } from "./ipc/visperHandlers";
+
 import { IpcContext } from "./ipc/types";
 
 let areHandlersRegistered = false;
@@ -29,7 +29,7 @@ export function setupIpcHandlers(
   registerSecurityHandlers();
   registerMiscHandlers(getWin, context);
   registerUpdateHandlers(getWin);
-  registerVisperHandlers(getWin);
+
 
   areHandlersRegistered = true;
 }

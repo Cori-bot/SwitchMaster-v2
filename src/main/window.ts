@@ -11,16 +11,15 @@ import { getConfig } from "./config";
 import { loadAccountsMeta } from "./accounts";
 import { devLog, devError } from "./logger";
 
+
 let mainWindow: BrowserWindow;
-let visperWindow: BrowserWindow | null = null;
 
 const DEFAULT_WIDTH = 1000;
 const DEFAULT_HEIGHT = 700;
 const MIN_WIDTH = 600;
 const MIN_HEIGHT = 600;
 
-const VISPER_WIDTH = 1300;
-const VISPER_HEIGHT = 850;
+
 
 export function createWindow(isDev: boolean): BrowserWindow {
   mainWindow = new BrowserWindow({
@@ -97,61 +96,7 @@ export function createWindow(isDev: boolean): BrowserWindow {
   return mainWindow;
 }
 
-export function createVisperWindow(isDev: boolean): BrowserWindow {
-  if (visperWindow) {
-    visperWindow.focus();
-    return visperWindow;
-  }
 
-  visperWindow = new BrowserWindow({
-    width: VISPER_WIDTH,
-    height: VISPER_HEIGHT,
-    minWidth: 400,
-    minHeight: 300,
-    webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true,
-      preload: path.join(__dirname, "preload.js"),
-    },
-    backgroundColor: "#0a0a0a",
-    frame: true, // On garde le cadre pour l'illustrer dans la barre Windows
-    show: false,
-    autoHideMenuBar: true,
-    title: "Visper",
-    icon: app.isPackaged
-      ? path.join(process.resourcesPath, "assets", "visper_logo.png")
-      : path.join(__dirname, "..", "..", "src", "assets", "visper_logo.png"),
-  });
-
-  const visperUrl = isDev
-    ? "http://localhost:3000/#/visper"
-    : `file://${path.join(__dirname, "..", "dist", "index.html")}#/visper`;
-
-  if (isDev) {
-    visperWindow.loadURL(visperUrl);
-  } else {
-    visperWindow.loadFile(path.join(__dirname, "..", "dist", "index.html"), { hash: "/visper" });
-  }
-
-  visperWindow.once("ready-to-show", () => {
-    visperWindow?.show();
-    // Réduire la fenêtre principale à l'ouverture
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.minimize();
-    }
-  });
-
-  visperWindow.on("closed", () => {
-    visperWindow = null;
-    // Restaurer la fenêtre principale à la fermeture
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.show();
-      mainWindow.focus();
-    }
-  });
-
-  return visperWindow;
-}
 
 
 let trayRef: Tray | null = null;
