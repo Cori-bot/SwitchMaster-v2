@@ -1,0 +1,4 @@
+## 2024-05-24 - Process Table Information Leakage
+**Vulnerability:** User credentials (username/password) were passed to PowerShell automation scripts via command-line arguments. In Windows (and most OSs), command-line arguments are visible to any user who can list processes (e.g., via Task Manager or `Get-Process`), leading to potential credential theft.
+**Learning:** Even short-lived processes expose their arguments to the OS process table. `spawn` or `exec` arguments should never contain secrets.
+**Prevention:** Pass sensitive data via `stdin` (Standard Input). The parent process writes the data to the child's stdin stream, and the child process reads it. This data channel is private to the two processes. In PowerShell, check `[Console]::IsInputRedirected` and use `[Console]::In.ReadToEnd()`.

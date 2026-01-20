@@ -5,6 +5,19 @@ param (
     [string]$Password = ""
 )
 
+# Read credentials from stdin to avoid process table exposure
+if ([Console]::IsInputRedirected) {
+    try {
+        $InputJson = [Console]::In.ReadToEnd()
+        $InputData = $InputJson | ConvertFrom-Json
+        $Username = $InputData.username
+        $Password = $InputData.password
+    } catch {
+        Write-Host "ERROR: Failed to read input"
+        exit 1
+    }
+}
+
 Add-Type -AssemblyName System.Windows.Forms
 
 # Constantes de timing optimisées
