@@ -1,9 +1,9 @@
 import { z } from "zod";
 
-// Regex permissive mais structurante pour Riot ID : Pseudo#TAG
+// Regex pour Riot ID : Pseudo#TAG
 // Pseudo: 1+ chars
-// Tag: 1+ chars alphanumériques (Riot impose généralement 3-5 chars mais on reste large pour éviter les faux négatifs)
-const RIOT_ID_REGEX = /^.+#[a-zA-Z0-9]+$/;
+// Tag: 1 à 5 caractères alphanumériques (Limite officielle Riot)
+const RIOT_ID_REGEX = /^.+#[a-zA-Z0-9]{1,5}$/;
 
 export const accountSchema = z.object({
   id: z.string().uuid().optional(),
