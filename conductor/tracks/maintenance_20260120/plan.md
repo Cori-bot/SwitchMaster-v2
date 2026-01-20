@@ -5,7 +5,7 @@
 - [x] Task: Audit current dependencies and identify vulnerabilities 0561880
     - [ ] Run `pnpm audit` and analyze the report.
     - [ ] List deprecated or vulnerable packages requiring update.
-- [ ] Task: Update Core Dependencies (Electron, React, Vite)
+- [x] Task: Update Core Dependencies (Electron, React, Vite) 08e088c
     - [ ] Update `electron` to the latest stable version.
     - [ ] Update `react` and `react-dom` to the latest stable versions.
     - [ ] Update `vite` and build plugins.
