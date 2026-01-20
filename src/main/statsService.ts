@@ -124,7 +124,12 @@ async function fetchValorantStats(riotId: string) {
 
     return { rank, rankIcon: icon, lastUpdate: Date.now() };
   } catch (err) {
-    devError(`Error Valorant stats ${riotId}:`, (err as Error).message);
+    const errorMsg = (err as Error).message;
+    if (errorMsg.includes("HTTP 404")) {
+      devLog(`Stats not found for ${riotId} (404) - Account may be private or not found.`);
+    } else {
+      devError(`Error Valorant stats ${riotId}:`, errorMsg);
+    }
     return null;
   }
 }
@@ -146,7 +151,12 @@ async function fetchLeagueStats(riotId: string) {
 
     return { rank, rankIcon: icon, lastUpdate: Date.now() };
   } catch (err) {
-    devError(`Error League stats ${riotId}:`, (err as Error).message);
+    const errorMsg = (err as Error).message;
+    if (errorMsg.includes("HTTP 404")) {
+      devLog(`Stats not found for ${riotId} (404) - Account may be private or not found.`);
+    } else {
+      devError(`Error League stats ${riotId}:`, errorMsg);
+    }
     return null;
   }
 }
