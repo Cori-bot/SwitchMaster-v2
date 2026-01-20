@@ -4,7 +4,9 @@ import path from "path";
 import fs from "fs-extra";
 import { clipboard, app } from "electron";
 const execAsync = util.promisify(exec);
-const setTimeoutAsync = util.promisify(setTimeout);
+
+// Remplacement de util.promisify(setTimeout) pour faciliter le mocking
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 import { devDebug, devError } from "./logger";
 
@@ -27,7 +29,7 @@ export async function killRiotProcesses() {
         e instanceof Error ? e.message : e,
       );
     }
-    await setTimeoutAsync(PROCESS_TERMINATION_DELAY);
+    await wait(PROCESS_TERMINATION_DELAY);
   } catch (e) {
     // Cleanup error, ignore
     devError("killRiotProcesses cleanup error:", e);
