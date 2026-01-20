@@ -1,17 +1,10 @@
 # Implementation Plan - Maintenance et Sécurité
 
-## Phase 1: Dependency Updates & Environment Health
+## Phase 1: Dependency Updates & Environment Health [checkpoint: bc52542]
 
 - [x] Task: Audit current dependencies and identify vulnerabilities 0561880
-    - [ ] Run `pnpm audit` and analyze the report.
-    - [ ] List deprecated or vulnerable packages requiring update.
 - [x] Task: Update Core Dependencies (Electron, React, Vite) 08e088c
-    - [ ] Update `electron` to the latest stable version.
-    - [ ] Update `react` and `react-dom` to the latest stable versions.
-    - [ ] Update `vite` and build plugins.
-    - [ ] Verify application build (`pnpm build`).
-    - [ ] Verify application start (`pnpm dev`).
-- [ ] Task: Conductor - User Manual Verification 'Dependency Updates & Environment Health' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Dependency Updates & Environment Health' (Protocol in workflow.md) bc52542
 
 ## Phase 2: Security Hardening & Validation
 
