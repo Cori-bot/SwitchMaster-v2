@@ -1,8 +1,0 @@
-ignoredBuiltDependencies:
-  - keysender
-
-onlyBuiltDependencies:
-  - electron
-  - electron-winstaller
-  - esbuild
-  - registry-js
