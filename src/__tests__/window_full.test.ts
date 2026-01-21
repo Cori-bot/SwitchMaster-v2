@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createWindow, updateTrayMenu, resetWindowModuleForTests } from "../main/window";
-import { app, BrowserWindow, Tray, shell } from "electron";
+import { app, BrowserWindow, Tray, shell, Menu } from "electron";
 import * as configModule from "../main/config";
 import * as accountsModule from "../main/accounts";
 
@@ -192,15 +192,59 @@ describe("Window Module", () => {
             expect(mockWin.focus).toHaveBeenCalled();
         });
 
-        it("doit inclure les favoris dans le menu", async () => {
+        it("doit gérer les clics sur les items du menu", async () => {
             const favAccount = { id: "1", name: "Fav", isFavorite: true };
-            (accountsModule.loadAccountsMeta as any).mockResolvedValue([favAccount]);
-            (configModule.getConfig as any).mockReturnValue({});
+            const otherAccount = { id: "2", name: "Other", isFavorite: false };
+            (accountsModule.loadAccountsMeta as any).mockResolvedValue([favAccount, otherAccount]);
+            // Setup config for "Dernier compte"
+            (configModule.getConfig as any).mockReturnValue({ lastAccountId: "2" });
 
             await updateTrayMenu(launchGameMock, switchAccountMock);
 
-            // We can inspect setContextMenu calls to verify content
-            // But mocking Menu.buildFromTemplate is shallow
+            expect(Menu.buildFromTemplate).toHaveBeenCalled();
+            const template = vi.mocked(Menu.buildFromTemplate).mock.calls[0][0];
+
+            // Helper to find item by label
+            const findItem = (labelInfo: string) => template.find((i: any) => i.label && i.label.includes(labelInfo));
+
+            // Test "Afficher SwitchMaster"
+            const showItem = findItem("Afficher SwitchMaster");
+            expect(showItem).toBeDefined();
+            (showItem as any).click({} as any, mockWin as any, {} as any);
+            expect(mockWin.show).toHaveBeenCalled();
+
+            // Test "Lancer League"
+            const launchLeagueItem = findItem("Lancer League");
+            expect(launchLeagueItem).toBeDefined();
+            (launchLeagueItem as any).click({} as any, mockWin as any, {} as any);
+            expect(launchGameMock).toHaveBeenCalledWith("league");
+
+            // Test "Lancer Valorant"
+            const launchValItem = findItem("Lancer Valorant");
+            expect(launchValItem).toBeDefined();
+            (launchValItem as any).click({} as any, mockWin as any, {} as any);
+            expect(launchGameMock).toHaveBeenCalledWith("valorant");
+
+            // Test "Favoris" click
+            const favItem = findItem("⭐ Fav");
+            expect(favItem).toBeDefined();
+            await (favItem as any).click({} as any, mockWin as any, {} as any);
+            expect(switchAccountMock).toHaveBeenCalledWith("1");
+            expect(mockWin.webContents.send).toHaveBeenCalledWith("quick-connect-triggered", "1");
+
+            // Test "Dernier compte" click
+            const lastAccItem = findItem("Dernier compte");
+            expect(lastAccItem).toBeDefined();
+            await (lastAccItem as any).click({} as any, mockWin as any, {} as any);
+            expect(switchAccountMock).toHaveBeenCalledWith("2");
+
+            // Test "Quitter"
+            const quitItem = findItem("Quitter");
+            expect(quitItem).toBeDefined();
+            (quitItem as any).click({} as any, mockWin as any, {} as any);
+            // Check global flags were set
+            expect((app as any).isQuitting).toBe(true);
+            expect(app.quit).toHaveBeenCalled();
         });
     });
 });

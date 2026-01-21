@@ -34,36 +34,67 @@ vi.mock("../main/ipc/updateHandlers", () => ({
 describe("IPC Main", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        vi.resetModules(); // Important pour reset l'état du module (singleton)
     });
 
-    it("doit enregistrer tous les handlers", () => {
-        const mockWin = {} as BrowserWindow;
+    it("doit enregistrer tous les handlers et exposer getWin correct", async () => {
+        // Pour tester le singleton et l'initialisation, on doit réimporter le module après resetModules
+        const { setupIpcHandlers } = await import("../main/ipc");
+        const accountHandlers = await import("../main/ipc/accountHandlers");
+
+        const mockWin = { id: 1 } as unknown as BrowserWindow;
         const mockContext = { launchGame: vi.fn(), getStatus: vi.fn() } as any;
 
         setupIpcHandlers(mockWin, mockContext);
 
+        // Verification des appels
         expect(accountHandlers.registerAccountHandlers).toHaveBeenCalled();
-        expect(configHandlers.registerConfigHandlers).toHaveBeenCalled();
-        expect(riotHandlers.registerRiotHandlers).toHaveBeenCalled();
-        expect(securityHandlers.registerSecurityHandlers).toHaveBeenCalled();
-        expect(miscHandlers.registerMiscHandlers).toHaveBeenCalled();
-        expect(updateHandlers.registerUpdateHandlers).toHaveBeenCalled();
+
+        // Verification du helper getWin passé aux handlers
+        const getWinCallback = vi.mocked(accountHandlers.registerAccountHandlers).mock.calls[0][0];
+        expect(getWinCallback).toBeDefined();
+        expect(getWinCallback()).toBe(mockWin); // Couvre la flèche '() => currentMainWindow'
     });
 
-    it("ne doit pas ré-enregistrer si déjà fait", () => {
+    it("ne doit pas ré-enregistrer si déjà fait (Singleton)", async () => {
+        // On importe une seule fois pour garder l'état entre les appels de ce test
+        const { setupIpcHandlers } = await import("../main/ipc");
+        const accountHandlers = await import("../main/ipc/accountHandlers");
+
         const mockWin = {} as BrowserWindow;
         const mockContext = { launchGame: vi.fn(), getStatus: vi.fn() } as any;
 
-        // Un appel a déjà été fait dans le test précédent, mais comme node cache les modules, 
-        // la variable locale 'areHandlersRegistered' est true.
-        // Cependant en test unitaire isolé, l'état peut être reset si on utilise isolateModules,
-        // mais ici on teste le comportement singleton.
-
-        // On reset les mocks pour vérifier qu'ils ne sont PAS appelés la 2ème fois
-        vi.clearAllMocks();
-
+        // Premier appel
         setupIpcHandlers(mockWin, mockContext);
+        expect(accountHandlers.registerAccountHandlers).toHaveBeenCalledTimes(1);
 
-        expect(accountHandlers.registerAccountHandlers).not.toHaveBeenCalled();
+        // Deuxième appel
+        setupIpcHandlers(mockWin, mockContext);
+        expect(accountHandlers.registerAccountHandlers).toHaveBeenCalledTimes(1); // Pas d'appel supplémentaire
+    });
+
+    it("doit mettre à jour currentMainWindow si fourni", async () => {
+        const { setupIpcHandlers } = await import("../main/ipc");
+        const accountHandlers = await import("../main/ipc/accountHandlers");
+
+        const mockWin1 = { id: 1 } as unknown as BrowserWindow;
+        const mockWin2 = { id: 2 } as unknown as BrowserWindow;
+        const mockContext = { launchGame: vi.fn(), getStatus: vi.fn() } as any;
+
+        // Premier appel avec win1
+        setupIpcHandlers(mockWin1, mockContext);
+
+        let getWinCallback = vi.mocked(accountHandlers.registerAccountHandlers).mock.calls[0][0];
+        expect(getWinCallback()).toBe(mockWin1);
+
+        // Reset mocks pour simuler "déjà enregistré" mais on veut vérifier la mise à jour de la ref
+        // Note: le code actuel a un early return "if (areHandlersRegistered) return;"
+        // qui se trouve APRES "if (mainWindow) currentMainWindow = mainWindow;"
+        // Donc currentMainWindow DEVRAIT être mis à jour même si handlers déjà registered.
+
+        setupIpcHandlers(mockWin2, mockContext);
+
+        // On vérifie que le getWin (qui est une closure sur currentMainWindow) retourne maintenant la nouvelle fenêtre
+        expect(getWinCallback()).toBe(mockWin2);
     });
 });

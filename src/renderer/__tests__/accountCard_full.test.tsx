@@ -87,6 +87,23 @@ describe("AccountCard Component", () => {
         it("doit convertir le chemin local en protocole sm-img", () => {
             const accountWithLocalImage = { ...mockAccount, cardImage: "C:\\Users\\test\\image.png" };
             render(<AccountCard {...defaultProps} account={accountWithLocalImage} />);
+
+            // On cherche la div qui a le style appliqué (c'est une div interne)
+            // L'implémentation met le style sur une div avec absolute inset-0
+            // On peut scanner le DOM pour trouver l'élément avec le bon background-image
+            const expectedUrl = "sm-img://C:/Users/test/image.png";
+            // Note: JSDOM/browser might add quotes or handle styles differently, checking substring is safer
+
+            const divs = document.querySelectorAll("div");
+            let found = false;
+            divs.forEach(div => {
+                const bgImage = div.style.backgroundImage;
+                if (bgImage && bgImage.includes(expectedUrl)) {
+                    found = true;
+                }
+            });
+
+            expect(found).toBe(true);
         });
     });
 

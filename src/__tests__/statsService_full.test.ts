@@ -138,6 +138,17 @@ describe("StatsService", () => {
                 lastUpdate: expect.any(Number)
             });
         });
+        it("doit gérer une erreur 404 pour League (compte privé/introuvable)", async () => {
+            mockHttpsRequest(404, "Not Found");
+            const stats = await fetchAccountStats("Player#TAG", "league");
+            expect(stats).toBeNull();
+        });
+
+        it("doit gérer une erreur générique pour League (ex: 500)", async () => {
+            mockHttpsRequest(500, "Server Error");
+            const stats = await fetchAccountStats("Player#TAG", "league");
+            expect(stats).toBeNull();
+        });
     });
 
     describe("Network Errors", () => {

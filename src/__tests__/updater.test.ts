@@ -6,7 +6,7 @@ vi.mock("electron", () => {
   // Simulation d'un EventEmitter simplifié pour Notification
   class MockNotification {
     callbacks: Record<string, Function> = {};
-    constructor() {}
+    constructor() { }
     show = vi.fn();
     on = vi.fn((event, cb) => {
       this.callbacks[event] = cb;
@@ -23,7 +23,7 @@ vi.mock("electron", () => {
       relaunch: vi.fn(),
       exit: vi.fn(),
     },
-    Notification: vi.fn().mockImplementation(function() {
+    Notification: vi.fn().mockImplementation(function () {
       return new MockNotification();
     }),
     BrowserWindow: vi.fn(),
@@ -39,7 +39,7 @@ vi.mock("electron-updater", async () => {
   (mockEmitter as any).checkForUpdates = vi.fn();
   (mockEmitter as any).downloadUpdate = vi.fn();
   (mockEmitter as any).quitAndInstall = vi.fn();
-  
+
   return {
     autoUpdater: mockEmitter,
     AppUpdater: vi.fn(),
@@ -93,9 +93,9 @@ describe("Updater Module", () => {
     it("doit gérer update-available et le clic sur la notification", () => {
       setupUpdater(mainWindow);
       const updateInfo = { version: "1.0.1", releaseNotes: "Notes" };
-      
+
       mockAutoUpdater.emit("update-available", updateInfo);
-      
+
       expect(mainWindow.webContents.send).toHaveBeenCalledWith("update-status", expect.objectContaining({
         status: "available",
         version: "1.0.1",
@@ -122,7 +122,7 @@ describe("Updater Module", () => {
       setupUpdater(mainWindow);
       const error = new Error("Generic error");
       mockAutoUpdater.emit("error", error);
-      
+
       expect(mainWindow.webContents.send).toHaveBeenCalledWith("update-status", {
         status: "error",
         error: "Erreur lors de la mise à jour",
@@ -135,7 +135,7 @@ describe("Updater Module", () => {
       setupUpdater(mainWindow);
       const error = new Error("GitHub connection failed");
       mockAutoUpdater.emit("error", error);
-      
+
       expect(mainWindow.webContents.send).toHaveBeenCalledWith("update-status", expect.objectContaining({
         error: expect.stringContaining("Erreur de connexion à GitHub"),
       }));
@@ -144,9 +144,9 @@ describe("Updater Module", () => {
     it("doit gérer spécifiquement l'erreur Semver 'Invalid Version'", () => {
       setupUpdater(mainWindow);
       // Erreur contenant exactement la chaîne cherchée
-      const error = new Error("Invalid Version: 2.2"); 
+      const error = new Error("Invalid Version: 2.2");
       mockAutoUpdater.emit("error", error);
-      
+
       // Doit envoyer status: not-available et non error
       expect(mainWindow.webContents.send).toHaveBeenCalledWith("update-status", {
         status: "not-available",
@@ -167,7 +167,7 @@ describe("Updater Module", () => {
     it("doit gérer update-downloaded et le clic sur la notification", () => {
       setupUpdater(mainWindow);
       mockAutoUpdater.emit("update-downloaded", { version: "1.0.1" });
-      
+
       expect(mainWindow.webContents.send).toHaveBeenCalledWith("update-downloaded");
       expect(Notification).toHaveBeenCalled();
 
@@ -176,6 +176,18 @@ describe("Updater Module", () => {
       notificationInstance.click();
       expect(mainWindow.show).toHaveBeenCalled();
       expect(mainWindow.focus).toHaveBeenCalled();
+    });
+    it("doit gérer l'erreur 404/latest.yml", () => {
+      setupUpdater(mainWindow);
+      const error = new Error("404 Not Found: latest.yml");
+      mockAutoUpdater.emit("error", error);
+
+      expect(mainWindow.webContents.send).toHaveBeenCalledWith("update-status", {
+        status: "error",
+        error: "Fichier de mise à jour introuvable sur le serveur (404).",
+        details: "404 Not Found: latest.yml",
+        isManual: false,
+      });
     });
   });
 
@@ -191,7 +203,7 @@ describe("Updater Module", () => {
       await handleUpdateCheck(mainWindow, true);
       expect(mainWindow.webContents.send).toHaveBeenCalledWith("update-status", expect.objectContaining({ status: "error" }));
     });
-    
+
     it("doit ignorer les erreurs semver lors du check", async () => {
       mockAutoUpdater.checkForUpdates.mockRejectedValue(new Error("Invalid Version: 2.2"));
       await handleUpdateCheck(mainWindow, true);

@@ -9,7 +9,7 @@ const { mockWin, handlers } = vi.hoisted(() => {
     isDestroyed: vi.fn().mockReturnValue(false),
     webContents: { send: vi.fn() }
   };
-  return { 
+  return {
     mockWin: m,
     handlers: {} as Record<string, Function>
   };
@@ -32,7 +32,7 @@ vi.mock("electron-updater", () => ({
 vi.mock("electron", () => {
   function MockBW() { return mockWin; }
   (MockBW as any).getAllWindows = vi.fn().mockReturnValue([mockWin]);
-  
+
   return {
     app: {
       getPath: vi.fn().mockReturnValue("userDataPath"),
@@ -44,14 +44,14 @@ vi.mock("electron", () => {
       relaunch: vi.fn(),
       exit: vi.fn(),
     },
-    ipcMain: { 
-      handle: vi.fn(), 
+    ipcMain: {
+      handle: vi.fn(),
       on: vi.fn(),
-      removeAllListeners: vi.fn() 
+      removeAllListeners: vi.fn()
     },
     BrowserWindow: MockBW,
-    dialog: { 
-      showOpenDialog: vi.fn().mockResolvedValue({ canceled: false, filePaths: ["path"] }) 
+    dialog: {
+      showOpenDialog: vi.fn().mockResolvedValue({ canceled: false, filePaths: ["path"] })
     },
     shell: { openExternal: vi.fn() },
   };
@@ -64,10 +64,47 @@ vi.mock("../main/ipc/utils", () => ({
 }));
 
 vi.mock("../main/accounts");
-vi.mock("../main/config");
-vi.mock("../main/automation");
+vi.mock("../main/accounts");
+vi.mock("../main/config", () => ({
+  getConfig: vi.fn().mockReturnValue({ riotPath: "d:\\Code\\SwitchMaster-v2\\dummy_riot" }),
+  saveConfig: vi.fn(),
+  loadConfig: vi.fn().mockResolvedValue({}),
+}));
+vi.mock("../main/accounts");
+vi.mock("../main/config", () => ({
+  getConfig: vi.fn().mockReturnValue({ riotPath: "d:\\Code\\SwitchMaster-v2\\dummy_riot" }),
+  saveConfig: vi.fn(),
+  loadConfig: vi.fn().mockResolvedValue({}),
+}));
+vi.mock("../main/automation", () => ({
+  killRiotProcesses: vi.fn().mockResolvedValue(undefined),
+  launchRiotClient: vi.fn().mockResolvedValue(undefined),
+  performAutomation: vi.fn().mockResolvedValue(undefined),
+  autoDetectPaths: vi.fn().mockResolvedValue({ riotPath: "d:\\Code\\SwitchMaster-v2\\dummy_riot" }),
+}));
+vi.mock("../main/logger");
+vi.mock("../main/logger");
 vi.mock("../main/logger");
 vi.mock("../main/statsService");
+vi.mock("fs-extra", () => {
+  const mockMethods = {
+    pathExists: vi.fn().mockResolvedValue(true),
+    stat: vi.fn().mockResolvedValue({ isDirectory: () => true }),
+    existsSync: vi.fn().mockReturnValue(true),
+  };
+  return {
+    ...mockMethods,
+    default: mockMethods,
+  };
+});
+vi.mock("../main/appLogic", () => ({
+  launchGame: vi.fn().mockResolvedValue(undefined),
+  monitorRiotProcess: vi.fn(),
+  setAutoStart: vi.fn(),
+  getAutoStartStatus: vi.fn().mockReturnValue({ enabled: false }),
+  getStatus: vi.fn().mockResolvedValue({ status: "Prêt" }),
+  isValorantRunning: vi.fn().mockResolvedValue(false),
+}));
 
 import { registerAccountHandlers } from "../main/ipc/accountHandlers";
 import { registerConfigHandlers } from "../main/ipc/configHandlers";
@@ -90,24 +127,24 @@ describe("Main Process IPC Handlers Full Coverage", () => {
   it("doit couvrir AccountHandlers", async () => {
     registerAccountHandlers(() => mockWin as any);
     (accountsModule.loadAccountsMeta as any).mockResolvedValue([{ id: "550e8400-e29b-41d4-a716-446655440000", riotId: "U#T" }]);
-    
+
     if (handlers["get-accounts"]) await handlers["get-accounts"]();
     if (handlers["get-account-credentials"]) await handlers["get-account-credentials"](null, "1");
-    
-    const validAcc = { 
-        id: "550e8400-e29b-41d4-a716-446655440000",
-        name: "Test", 
-        gameType: "valorant", 
-        riotId: "User#TAG",
-        region: "eu"
+
+    const validAcc = {
+      id: "550e8400-e29b-41d4-a716-446655440000",
+      name: "Test",
+      gameType: "valorant",
+      riotId: "User#TAG",
+      region: "eu"
     };
-    
+
     if (handlers["add-account"]) await handlers["add-account"](null, validAcc);
     if (handlers["update-account"]) await handlers["update-account"](null, validAcc);
     if (handlers["delete-account"]) await handlers["delete-account"](null, "1");
     if (handlers["reorder-accounts"]) await handlers["reorder-accounts"](null, ["1"]);
     if (handlers["fetch-account-stats"]) await handlers["fetch-account-stats"](null, "550e8400-e29b-41d4-a716-446655440000");
-    
+
     expect(accountsModule.addAccount).toHaveBeenCalled();
   });
 
@@ -122,25 +159,26 @@ describe("Main Process IPC Handlers Full Coverage", () => {
   it("doit enregistrer et appeler RiotHandlers", async () => {
     registerRiotHandlers(() => mockWin as any, vi.fn(), vi.fn());
     (accountsModule.getAccountCredentials as any).mockResolvedValue({ username: "u", password: "p" });
-    (configModule.getConfig as any).mockReturnValue({ riotPath: "C:\\Riot" });
+    // Point to the dummy file we created
+    (configModule.getConfig as any).mockReturnValue({ riotPath: "d:\\Code\\SwitchMaster-v2\\dummy_riot" });
 
     if (handlers["select-riot-path"]) await handlers["select-riot-path"]();
     if (handlers["auto-detect-paths"]) await handlers["auto-detect-paths"]();
     if (handlers["switch-account"]) await handlers["switch-account"](null, "1");
     if (handlers["launch-game"]) await handlers["launch-game"](null, "valorant");
-    
+
     expect(automationModule.performAutomation).toHaveBeenCalled();
   });
 
   it("doit enregistrer et appeler MiscHandlers", async () => {
     const mockContext = {
-        getStatus: vi.fn().mockResolvedValue({ status: "Active", accountId: "550e8400-e29b-41d4-a716-446655440000" }),
-        getAutoStartStatus: vi.fn(),
-        setAutoStart: vi.fn(),
-        isValorantRunning: vi.fn()
+      getStatus: vi.fn().mockResolvedValue({ status: "Active", accountId: "550e8400-e29b-41d4-a716-446655440000" }),
+      getAutoStartStatus: vi.fn(),
+      setAutoStart: vi.fn(),
+      isValorantRunning: vi.fn()
     };
     registerMiscHandlers(() => mockWin as any, mockContext as any);
-    
+
     // Test logs
     if (handlers["log-to-main"]) handlers["log-to-main"](null, { level: "info", args: ["test"] });
 
@@ -148,7 +186,7 @@ describe("Main Process IPC Handlers Full Coverage", () => {
     await handlers["get-status"]();
     await handlers["get-auto-start"]();
     await handlers["set-auto-start"](null, true);
-    
+
     // Test fermeture avec minimize
     await handlers["handle-quit-choice"](null, { action: "minimize", dontShowAgain: true });
     expect(mockWin.hide).toHaveBeenCalled();

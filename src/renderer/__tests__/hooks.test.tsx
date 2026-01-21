@@ -23,18 +23,18 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  delete (window as any).ipc;
+  // delete (window as any).ipc; // Safer to just overwrite in beforeEach
 });
 
 describe("useAccounts", () => {
   it("doit charger les comptes au montage", async () => {
     mockInvoke.mockResolvedValueOnce([{ id: "1", name: "Test" }]);
-    mockOn.mockReturnValue(() => {}); // Unsubscribe mock
+    mockOn.mockReturnValue(() => { }); // Unsubscribe mock
 
     const { result } = renderHook(() => useAccounts());
 
     expect(result.current.loading).toBe(true);
-    
+
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
     });
@@ -45,7 +45,7 @@ describe("useAccounts", () => {
 
   it("doit gérer les erreurs de chargement des comptes", async () => {
     mockInvoke.mockRejectedValueOnce(new Error("Fetch error"));
-    
+
     const { result } = renderHook(() => useAccounts());
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.accounts).toEqual([]);
@@ -72,7 +72,7 @@ describe("useAccounts", () => {
 
   it("doit appeler les méthodes CRUD", async () => {
     mockInvoke.mockResolvedValue([]);
-    mockOn.mockReturnValue(() => {});
+    mockOn.mockReturnValue(() => { });
     const { result } = renderHook(() => useAccounts());
 
     await act(async () => {
@@ -95,12 +95,28 @@ describe("useAccounts", () => {
     });
     expect(mockInvoke).toHaveBeenCalledWith("reorder-accounts", ["1", "2"]);
   });
+
+  it("doit nettoyer les écouteurs au démontage", () => {
+    const unsubscribe = vi.fn();
+    mockOn.mockReturnValue(unsubscribe);
+
+    const { unmount } = renderHook(() => useAccounts());
+    unmount();
+
+    expect(unsubscribe).toHaveBeenCalled();
+  });
+
+  it("ne doit pas planter si unsubscribe n'est pas une fonction", () => {
+    mockOn.mockReturnValue(null); // Invalid unsubscribe
+    const { unmount } = renderHook(() => useAccounts());
+    expect(() => unmount()).not.toThrow();
+  });
 });
 
 describe("useAppIpc", () => {
   it("doit initialiser le statut", async () => {
     mockInvoke.mockResolvedValueOnce({ status: "Active", accountName: "Player" });
-    mockOn.mockReturnValue(() => {});
+    mockOn.mockReturnValue(() => { });
 
     const handleSwitch = vi.fn();
     const { result } = renderHook(() => useAppIpc(handleSwitch));
@@ -124,17 +140,23 @@ describe("useAppIpc", () => {
     act(() => {
       callbacks["riot-client-closed"](null);
     });
-    
+
     await waitFor(() => {
       expect(mockInvoke).toHaveBeenCalledWith("get-status");
     });
+
+    // Status Updated Event
+    act(() => {
+      callbacks["status-updated"](null, { status: "Active", accountName: "Updated" });
+    });
+    expect(result.current.status.status).toBe("Actif: Updated");
 
     // Quit Modal
     act(() => {
       callbacks["show-quit-modal"](null);
     });
     expect(result.current.isQuitModalOpen).toBe(true);
-    
+
     unmount();
   });
 
@@ -191,5 +213,57 @@ describe("useAppIpc", () => {
     });
 
     expect(handleSwitch).toHaveBeenCalledWith("acc-1", false);
+    expect(handleSwitch).toHaveBeenCalledWith("acc-1", false);
+  });
+
+  it("doit ouvrir l'update modal si isManual est vrai même si status est idle", () => {
+    mockInvoke.mockResolvedValue({ status: "Prêt" });
+    const callbacks: Record<string, Function> = {};
+    mockOn.mockImplementation((event, cb) => {
+      callbacks[event] = cb;
+      return vi.fn();
+    });
+
+    const { result } = renderHook(() => useAppIpc(vi.fn()));
+
+    act(() => {
+      callbacks["update-status"](null, { status: "idle", isManual: true });
+    });
+    expect(result.current.updateInfo.isOpen).toBe(true);
+  });
+
+  it("doit conserver les infos précédentes si non fournies", () => {
+    mockInvoke.mockResolvedValue({ status: "Prêt" });
+    const callbacks: Record<string, Function> = {};
+    mockOn.mockImplementation((event, cb) => {
+      callbacks[event] = cb;
+      return vi.fn();
+    });
+
+    const { result } = renderHook(() => useAppIpc(vi.fn()));
+
+    // First update with info
+    act(() => {
+      callbacks["update-status"](null, { status: "available", version: "1.0", releaseNotes: "Notes" });
+    });
+
+    // Second update without info
+    act(() => {
+      callbacks["update-status"](null, { status: "downloading" });
+    });
+
+    expect(result.current.updateInfo.version).toBe("1.0");
+    expect(result.current.updateInfo.releaseNotes).toBe("Notes");
+  });
+
+  it("doit gérer un statut null", async () => {
+    mockInvoke.mockResolvedValue(null);
+    mockOn.mockReturnValue(() => { });
+
+    const { result } = renderHook(() => useAppIpc(vi.fn()));
+
+    await waitFor(() => {
+      expect(result.current.status.status).toBe("Prêt");
+    });
   });
 });

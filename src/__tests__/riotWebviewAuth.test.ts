@@ -272,4 +272,69 @@ describe("RiotWebviewAuth", () => {
       }
     });
   });
+
+
+  describe("login - Additional Coverage", () => {
+    it("doit utiliser forceNew=true dans l'URL", async () => {
+      RiotWebviewAuth.login(null, false, true);
+      expect(mockLoginWin.loadURL).toHaveBeenCalledWith(expect.stringContaining("prompt=login"));
+    });
+
+    it("doit ignorer la navigation vers des URLs sans token", () => {
+      RiotWebviewAuth.login(null, false, false);
+      const mockEvent = { preventDefault: vi.fn() };
+
+      // Simuler une navigation sans token
+      if (webContentsListeners["will-navigate"] && webContentsListeners["will-navigate"][0]) {
+        webContentsListeners["will-navigate"][0](mockEvent, "https://google.com");
+      }
+
+      if (webContentsListeners["did-navigate"] && webContentsListeners["did-navigate"][0]) {
+        webContentsListeners["did-navigate"][0]({}, "https://google.com");
+      }
+
+      expect(mockEvent.preventDefault).not.toHaveBeenCalled();
+    });
+
+    it("doit gérer le catch global de finishAuth via safeResolve error", async () => {
+      mockLoginWin.close.mockImplementationOnce(() => {
+        throw new Error("Close failed");
+      });
+
+      mockFetch
+        .mockResolvedValueOnce({ json: () => Promise.resolve({ entitlements_token: "ent_token" }) })
+        .mockResolvedValue({ json: () => Promise.resolve({}) });
+
+      const promise = RiotWebviewAuth.login(null, false, false);
+      const mockEvent = { preventDefault: vi.fn() };
+      const tokenUrl = "http://localhost/redirect#access_token=test_token";
+
+      if (webContentsListeners["will-redirect"] && webContentsListeners["will-redirect"][0]) {
+        webContentsListeners["will-redirect"][0](mockEvent, tokenUrl);
+      }
+
+      await vi.advanceTimersByTimeAsync(1000);
+      const result = await promise;
+      expect(result).not.toBeNull();
+    });
+
+    it("doit gérer l'échec de UserInfo et continuer", async () => {
+      mockFetch
+        .mockResolvedValueOnce({ json: () => Promise.resolve({ entitlements_token: "ent_token" }) })
+        .mockRejectedValueOnce(new Error("UserInfo Failed"));
+
+      const promise = RiotWebviewAuth.login(null, false, false);
+      const mockEvent = { preventDefault: vi.fn() };
+      const tokenUrl = "http://localhost/redirect#access_token=test_token";
+
+      if (webContentsListeners["will-redirect"] && webContentsListeners["will-redirect"][0]) {
+        webContentsListeners["will-redirect"][0](mockEvent, tokenUrl);
+      }
+
+      await vi.advanceTimersByTimeAsync(1000);
+      const result = await promise;
+      expect(result).not.toBeNull();
+      expect(result?.gameName).toBe("");
+    });
+  });
 });

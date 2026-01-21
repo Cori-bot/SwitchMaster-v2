@@ -95,8 +95,8 @@ describe("AppLogic Extended Tests", () => {
       (fs.pathExists as any).mockResolvedValue(false);
 
       const promise = launchGame("valorant");
-      await vi.advanceTimersByTimeAsync(4000);
-
+      // Validation occurs before delay, so we should expect failure immediately
+      // NOT waiting ensures we catch the rejection before Vitest flags it as unhandled
       await expect(promise).rejects.toThrow("Executable Riot Client non trouvé");
     });
   });

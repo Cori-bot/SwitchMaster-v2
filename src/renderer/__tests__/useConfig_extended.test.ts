@@ -76,6 +76,37 @@ describe("useConfig - Extended Coverage", () => {
         } catch (error) {
             // Expected to throw
         }
+        try {
+            await act(async () => {
+                await result.current.updateConfig({ riotPath: "/new/path" });
+            });
+        } catch (error) {
+            // Expected to throw
+        }
+
+        // Verify optimistic update callback logic (line 35)
+        // We need to trigger the setter with prev value null to checking branch coverage if any?
+        // Actually line 35 is: setConfig((prev) => (prev ? { ...prev, ...newConfig } : null));
+        // We need a test where updateConfig is called while config is null? (unlikely but possible)
+        // Or just ensure the `prev ?` part is executed.
+        // It is executed in the success case above.
+        // If config is null, it returns null.
+    });
+
+    it("ne doit pas faire d'optimistic update si config est null", async () => {
+        (window.ipc.invoke as any).mockResolvedValueOnce(null); // Init null
+
+        const { result } = renderHook(() => useConfig());
+        await waitFor(() => expect(result.current.loading).toBe(false));
+
+        try {
+            await act(async () => {
+                await result.current.updateConfig({ riotPath: "/new" });
+            });
+        } catch (e) { }
+
+        // Should still be null
+        expect(result.current.config).toBeNull();
     });
 
     it("doit appeler selectRiotPath et mettre à jour la config", async () => {
@@ -178,5 +209,37 @@ describe("useConfig - Extended Coverage", () => {
         });
 
         expect(result.current.config?.riotPath).toBe("/refreshed/path");
+    });
+
+    it("ne doit pas mettre à jour via config-updated si la config n'est pas chargée (prev null)", async () => {
+        (window.ipc.invoke as any).mockResolvedValueOnce(null); // Initial load returns null/fails logic
+
+        const { result } = renderHook(() => useConfig());
+        await waitFor(() => expect(result.current.loading).toBe(false));
+
+        // Trigger update
+        const callback = (window.ipc.on as any).mock.calls.find((c: any) => c[0] === "config-updated")?.[1];
+        act(() => {
+            if (callback) callback({}, { riotPath: "/path" });
+        });
+
+        // Config should remain null because prev was null
+        expect(result.current.config).toBeNull();
+    });
+
+    it("ne doit pas mettre à jour si autoDetectPaths retourne un objet vide", async () => {
+        const mockConfig = { riotPath: "/old" };
+        (window.ipc.invoke as any)
+            .mockResolvedValueOnce(mockConfig)
+            .mockResolvedValueOnce({}); // Empty result
+
+        const { result } = renderHook(() => useConfig());
+        await waitFor(() => expect(result.current.config).toBeDefined());
+
+        await act(async () => {
+            await result.current.autoDetectPaths();
+        });
+
+        expect(result.current.config?.riotPath).toBe("/old");
     });
 });
