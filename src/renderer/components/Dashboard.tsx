@@ -86,7 +86,13 @@ const Dashboard: React.FC<DashboardProps> = ({
     ghost.style.opacity = "0";
     document.body.appendChild(ghost);
     e.dataTransfer.setDragImage(ghost, 0, 0);
-    setTimeout(() => document.body.removeChild(ghost), 0);
+    setTimeout(() => {
+      try {
+        document.body.removeChild(ghost);
+      } catch (e) {
+        // Ignorer si déjà supprimé
+      }
+    }, 0);
   };
 
   const handleDragOver = (e: React.DragEvent, targetId: string) => {
