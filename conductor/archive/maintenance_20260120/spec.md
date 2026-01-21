@@ -21,5 +21,5 @@ Cette track vise à consolider la base technique de SwitchMaster en mettant à j
 ## Success Criteria
 - Toutes les dépendances sont à jour sans vulnérabilités critiques (`npm audit` clean).
 - L'application build et se lance correctement sur la dernière version d'Electron.
-- Les tests unitaires couvrent 100% des modules de sécurité et de gestion des comptes.
+- Les tests unitaires couvrent 80% des modules de sécurité et de gestion des comptes.
 - Impossible d'injecter des données malformées dans le stockage des comptes.

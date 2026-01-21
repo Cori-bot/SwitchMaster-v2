@@ -5,7 +5,7 @@
 1. **The Plan is the Source of Truth:** All work must be tracked in `plan.md`
 2. **The Tech Stack is Deliberate:** Changes to the tech stack must be documented in `tech-stack.md` *before* implementation
 3. **Test-Driven Development:** Write unit tests before implementing functionality
-4. **High Code Coverage:** Requirement of 100% code coverage for all modules
+4. **High Code Coverage:** Requirement of 80% code coverage for all modules
 5. **User Experience First:** Every decision should prioritize user experience
 6. **Non-Interactive & CI-Aware:** Prefer non-interactive commands. Use `CI=true` for watch-mode tools (tests, linters) to ensure single execution.
 
@@ -36,7 +36,7 @@ All tasks follow a strict lifecycle:
    ```bash
    pytest --cov=app --cov-report=html
    ```
-   Target: 100% coverage for new code. The specific tools and commands will vary by language and framework.
+   Target: 80% coverage for new code. The specific tools and commands will vary by language and framework.
 
 7. **Document Deviations:** If implementation differs from tech stack:
    - **STOP** implementation

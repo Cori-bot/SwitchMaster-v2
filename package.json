@@ -8,7 +8,8 @@
     "build": "vite build && node scripts/build-main.js && electron-builder",
     "release": "vite build && electron-builder --publish=always",
     "up-dep": "pnpm up --latest",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "build": {
     "appId": "com.switchmaster.app",
@@ -97,6 +98,10 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.18",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^25.0.3",
     "@types/react": "^19.2.7",

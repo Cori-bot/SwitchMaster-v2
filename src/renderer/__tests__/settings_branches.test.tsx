@@ -1,0 +1,32 @@
+import { render, screen, fireEvent } from "@testing-library/react";
+import Settings from "../components/Settings";
+import { vi, describe, it, expect } from "vitest";
+import React from "react";
+
+describe("Settings Branches Coverage", () => {
+  const mockHandlers = {
+    onUpdate: vi.fn(),
+    onSelectRiotPath: vi.fn(),
+    onCheckUpdates: vi.fn(),
+    onOpenPinModal: vi.fn(),
+    onDisablePin: vi.fn(),
+    onOpenGPUModal: vi.fn(),
+  };
+
+  it("doit rendre un état vide si pas de config", () => {
+    render(<Settings config={null as any} {...mockHandlers} />);
+    expect(screen.queryByText(/Application/i)).not.toBeInTheDocument();
+  });
+
+  it("doit déclencher onUpdate sur le toggle autoStart en utilisant l'ID", () => {
+    const config = { autoStart: false, hasPin: true, riotPath: "" };
+    const { container } = render(<Settings config={config as any} {...mockHandlers} />);
+    
+    // Utiliser container.querySelector pour être sûr de l'élément input exact
+    const input = container.querySelector("#autoStart");
+    if (!input) throw new Error("Input not found");
+    
+    fireEvent.click(input);
+    expect(mockHandlers.onUpdate).toHaveBeenCalledWith({ autoStart: true });
+  });
+});
