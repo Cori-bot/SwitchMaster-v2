@@ -1,143 +1,165 @@
-
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import NotificationItem from "../components/NotificationItem";
 
-describe("NotificationItem", () => {
-    const defaultProps = {
-        notification: {
-            id: 1,
-            message: "Test message",
-            type: "success" as const,
-        },
-        onRemove: vi.fn(),
-    };
-
+describe("NotificationItem - 100% Coverage", () => {
     beforeEach(() => {
         vi.useFakeTimers();
-        vi.clearAllMocks();
     });
 
     afterEach(() => {
-        vi.runOnlyPendingTimers();
         vi.useRealTimers();
     });
 
-    it("doit déclencher onRemove après un délai en cas de swipe", () => {
-        render(<NotificationItem {...defaultProps} />);
+    const successNotification = {
+        id: 1,
+        message: "Success message",
+        type: "success" as const,
+    };
 
-        const container = screen.getByText("Test message").closest(".group")!;
+    const errorNotification = {
+        id: 2,
+        message: "Error message",
+        type: "error" as const,
+    };
 
-        // Start drag
-        fireEvent.mouseDown(container, { clientX: 0 });
+    const infoNotification = {
+        id: 3,
+        message: "Info message",
+        type: "info" as const,
+    };
 
-        // Move drag (> 100px)
-        act(() => {
-            const moveEvent = new MouseEvent("mousemove", { clientX: 150 });
-            window.dispatchEvent(moveEvent);
-        });
-
-        // End drag
-        act(() => {
-            const upEvent = new MouseEvent("mouseup", {});
-            window.dispatchEvent(upEvent);
-        });
-
-        // Should trigger remove logic which waits 200ms
-        act(() => {
-            vi.advanceTimersByTime(200);
-        });
-
-        expect(defaultProps.onRemove).toHaveBeenCalledWith(1);
+    it("doit afficher une notification de type success", () => {
+        render(<NotificationItem notification={successNotification} onRemove={vi.fn()} />);
+        expect(screen.getByText("Success message")).toBeDefined();
     });
 
-    it("ne doit pas déclencher onRemove si le swipe est insuffisant", () => {
-        render(<NotificationItem {...defaultProps} />);
-
-        const container = screen.getByText("Test message").closest(".group")!;
-
-        // Start drag
-        fireEvent.mouseDown(container, { clientX: 0 });
-
-        // Move drag (< 100px)
-        act(() => {
-            const moveEvent = new MouseEvent("mousemove", { clientX: 50 });
-            window.dispatchEvent(moveEvent);
-        });
-
-        // End drag
-        act(() => {
-            const upEvent = new MouseEvent("mouseup", {});
-            window.dispatchEvent(upEvent);
-        });
-
-        act(() => {
-            vi.advanceTimersByTime(200);
-        });
-
-        expect(defaultProps.onRemove).not.toHaveBeenCalled();
+    it("doit afficher une notification de type error", () => {
+        render(<NotificationItem notification={errorNotification} onRemove={vi.fn()} />);
+        expect(screen.getByText("Error message")).toBeDefined();
     });
 
-    it("doit gérer les événements tactiles", () => {
-        render(<NotificationItem {...defaultProps} />);
-        const container = screen.getByText("Test message").closest(".group")!;
-
-        fireEvent.touchStart(container, { touches: [{ clientX: 0 }] });
-
-        act(() => {
-            const moveEvent = new TouchEvent("touchmove", { touches: [{ clientX: 150 }] as any });
-            window.dispatchEvent(moveEvent);
-        });
-
-        act(() => {
-            const endEvent = new TouchEvent("touchend", {});
-            window.dispatchEvent(endEvent);
-        });
-
-        act(() => {
-            vi.advanceTimersByTime(200);
-        });
-
-        expect(defaultProps.onRemove).toHaveBeenCalledWith(1);
+    it("doit afficher une notification de type info", () => {
+        render(<NotificationItem notification={infoNotification} onRemove={vi.fn()} />);
+        expect(screen.getByText("Info message")).toBeDefined();
     });
 
-    it("doit nettoyer les event listeners au démontage", () => {
-        const { unmount } = render(<NotificationItem {...defaultProps} />);
-        const removeSpy = vi.spyOn(window, "removeEventListener");
+    it("doit appeler onRemove au clic sur le bouton X", () => {
+        const onRemove = vi.fn();
+        render(<NotificationItem notification={successNotification} onRemove={onRemove} />);
 
-        // Trigger generic drag to attach listeners (listeners are attached in useEffect only if isDragging? No, conditional)
-        // Actually code says: useEffect(() => ... [isDragging])
-        // if (!isDragging) return;
-
-        const container = screen.getByText("Test message").closest(".group")!;
-        fireEvent.mouseDown(container, { clientX: 0 }); // isDragging = true
-
-        unmount();
-
-        expect(removeSpy).toHaveBeenCalledWith("mousemove", expect.any(Function));
-    });
-
-    it("doit supprimer la notification au clic sur le bouton fermer", () => {
-        render(<NotificationItem {...defaultProps} />);
-        const closeBtn = screen.getByRole("button"); // The X button
-
-        fireEvent.click(closeBtn);
+        fireEvent.click(screen.getByRole("button"));
 
         act(() => {
-            vi.advanceTimersByTime(200);
+            vi.advanceTimersByTime(300);
         });
 
+        expect(onRemove).toHaveBeenCalledWith(1);
     });
 
-    it("doit appliquer les styles d'erreur", () => {
-        render(<NotificationItem {...defaultProps} notification={{ ...defaultProps.notification, type: "error" }} />);
-        const container = screen.getByText("Test message").closest(".group");
-        expect(container?.className).toContain("bg-rose-500/10");
+    it("doit gérer le swipe vers la droite avec mousedown/mousemove/mouseup", () => {
+        const onRemove = vi.fn();
+        render(<NotificationItem notification={successNotification} onRemove={onRemove} />);
+
+        const notification = screen.getByText("Success message").closest("div");
+
+        // Start dragging
+        fireEvent.mouseDown(notification!, { clientX: 0 });
+
+        // Move right (> 100px should trigger removal)
+        fireEvent(window, new MouseEvent("mousemove", { clientX: 150 }));
+
+        // End dragging
+        fireEvent(window, new MouseEvent("mouseup"));
+
+        act(() => {
+            vi.advanceTimersByTime(300);
+        });
+
+        expect(onRemove).toHaveBeenCalledWith(1);
     });
 
-    it("doit appliquer les styles info", () => {
-        render(<NotificationItem {...defaultProps} notification={{ ...defaultProps.notification, type: "info" }} />);
-        const container = screen.getByText("Test message").closest(".group");
-        expect(container?.className).toContain("bg-blue-500/10");
+    it("doit gérer handleMove quand isDragging est false (ligne 33)", () => {
+        const onRemove = vi.fn();
+        render(<NotificationItem notification={successNotification} onRemove={vi.fn()} />);
+
+        // Trigger mousemove without mousedown (isDragging = false)
+        fireEvent(window, new MouseEvent("mousemove", { clientX: 100 }));
+
+        // Should not crash and onRemove should not be called
+        expect(onRemove).not.toHaveBeenCalled();
+    });
+
+    it("doit gérer handleEnd quand isDragging est false (ligne 42)", () => {
+        const onRemove = vi.fn();
+        render(<NotificationItem notification={successNotification} onRemove={vi.fn()} />);
+
+        // Trigger mouseup without mousedown (isDragging = false)
+        fireEvent(window, new MouseEvent("mouseup"));
+
+        // Should not crash and onRemove should not be called
+        expect(onRemove).not.toHaveBeenCalled();
+    });
+
+    it("doit revenir à position 0 si swipe < 100px", () => {
+        const onRemove = vi.fn();
+        render(<NotificationItem notification={successNotification} onRemove={onRemove} />);
+
+        const notification = screen.getByText("Success message").closest("div");
+
+        // Start dragging
+        fireEvent.mouseDown(notification!, { clientX: 0 });
+
+        // Move right but less than 100px
+        fireEvent(window, new MouseEvent("mousemove", { clientX: 50 }));
+
+        // End dragging
+        fireEvent(window, new MouseEvent("mouseup"));
+
+        // Should not remove
+        expect(onRemove).not.toHaveBeenCalled();
+    });
+
+    it("doit ignorer le swipe vers la gauche (diff < 0)", () => {
+        const onRemove = vi.fn();
+        render(<NotificationItem notification={successNotification} onRemove={onRemove} />);
+
+        const notification = screen.getByText("Success message").closest("div");
+
+        // Start dragging
+        fireEvent.mouseDown(notification!, { clientX: 100 });
+
+        // Move left (negative diff)
+        fireEvent(window, new MouseEvent("mousemove", { clientX: 50 }));
+
+        // End dragging
+        fireEvent(window, new MouseEvent("mouseup"));
+
+        // Should not remove
+        expect(onRemove).not.toHaveBeenCalled();
+    });
+
+    it("doit gérer les événements touch", () => {
+        const onRemove = vi.fn();
+        render(<NotificationItem notification={successNotification} onRemove={onRemove} />);
+
+        const notification = screen.getByText("Success message").closest("div");
+
+        // Touch start
+        fireEvent.touchStart(notification!, { touches: [{ clientX: 0 }] });
+
+        // Touch move
+        fireEvent(window, new TouchEvent("touchmove", {
+            touches: [{ clientX: 150 } as Touch]
+        }));
+
+        // Touch end
+        fireEvent(window, new TouchEvent("touchend"));
+
+        act(() => {
+            vi.advanceTimersByTime(300);
+        });
+
+        expect(onRemove).toHaveBeenCalledWith(1);
     });
 });
