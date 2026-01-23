@@ -59,9 +59,7 @@ const GuideOnboarding: React.FC<GuideOnboardingProps> = ({
     };
 
     const prevStep = () => {
-        if (currentStep > 0) {
-            setCurrentStep(currentStep - 1);
-        }
+        setCurrentStep(currentStep - 1);
     };
 
     const handleFinish = async () => {

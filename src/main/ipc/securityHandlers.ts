@@ -4,10 +4,8 @@ import { safeHandle } from "./utils";
 
 const PIN_MIN_LENGTH = 4;
 
-function hashPin(pin: string, salt?: string): string {
-  if (!salt) {
-    salt = crypto.randomBytes(16).toString("hex");
-  }
+function hashPin(pin: string): string {
+  const salt = crypto.randomBytes(16).toString("hex");
   const hash = crypto.createHmac("sha256", salt).update(pin).digest("hex");
   return `${salt}:${hash}`;
 }

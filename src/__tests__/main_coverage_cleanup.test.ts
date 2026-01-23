@@ -15,10 +15,10 @@ vi.mock("child_process", () => {
     return {
         default: {
             exec: (cmd: any, cb: any) => mocks.exec(cmd, cb),
-            spawn: (...args: any[]) => mocks.spawn(...args),
+            spawn: (...args: any[]) => (mocks.spawn as any)(...args),
         },
         exec: (cmd: any, cb: any) => mocks.exec(cmd, cb),
-        spawn: (...args: any[]) => mocks.spawn(...args),
+        spawn: (...args: any[]) => (mocks.spawn as any)(...args),
     };
 });
 

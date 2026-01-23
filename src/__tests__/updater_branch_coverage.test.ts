@@ -67,13 +67,13 @@ describe("Updater Exhaustive Coverage", () => {
 
         // Click on update-available notification
         mockEmitter.emit("update-available", { version: "1.0" });
-        const clickCb = (mockNotification.on as any).mock.calls.find(c => c[0] === "click")[1];
+        const clickCb = (mockNotification.on as any).mock.calls.find((c: any) => c[0] === "click")[1];
         clickCb();
         expect(mw.show).toHaveBeenCalled();
 
         // Click on update-downloaded notification
         mockEmitter.emit("update-downloaded", { version: "1.0" });
-        const clickCb2 = (mockNotification.on as any).mock.calls.find(c => c[0] === "click")[1];
+        const clickCb2 = (mockNotification.on as any).mock.calls.find((c: any) => c[0] === "click")[1];
         clickCb2();
         expect(mw.focus).toHaveBeenCalled();
     });

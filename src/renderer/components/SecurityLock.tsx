@@ -34,6 +34,7 @@ const SecurityLock: React.FC<SecurityLockProps> = ({
   }, [pin]);
 
   const handleNumberClick = (num: string | number) => {
+
     if (pin.length < PIN_LENGTH) {
       setPin((prev) => prev + num);
       setError("");
@@ -52,6 +53,7 @@ const SecurityLock: React.FC<SecurityLockProps> = ({
         setError("Code PIN incorrect");
         setPin("");
       }
+
     } else if (mode === "set") {
       if (step === 1) {
         setConfirmPin(pin);
@@ -78,7 +80,7 @@ const SecurityLock: React.FC<SecurityLockProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-[#0a0a0a] flex flex-col items-center justify-center p-6 overflow-y-auto scrollbar-hide">
+    <div className="fixed inset-0 z-100 bg-[#0a0a0a] flex flex-col items-center justify-center p-6 overflow-y-auto scrollbar-hide">
       <div className="w-full max-w-[320px] flex flex-col items-center py-4">
         <div className="flex items-center gap-4 mb-10">
           <div
@@ -95,11 +97,10 @@ const SecurityLock: React.FC<SecurityLockProps> = ({
           {[...Array(PIN_LENGTH)].map((_, i) => (
             <div
               key={i}
-              className={`w-3.5 h-3.5 rounded-full border-2 transition-all duration-200 ${
-                i < pin.length
-                  ? "bg-blue-500 border-blue-500 scale-125 shadow-[0_0_12px_rgba(59,130,246,0.6)]"
-                  : "border-white/10"
-              }`}
+              className={`w-3.5 h-3.5 rounded-full border-2 transition-all duration-200 ${i < pin.length
+                ? "bg-blue-500 border-blue-500 scale-125 shadow-[0_0_12px_rgba(59,130,246,0.6)]"
+                : "border-white/10"
+                }`}
             />
           ))}
         </div>
@@ -141,7 +142,7 @@ const SecurityLock: React.FC<SecurityLockProps> = ({
 
         {mode !== "verify" && (
           <button
-            onClick={onCancel || (() => {})}
+            onClick={onCancel || (() => { })}
             className="mt-10 text-gray-500 hover:text-white text-sm font-bold transition-colors"
           >
             Annuler

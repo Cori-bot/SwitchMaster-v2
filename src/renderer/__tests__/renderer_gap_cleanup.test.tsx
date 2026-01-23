@@ -4,7 +4,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import AddAccountModal from "../components/AddAccountModal";
 import NotificationItem from "../components/NotificationItem";
 import SecurityLock from "../components/SecurityLock";
-import React from "react";
+
 
 describe("Renderer Gap Cleanup", () => {
     beforeEach(() => {
@@ -13,7 +13,7 @@ describe("Renderer Gap Cleanup", () => {
 
     it("AddAccountModal preserves early return on empty submit (Line 94)", () => {
         const onAdd = vi.fn();
-        render(<AddAccountModal isOpen={true} onAdd={onAdd} onClose={vi.fn()} editingAccount={undefined} />);
+        render(<AddAccountModal isOpen={true} onAdd={onAdd} onClose={vi.fn()} editingAccount={null} />);
 
         // Submit with empty fields
         const submitBtn = screen.getByText("Ajouter le compte");

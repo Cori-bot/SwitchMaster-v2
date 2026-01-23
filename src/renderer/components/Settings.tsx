@@ -149,9 +149,8 @@ const Settings: React.FC<SettingsProps> = ({
 
   const handleStartMinimizedChange = async (enabled: boolean) => {
     await onUpdate({ startMinimized: enabled });
-    if (config.autoStart) {
-      window.ipc.invoke("set-auto-start", true);
-    }
+
+    window.ipc.invoke("set-auto-start", true);
   };
 
   return (

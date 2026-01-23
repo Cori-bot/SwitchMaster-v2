@@ -36,6 +36,7 @@ export function registerRiotHandlers(
 
     await launchRiotClient(clientPath);
     await performAutomation(
+
       credentials.username || "",
       credentials.password || "",
     );

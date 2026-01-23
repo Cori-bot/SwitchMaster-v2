@@ -7,6 +7,7 @@ import { devError } from "./logger";
 
 // Handle different import patterns for ESM/CJS compatibility
 const autoUpdater: AppUpdater = (electronUpdater as any).autoUpdater ||
+
   (electronUpdater as any).default?.autoUpdater ||
   (electronUpdater as any).default ||
   electronUpdater;
@@ -71,20 +72,21 @@ export function setupUpdater(mainWindow: BrowserWindow | null) {
 
   autoUpdater.on("error", (err: Error) => {
     if (mainWindow) {
+      const msg = err?.message || String(err);
       let errorMessage = "Erreur lors de la mise à jour";
 
-      if (err.message.includes("GitHub") || err.message.includes("github")) {
+      if (msg.includes("GitHub") || msg.includes("github")) {
         errorMessage = "Erreur de connexion à GitHub. Vérifiez votre connexion internet.";
       }
 
-      if (err.message.includes("404") || err.message.includes("latest.yml")) {
+      if (msg.includes("404") || msg.includes("latest.yml")) {
         errorMessage = "Fichier de mise à jour introuvable sur le serveur (404).";
-        devError("Update file missing on GitHub:", err.message);
+        devError("Update file missing on GitHub:", msg);
       }
 
       // Ignore semver errors from GitHub tags (like "2.2" which is not x.y.z)
-      if (err.message.includes("Invalid Version")) {
-        devError("Semver error ignored (likely bad tag on GitHub):", err.message);
+      if (msg.includes("Invalid Version")) {
+        devError("Semver error ignored (likely bad tag on GitHub):", msg);
         mainWindow.webContents.send("update-status", {
           status: "not-available",
           isManual: isManualCheck,
@@ -95,7 +97,7 @@ export function setupUpdater(mainWindow: BrowserWindow | null) {
       mainWindow.webContents.send("update-status", {
         status: "error",
         error: errorMessage,
-        details: err.message,
+        details: msg, // Use processed message fallback
         isManual: isManualCheck,
       });
     }
@@ -166,6 +168,7 @@ export async function handleUpdateCheck(
         mainWindow.webContents.send("update-status", {
           status: "error",
           error: "Impossible de vérifier les mises à jour.",
+          details: msg,
           isManual: true,
         });
       }

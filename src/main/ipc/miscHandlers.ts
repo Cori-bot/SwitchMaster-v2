@@ -50,7 +50,9 @@ export function registerMiscHandlers(
   safeHandle("check-updates", async () => {
     const win = getMainWindow();
     if (win) {
+
       await handleUpdateCheck(win, true);
+
     }
     return true;
   });

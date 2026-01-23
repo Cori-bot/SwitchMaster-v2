@@ -91,6 +91,45 @@ describe("Window Exhaustive Coverage", () => {
 
         expect(event.preventDefault).toHaveBeenCalled();
         expect(win.hide).toHaveBeenCalled();
+        expect(win.hide).toHaveBeenCalled();
+    });
+
+    it("creation handles showQuitModal sending event (Line 96)", async () => {
+        const { createWindow } = await import("../main/window");
+        (configModule.getConfig as any).mockReturnValue({
+            showQuitModal: true,
+            minimizeToTray: false,
+        }); // Start with true
+
+        const win = createWindow(true);
+        const closeHandler = (win.on as any).mock.calls.find((c: any) => c[0] === "close")[1];
+        const event = { preventDefault: vi.fn() };
+
+        // Mock non-destroyed webContents
+        win.webContents.isDestroyed = vi.fn().mockReturnValue(false);
+
+        closeHandler(event);
+
+        expect(event.preventDefault).toHaveBeenCalled();
+        expect(win.webContents.send).toHaveBeenCalledWith("show-quit-modal");
+    });
+
+    it("creation handles close normally when no modal and no tray minimize (Line 98 else)", async () => {
+        const { createWindow } = await import("../main/window");
+        (configModule.getConfig as any).mockReturnValue({
+            showQuitModal: false,
+            minimizeToTray: false,
+        });
+
+        const win = createWindow(true);
+        const closeHandler = (win.on as any).mock.calls.find((c: any) => c[0] === "close")[1];
+        const event = { preventDefault: vi.fn() };
+
+        closeHandler(event);
+
+        // precise check: preventDefault NOT called -> window closes naturally
+        expect(event.preventDefault).not.toHaveBeenCalled();
+        expect(win.hide).not.toHaveBeenCalled();
     });
 
     it("updateTrayMenu and tray interaction coverage", async () => {

@@ -1,5 +1,5 @@
 
-import React from "react";
+
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import ErrorBoundary from "../components/ErrorBoundary";
@@ -68,5 +68,20 @@ describe("ErrorBoundary", () => {
         fireEvent.click(reloadBtn);
 
         expect(window.location.reload).toHaveBeenCalled();
+    });
+
+    it("ne crash pas si window.ipc n'existe pas (ligne 24)", () => {
+        // Supprimer window.ipc
+        delete (window as any).ipc;
+
+        render(
+            <ErrorBoundary>
+                <Bomb shouldThrow={true} />
+            </ErrorBoundary>
+        );
+
+        // Doit afficher l'UI de fallback sans crash
+        expect(screen.getByText("Une erreur est survenue")).toBeInTheDocument();
+        // Pas de call à ipc.send car ipc n'existe pas
     });
 });

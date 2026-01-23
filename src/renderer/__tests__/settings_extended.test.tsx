@@ -15,6 +15,7 @@ describe("Settings - Extended Coverage", () => {
         enableGPU: false,
         security: { enabled: false },
         lastAccountId: undefined,
+        hasSeenOnboarding: true,
     };
 
     const defaultProps = {
@@ -97,6 +98,28 @@ describe("Settings - Extended Coverage", () => {
         // startMinimized devrait être disabled
         const checkbox = screen.getByLabelText(/Démarrer en arrière-plan/i);
         expect(checkbox).toHaveProperty("disabled", true);
+    });
+
+    it("appelle set-auto-start quand startMinimized change et autoStart est actif", async () => {
+        // Setup config with autoStart true
+        const configWithAutoStart = { ...mockConfig, autoStart: true, startMinimized: false };
+        render(<Settings {...defaultProps} config={configWithAutoStart} />);
+
+        const checkbox = screen.getByLabelText(/Démarrer en arrière-plan/i);
+        // Initially enabled because autoStart is true
+        expect(checkbox).not.toHaveProperty("disabled", true);
+
+        // Click to enable startMinimized
+        fireEvent.click(checkbox);
+
+        await waitFor(() => {
+            // Check update called with startMinimized: true
+            expect(defaultProps.onUpdate).toHaveBeenCalledWith({ startMinimized: true });
+
+            // Check ipc invoke called. The logic says: if (config.autoStart) set-auto-start true
+            // Since we passed autoStart: true in props, this branch should be taken
+            expect(window.ipc.invoke).toHaveBeenCalledWith("set-auto-start", true);
+        });
     });
 
     it("doit appeler onOpenGPUModal quand enableGPU change", () => {
