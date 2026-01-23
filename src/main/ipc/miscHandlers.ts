@@ -1,15 +1,16 @@
 import { ipcMain, dialog, app, BrowserWindow } from "electron";
-import { loadAccountsMeta } from "../accounts";
-import { saveConfig, getConfig } from "../config";
 import { safeHandle } from "./utils";
 import { IpcContext } from "./types";
 import { handleUpdateCheck } from "../updater";
 import { devLog, devError } from "../logger";
-
+import { AccountService } from "../services/AccountService";
+import { ConfigService } from "../services/ConfigService";
 
 export function registerMiscHandlers(
   getMainWindow: () => BrowserWindow | null,
   context: IpcContext,
+  accountService: AccountService,
+  configService: ConfigService,
 ) {
   safeHandle("select-account-image", async () => {
     const win = getMainWindow();
@@ -32,7 +33,7 @@ export function registerMiscHandlers(
   safeHandle("get-status", async () => {
     const statusInfo = await context.getStatus();
     if (statusInfo.status === "Active" && statusInfo.accountId) {
-      const accounts = await loadAccountsMeta();
+      const accounts = await accountService.getAccounts();
       const acc = accounts.find((a) => a.id === statusInfo.accountId);
       if (acc) {
         statusInfo.accountName = acc.name;
@@ -50,9 +51,7 @@ export function registerMiscHandlers(
   safeHandle("check-updates", async () => {
     const win = getMainWindow();
     if (win) {
-
       await handleUpdateCheck(win, true);
-
     }
     return true;
   });
@@ -70,7 +69,7 @@ export function registerMiscHandlers(
 
     const win = getMainWindow();
     if (dontShowAgain) {
-      const config = getConfig();
+      const config = configService.getConfig();
       const newConfig = {
         ...config,
         showQuitModal: false,
@@ -78,7 +77,7 @@ export function registerMiscHandlers(
       };
 
       try {
-        await saveConfig(newConfig);
+        await configService.saveConfig(newConfig);
         if (action !== "quit" && win && !win.isDestroyed()) {
           void win.webContents.send("config-updated", newConfig);
         }
@@ -110,8 +109,6 @@ export function registerMiscHandlers(
     app.relaunch();
     app.exit();
   });
-
-
 
   safeHandle("is-valorant-running", () => context.isValorantRunning());
 }

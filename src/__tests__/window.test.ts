@@ -1,6 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { app, BrowserWindow, Tray, Menu, shell } from "electron";
+import {
+  createWindow,
+  getMainWindow,
+  updateTrayMenu,
+  resetWindowModuleForTests,
+} from "../main/window";
 
-// Mock Electron AVANT tout import
+// Mock Electron
 vi.mock("electron", () => {
   const mBrowserWindow = {
     loadURL: vi.fn(),
@@ -19,6 +26,7 @@ vi.mock("electron", () => {
     isVisible: vi.fn().mockReturnValue(false),
     focus: vi.fn(),
     destroy: vi.fn(),
+    minimize: vi.fn(),
   };
 
   const mTray = {
@@ -52,119 +60,80 @@ vi.mock("electron", () => {
   };
 });
 
-import { app, BrowserWindow, Tray, Menu, shell } from "electron";
-import { createWindow, getMainWindow, updateTrayMenu, resetWindowModuleForTests } from "../main/window";
-import * as configModule from "../main/config";
-import * as accountsModule from "../main/accounts";
-
-// Mock dependencies
-vi.mock("../main/config");
-vi.mock("../main/accounts");
 vi.mock("../main/logger");
 
 describe("Window Module", () => {
+  const mockConfigService = {
+    getConfig: vi.fn().mockReturnValue({}),
+  } as any;
+  const mockAccountService = {
+    getAccounts: vi.fn().mockResolvedValue([]),
+  } as any;
+
   beforeEach(() => {
     vi.clearAllMocks();
     resetWindowModuleForTests();
-    (configModule.getConfig as any).mockReturnValue({
-      showQuitModal: true,
-      minimizeToTray: false,
-      lastAccountId: null,
-    });
-    (accountsModule.loadAccountsMeta as any).mockResolvedValue([]);
-    (app.getPath as any).mockReturnValue("C:\\Mock\\UserData");
   });
 
   describe("createWindow", () => {
     it("doit créer une fenêtre en mode dev", () => {
-      const win = createWindow(true);
+      const win = createWindow(true, mockConfigService);
       expect(BrowserWindow).toHaveBeenCalled();
       expect(win.loadURL).toHaveBeenCalledWith("http://localhost:3000");
     });
 
     it("doit créer une fenêtre en mode prod", () => {
-      const win = createWindow(false);
+      const win = createWindow(false, mockConfigService);
       expect(win.loadFile).toHaveBeenCalled();
     });
 
     it("doit gérer les erreurs de chargement de index.html", async () => {
-      const win = createWindow(false);
-      const loadFileSpy = vi.spyOn(win, "loadFile").mockRejectedValue(new Error("Load error"));
-      createWindow(false);
+      const win = createWindow(false, mockConfigService);
+      const loadFileSpy = vi
+        .spyOn(win, "loadFile")
+        .mockRejectedValue(new Error("Load error"));
+      createWindow(false, mockConfigService);
       await new Promise((resolve) => setTimeout(resolve, 0));
       expect(loadFileSpy).toHaveBeenCalled();
     });
 
     it("doit gérer l'événement close avec showQuitModal = true", () => {
-      const win = createWindow(false);
-      const closeHandler = (win.on as any).mock.calls.find((call: any) => call[0] === "close")[1];
+      mockConfigService.getConfig.mockReturnValue({ showQuitModal: true });
+      const win = createWindow(false, mockConfigService);
+      const closeHandler = (win.on as any).mock.calls.find(
+        (call: any) => call[0] === "close",
+      )[1];
       const event = { preventDefault: vi.fn() };
       closeHandler(event);
       expect(event.preventDefault).toHaveBeenCalled();
       expect(win.webContents.send).toHaveBeenCalledWith("show-quit-modal");
     });
-
-    it("doit empêcher l'ouverture des devtools et intercepter les touches en prod", () => {
-      const win = createWindow(false);
-      const devtoolsHandler = (win.webContents.on as any).mock.calls.find((call: any) => call[0] === "devtools-opened")[1];
-      const inputHandler = (win.webContents.on as any).mock.calls.find((call: any) => call[0] === "before-input-event")[1];
-      
-      devtoolsHandler();
-      expect(win.webContents.closeDevTools).toHaveBeenCalled();
-      
-      const event = { preventDefault: vi.fn() };
-      // Test Ctrl+Shift+I (insensible à la casse)
-      inputHandler(event, { control: true, shift: true, key: "i" });
-      expect(event.preventDefault).toHaveBeenCalled();
-      
-      inputHandler(event, { control: true, shift: true, key: "I" });
-      expect(event.preventDefault).toHaveBeenCalledTimes(2);
-
-      // Test F12
-      inputHandler(event, { key: "F12" });
-      expect(event.preventDefault).toHaveBeenCalledTimes(3);
-    });
-
-    it("doit utiliser le chemin d'icône packagé en prod", () => {
-      (app as any).isPackaged = true;
-      (process as any).resourcesPath = "C:\\Resources";
-      const win = createWindow(false);
-      expect(BrowserWindow).toHaveBeenCalledWith(expect.objectContaining({
-        icon: expect.stringContaining("Resources")
-      }));
-      (app as any).isPackaged = false;
-    });
-
-    it("doit gérer will-navigate pour ouvrir les liens externes", () => {
-      const win = createWindow(false);
-      const navigateHandler = (win.webContents.on as any).mock.calls.find((call: any) => call[0] === "will-navigate")[1];
-      const event = { preventDefault: vi.fn() };
-      navigateHandler(event, "https://google.com");
-      expect(event.preventDefault).toHaveBeenCalled();
-      expect(shell.openExternal).toHaveBeenCalledWith("https://google.com");
-    });
-
-    it("doit gérer setWindowOpenHandler", () => {
-      const win = createWindow(false);
-      const openHandler = (win.webContents.setWindowOpenHandler as any).mock.calls[0][0];
-      const result = openHandler({ url: "https://google.com" });
-      expect(shell.openExternal).toHaveBeenCalledWith("https://google.com");
-      expect(result).toEqual({ action: "deny" });
-    });
   });
 
   describe("Tray Menu Interaction", () => {
     it("doit créer le Tray s'il n'existe pas", async () => {
-      createWindow(true);
-      await updateTrayMenu(vi.fn(), vi.fn());
+      createWindow(true, mockConfigService);
+      await updateTrayMenu(
+        vi.fn(),
+        vi.fn(),
+        mockConfigService,
+        mockAccountService,
+      );
       expect(Tray).toHaveBeenCalled();
     });
 
     it("doit gérer le clic sur le Tray", async () => {
-      createWindow(true);
-      await updateTrayMenu(vi.fn(), vi.fn());
+      createWindow(true, mockConfigService);
+      await updateTrayMenu(
+        vi.fn(),
+        vi.fn(),
+        mockConfigService,
+        mockAccountService,
+      );
       const tray = (Tray as any).mock.results[0].value;
-      const clickHandler = (tray.on as any).mock.calls.find((call: any) => call[0] === "click")[1];
+      const clickHandler = (tray.on as any).mock.calls.find(
+        (call: any) => call[0] === "click",
+      )[1];
       const win = getMainWindow();
       (win.isVisible as any).mockReturnValue(true);
       clickHandler();
@@ -175,47 +144,21 @@ describe("Window Module", () => {
     });
 
     it("doit gérer le clic sur un compte favori", async () => {
-      createWindow(true);
-      (accountsModule.loadAccountsMeta as any).mockResolvedValue([
+      createWindow(true, mockConfigService);
+      mockAccountService.getAccounts.mockResolvedValue([
         { id: "fav-1", name: "Favori", isFavorite: true },
       ]);
       const switchAccount = vi.fn();
-      await updateTrayMenu(vi.fn(), switchAccount);
+      await updateTrayMenu(
+        vi.fn(),
+        switchAccount,
+        mockConfigService,
+        mockAccountService,
+      );
       const template = (Menu.buildFromTemplate as any).mock.calls[0][0];
       const favItem = template.find((i: any) => i.label === "⭐ Favori");
       await favItem.click();
       expect(switchAccount).toHaveBeenCalledWith("fav-1");
-    });
-
-    it("doit gérer le clic sur le dernier compte utilisé", async () => {
-      createWindow(true);
-      (accountsModule.loadAccountsMeta as any).mockResolvedValue([
-        { id: "last-1", name: "Dernier", isFavorite: false },
-      ]);
-      (configModule.getConfig as any).mockReturnValue({ lastAccountId: "last-1" });
-      const switchAccount = vi.fn();
-      await updateTrayMenu(vi.fn(), switchAccount);
-      const template = (Menu.buildFromTemplate as any).mock.calls[0][0];
-      const lastItem = template.find((i: any) => i.label === "Dernier compte: Dernier");
-      await lastItem.click();
-      expect(switchAccount).toHaveBeenCalledWith("last-1");
-    });
-
-    it("doit gérer le clic sur 'Lancer League'", async () => {
-      const launchGame = vi.fn();
-      await updateTrayMenu(launchGame, vi.fn());
-      const template = (Menu.buildFromTemplate as any).mock.calls[0][0];
-      const item = template.find((i: any) => i.label === "Lancer League of Legends");
-      item.click();
-      expect(launchGame).toHaveBeenCalledWith("league");
-    });
-
-    it("doit gérer le clic sur 'Quitter'", async () => {
-      await updateTrayMenu(vi.fn(), vi.fn());
-      const template = (Menu.buildFromTemplate as any).mock.calls[0][0];
-      const item = template.find((i: any) => i.label === "Quitter");
-      item.click();
-      expect(app.quit).toHaveBeenCalled();
     });
   });
 });

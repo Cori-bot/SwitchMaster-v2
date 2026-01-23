@@ -3,13 +3,13 @@ import { ipcMain, BrowserWindow } from "electron";
 
 // Mock electron
 vi.mock("electron", () => ({
-    ipcMain: {
-        handle: vi.fn(),
-        removeHandler: vi.fn(),
-    },
-    BrowserWindow: {
-        getAllWindows: vi.fn(() => []),
-    },
+  ipcMain: {
+    handle: vi.fn(),
+    removeHandler: vi.fn(),
+  },
+  BrowserWindow: {
+    getAllWindows: vi.fn(() => []),
+  },
 }));
 
 // Mock accounts
@@ -17,165 +17,195 @@ const mockLoadAccountsMeta = vi.fn();
 const mockSaveAccountsMeta = vi.fn();
 
 vi.mock("../main/accounts", () => ({
-    loadAccountsMeta: (...args: any[]) => mockLoadAccountsMeta(...args),
-    getAccountCredentials: vi.fn().mockResolvedValue({ username: "test", password: "test" }),
-    addAccount: vi.fn().mockResolvedValue({ id: "new-id", name: "New" }),
-    updateAccount: vi.fn().mockResolvedValue({ id: "updated-id", name: "Updated" }),
-    deleteAccount: vi.fn().mockResolvedValue(true),
-    saveAccountsMeta: (...args: any[]) => mockSaveAccountsMeta(...args),
+  loadAccountsMeta: (...args: any[]) => mockLoadAccountsMeta(...args),
+  getAccountCredentials: vi
+    .fn()
+    .mockResolvedValue({ username: "test", password: "test" }),
+  addAccount: vi.fn().mockResolvedValue({ id: "new-id", name: "New" }),
+  updateAccount: vi
+    .fn()
+    .mockResolvedValue({ id: "updated-id", name: "Updated" }),
+  deleteAccount: vi.fn().mockResolvedValue(true),
+  saveAccountsMeta: (...args: any[]) => mockSaveAccountsMeta(...args),
 }));
 
 // Mock statsService
 vi.mock("../main/statsService", () => ({
-    fetchAccountStats: vi.fn().mockResolvedValue({ rank: "Gold" }),
+  fetchAccountStats: vi.fn().mockResolvedValue({ rank: "Gold" }),
 }));
 
 // Mock validation
 vi.mock("../shared/validation", () => ({
-    accountSchema: {
-        parse: vi.fn((data: any) => data),
-    },
+  accountSchema: {
+    parse: vi.fn((data: any) => data),
+  },
 }));
 
 describe("accountHandlers - Couverture 100%", () => {
-    const registeredHandlers: Record<string, Function> = {};
+  const registeredHandlers: Record<string, Function> = {};
 
-    beforeEach(() => {
-        vi.clearAllMocks();
-        Object.keys(registeredHandlers).forEach((k) => delete registeredHandlers[k]);
+  beforeEach(() => {
+    vi.clearAllMocks();
+    Object.keys(registeredHandlers).forEach(
+      (k) => delete registeredHandlers[k],
+    );
 
-        (ipcMain.handle as any).mockImplementation((channel: string, handler: Function) => {
-            registeredHandlers[channel] = handler;
-        });
+    (ipcMain.handle as any).mockImplementation(
+      (channel: string, handler: Function) => {
+        registeredHandlers[channel] = handler;
+      },
+    );
 
-        mockLoadAccountsMeta.mockResolvedValue([
-            { id: "1", name: "Account1", riotId: "player#NA1", gameType: "valorant" },
-        ]);
+    mockLoadAccountsMeta.mockResolvedValue([
+      { id: "1", name: "Account1", riotId: "player#NA1", gameType: "valorant" },
+    ]);
+  });
+
+  afterEach(() => {
+    vi.resetModules();
+    delete (global as any).refreshTray;
+  });
+
+  describe("notifyUpdate", () => {
+    it("appelle refreshTray si global.refreshTray existe (lignes 26-27)", async () => {
+      vi.resetModules();
+
+      // Setup global.refreshTray
+      const mockRefreshTray = vi.fn();
+      (global as any).refreshTray = mockRefreshTray;
+
+      const { registerAccountHandlers } =
+        await import("../main/ipc/accountHandlers");
+
+      const mockWindow = {
+        webContents: { send: vi.fn() },
+        isDestroyed: () => false,
+      } as unknown as BrowserWindow;
+
+      const mockAccountService = {
+        getAccounts: vi.fn().mockResolvedValue([{ id: "1", name: "Account1" }]),
+        addAccount: vi.fn().mockResolvedValue({ id: "new-id" }),
+      };
+
+      registerAccountHandlers(() => mockWindow, mockAccountService as any);
+
+      // Déclencher notifyUpdate via add-account
+      const handler = registeredHandlers["add-account"];
+      await handler({}, { name: "Test", username: "user", password: "pass" });
+
+      // refreshTray doit avoir été appelé
+      expect(mockRefreshTray).toHaveBeenCalled();
     });
 
-    afterEach(() => {
-        vi.resetModules();
-        delete (global as any).refreshTray;
+    it("ne crash pas si refreshTray n'existe pas", async () => {
+      vi.resetModules();
+
+      // Pas de global.refreshTray
+      delete (global as any).refreshTray;
+
+      const { registerAccountHandlers } =
+        await import("../main/ipc/accountHandlers");
+
+      const mockWindow = {
+        webContents: { send: vi.fn() },
+        isDestroyed: () => false,
+      } as unknown as BrowserWindow;
+
+      const mockAccountService = {
+        getAccounts: vi.fn().mockResolvedValue([{ id: "1", name: "Account1" }]),
+        addAccount: vi.fn().mockResolvedValue({ id: "new-id" }),
+      };
+
+      registerAccountHandlers(() => mockWindow, mockAccountService as any);
+
+      const handler = registeredHandlers["add-account"];
+      // Ne doit pas lever d'exception
+      await expect(
+        handler({}, { name: "Test", username: "user", password: "pass" }),
+      ).resolves.toBeDefined();
     });
 
-    describe("notifyUpdate", () => {
-        it("appelle refreshTray si global.refreshTray existe (lignes 26-27)", async () => {
-            vi.resetModules();
+    it("utilise getAllWindows si mainWin est null ou destroyed", async () => {
+      vi.resetModules();
+      const { registerAccountHandlers } =
+        await import("../main/ipc/accountHandlers");
 
-            // Setup global.refreshTray
-            const mockRefreshTray = vi.fn();
-            (global as any).refreshTray = mockRefreshTray;
+      const mockAllWindows = [
+        { webContents: { send: vi.fn() }, isDestroyed: () => false },
+      ];
+      (BrowserWindow.getAllWindows as any).mockReturnValue(mockAllWindows);
 
-            const { registerAccountHandlers } = await import("../main/ipc/accountHandlers");
+      // getMainWindow retourne null
+      const mockAccountService = {
+        getAccounts: vi.fn().mockResolvedValue([{ id: "1", name: "Account1" }]),
+        addAccount: vi.fn().mockResolvedValue({ id: "new-id" }),
+        reorderAccounts: vi.fn().mockResolvedValue(true),
+      };
 
-            const mockWindow = {
-                webContents: { send: vi.fn() },
-                isDestroyed: () => false,
-            } as unknown as BrowserWindow;
+      registerAccountHandlers(() => null, mockAccountService as any);
 
-            registerAccountHandlers(() => mockWindow);
+      const handler = registeredHandlers["add-account"];
+      await handler({}, { name: "Test", username: "user", password: "pass" });
 
-            // Déclencher notifyUpdate via add-account
-            const handler = registeredHandlers["add-account"];
-            await handler({}, { name: "Test", username: "user", password: "pass" });
-
-            // refreshTray doit avoir été appelé
-            expect(mockRefreshTray).toHaveBeenCalled();
-        });
-
-        it("ne crash pas si refreshTray n'existe pas", async () => {
-            vi.resetModules();
-
-            // Pas de global.refreshTray
-            delete (global as any).refreshTray;
-
-            const { registerAccountHandlers } = await import("../main/ipc/accountHandlers");
-
-            const mockWindow = {
-                webContents: { send: vi.fn() },
-                isDestroyed: () => false,
-            } as unknown as BrowserWindow;
-
-            registerAccountHandlers(() => mockWindow);
-
-            const handler = registeredHandlers["add-account"];
-            // Ne doit pas lever d'exception
-            await expect(handler({}, { name: "Test", username: "user", password: "pass" })).resolves.toBeDefined();
-        });
-
-        it("utilise getAllWindows si mainWin est null ou destroyed", async () => {
-            vi.resetModules();
-            const { registerAccountHandlers } = await import("../main/ipc/accountHandlers");
-
-            const mockAllWindows = [
-                { webContents: { send: vi.fn() }, isDestroyed: () => false },
-            ];
-            (BrowserWindow.getAllWindows as any).mockReturnValue(mockAllWindows);
-
-            // getMainWindow retourne null
-            registerAccountHandlers(() => null);
-
-            const handler = registeredHandlers["add-account"];
-            await handler({}, { name: "Test", username: "user", password: "pass" });
-
-            // getAllWindows doit être utilisé
-            expect(BrowserWindow.getAllWindows).toHaveBeenCalled();
-            expect(mockAllWindows[0].webContents.send).toHaveBeenCalledWith(
-                "accounts-updated",
-                expect.any(Array)
-            );
-        });
-
-        it("utilise getAllWindows si mainWin est destroyed", async () => {
-            vi.resetModules();
-            const { registerAccountHandlers } = await import("../main/ipc/accountHandlers");
-
-            const mockWindow = {
-                webContents: { send: vi.fn() },
-                isDestroyed: () => true, // Destroyed
-            } as unknown as BrowserWindow;
-
-            const mockAllWindows = [
-                { webContents: { send: vi.fn() }, isDestroyed: () => false },
-            ];
-            (BrowserWindow.getAllWindows as any).mockReturnValue(mockAllWindows);
-
-            registerAccountHandlers(() => mockWindow);
-
-            const handler = registeredHandlers["add-account"];
-            await handler({}, { name: "Test", username: "user", password: "pass" });
-
-            expect(mockAllWindows[0].webContents.send).toHaveBeenCalledWith(
-                "accounts-updated",
-                expect.any(Array)
-            );
-        });
+      // getAllWindows doit être utilisé
+      expect(BrowserWindow.getAllWindows).toHaveBeenCalled();
+      expect(mockAllWindows[0].webContents.send).toHaveBeenCalledWith(
+        "accounts-updated",
+        expect.any(Array),
+      );
     });
 
-    describe("reorder-accounts coverage", () => {
-        it("préserve les comptes non listés dans la réorganisation (ligne 71)", async () => {
-            const { registerAccountHandlers } = await import("../main/ipc/accountHandlers");
+    it("utilise getAllWindows si mainWin est destroyed", async () => {
+      vi.resetModules();
+      const { registerAccountHandlers } =
+        await import("../main/ipc/accountHandlers");
 
-            // 3 comptes existants
-            mockLoadAccountsMeta.mockResolvedValue([
-                { id: "1", name: "Acc1" },
-                { id: "2", name: "Acc2" },
-                { id: "3", name: "Acc3" },
-            ]);
+      const mockWindow = {
+        webContents: { send: vi.fn() },
+        isDestroyed: () => true, // Destroyed
+      } as unknown as BrowserWindow;
 
-            registerAccountHandlers(() => null);
+      const mockAllWindows = [
+        { webContents: { send: vi.fn() }, isDestroyed: () => false },
+      ];
+      (BrowserWindow.getAllWindows as any).mockReturnValue(mockAllWindows);
 
-            const handler = registeredHandlers["reorder-accounts"];
+      const mockAccountService = {
+        getAccounts: vi.fn().mockResolvedValue([{ id: "1", name: "Account1" }]),
+        addAccount: vi.fn().mockResolvedValue({ id: "new-id" }),
+      };
 
-            // On ne réorganise que 2 et 1, le 3 est omis
-            await handler({}, ["2", "1"]);
+      registerAccountHandlers(() => mockWindow, mockAccountService as any);
 
-            // Vérifier que saveAccountsMeta est appelé avec [2, 1, 3]
-            expect(mockSaveAccountsMeta).toHaveBeenCalledWith([
-                expect.objectContaining({ id: "2" }),
-                expect.objectContaining({ id: "1" }),
-                expect.objectContaining({ id: "3" }), // Le compte 3 est ajouté à la fin grace à la ligne 71
-            ]);
-        });
+      const handler = registeredHandlers["add-account"];
+      await handler({}, { name: "Test", username: "user", password: "pass" });
+
+      expect(mockAllWindows[0].webContents.send).toHaveBeenCalledWith(
+        "accounts-updated",
+        expect.any(Array),
+      );
     });
+  });
+
+  describe("reorder-accounts coverage", () => {
+    it("appelle reorderAccounts sur le service", async () => {
+      const { registerAccountHandlers } =
+        await import("../main/ipc/accountHandlers");
+
+      const mockAccountService = {
+        getAccounts: vi.fn().mockResolvedValue([]),
+        reorderAccounts: vi.fn().mockResolvedValue(true),
+      };
+
+      registerAccountHandlers(() => null, mockAccountService as any);
+
+      const handler = registeredHandlers["reorder-accounts"];
+      await handler({}, ["2", "1"]);
+
+      expect(mockAccountService.reorderAccounts).toHaveBeenCalledWith([
+        "2",
+        "1",
+      ]);
+    });
+  });
 });

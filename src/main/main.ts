@@ -1,8 +1,15 @@
 import { app, BrowserWindow, protocol, net } from "electron";
 import path from "path";
 import { pathToFileURL } from "url";
-import { ensureAppData, loadConfig, getConfig, loadConfigSync } from "./config";
 import { devLog, devError } from "./logger";
+
+import { ConfigService } from "./services/ConfigService";
+import { SecurityService } from "./services/SecurityService";
+import { AccountService } from "./services/AccountService";
+import { RiotAutomationService } from "./services/RiotAutomationService";
+import { SessionService } from "./services/SessionService";
+import { SystemService } from "./services/SystemService";
+import { StatsService } from "./services/StatsService";
 
 // Capture globale des erreurs fatales (Production Stability)
 process.on("uncaughtException", (err) => {
@@ -27,18 +34,9 @@ protocol.registerSchemesAsPrivileged([
   },
 ]);
 
-import { refreshAllAccountStats } from "./accounts";
 import { createWindow, updateTrayMenu } from "./window";
 import { setupIpcHandlers } from "./ipc";
 import { setupUpdater, handleUpdateCheck } from "./updater";
-import {
-  monitorRiotProcess,
-  launchGame,
-  setAutoStart,
-  getAutoStartStatus,
-  getStatus,
-  isValorantRunning,
-} from "./appLogic";
 
 const isDev = process.env.NODE_ENV === "development" || !app.isPackaged;
 let mainWindow: BrowserWindow | null = null;
@@ -51,8 +49,28 @@ app.name = "switchmaster";
 const userDataPath = path.join(app.getPath("appData"), "switchmaster");
 app.setPath("userData", userDataPath);
 
+// App Switches
+app.commandLine.appendSwitch("disable-gpu-cache");
+app.commandLine.appendSwitch("disable-gpu-shader-disk-cache");
+app.commandLine.appendSwitch("disable-http-cache");
+app.commandLine.appendSwitch("lang", "fr-FR");
+
+// Instantiate Services
+const configService = new ConfigService();
+const securityService = new SecurityService(configService);
+const statsService = new StatsService();
+const accountService = new AccountService(securityService, statsService);
+const riotAutomationService = new RiotAutomationService();
+const sessionService = new SessionService(
+  accountService,
+  riotAutomationService,
+  configService,
+);
+const systemService = new SystemService();
+
 // Chargement synchrone de la config pour GPU
-const initialConfig = loadConfigSync();
+
+const initialConfig = configService.loadConfigSync();
 if (!initialConfig.enableGPU) {
   app.disableHardwareAcceleration();
 }
@@ -69,7 +87,7 @@ if (!gotTheLock) {
   });
 
   app.on("window-all-closed", () => {
-    const config = getConfig();
+    const config = configService.getConfig();
     if (process.platform !== "darwin" && !config.minimizeToTray) {
       app.quit();
     }
@@ -87,7 +105,7 @@ async function initApp() {
     }
     devLog("Mode développement:", isDev);
 
-    await loadConfig();
+    await configService.init();
     await app.whenReady();
 
     // Enregistrement du protocole sm-img pour les images locales
@@ -110,18 +128,38 @@ async function initApp() {
       }
     });
 
-    await ensureAppData();
-
     // Register IPC handlers ALWAYS BEFORE window creation
-    setupIpcHandlers(null, {
-      launchGame,
-      setAutoStart,
-      getAutoStartStatus,
-      getStatus,
-      isValorantRunning,
+    const ipcContext = {
+      launchGame: (gameId: "league" | "valorant") =>
+        riotAutomationService.launchGame(configService.getRiotPath(), gameId),
+      setAutoStart: (enable: boolean) =>
+        systemService.setAutoStart(
+          enable,
+          configService.getConfig().startMinimized,
+        ),
+      getAutoStartStatus: () => systemService.getAutoStartStatus(),
+      getStatus: async () => {
+        const isRunning = await riotAutomationService.isRiotClientRunning();
+        const lastAccountId = configService.getConfig().lastAccountId;
+        if (isRunning && lastAccountId) {
+          return { status: "Active", accountId: lastAccountId };
+        }
+        return { status: "Prêt" };
+      },
+      isValorantRunning: () => riotAutomationService.isValorantRunning(),
+    };
+
+    setupIpcHandlers(null, ipcContext, {
+      configService,
+      securityService,
+      accountService,
+      riotAutomationService,
+      sessionService,
+      systemService,
+      statsService,
     });
 
-    mainWindow = createWindow(isDev);
+    mainWindow = createWindow(isDev, configService);
 
     // Détection du mode de démarrage en arrière-plan
     const isAutoStartArg = process.argv.includes("--minimized");
@@ -143,12 +181,16 @@ async function initApp() {
 
     const isNewSession = lastBootTime !== currentBootTime.toString();
     const isFirstRunOfSession = isNewSession && uptime < 300;
-    const config = getConfig();
-    const isMinimized = config.startMinimized && config.autoStart && (isAutoStartArg || isFirstRunOfSession);
+    const config = configService.getConfig();
+    const isMinimized =
+      config.startMinimized &&
+      config.autoStart &&
+      (isAutoStartArg || isFirstRunOfSession);
 
     // Gestion de la deuxième instance
     app.on("second-instance", (_event, commandLine) => {
-      const isSecondInstanceAuto = commandLine.includes("--minimized") || commandLine.includes("--hidden");
+      const isSecondInstanceAuto =
+        commandLine.includes("--minimized") || commandLine.includes("--hidden");
       if (isMinimized && isSecondInstanceAuto && uptime < 600) return;
 
       if (mainWindow) {
@@ -177,38 +219,56 @@ async function initApp() {
       if (mainWindow) {
         mainWindow.webContents.send("quick-connect-triggered", id);
       }
-      await updateTrayMenu(launchGame, switchAccountTrigger);
+      await updateTrayMenu(
+        ipcContext.launchGame,
+        switchAccountTrigger,
+        configService,
+        accountService,
+      );
     };
 
-    (global as any).refreshTray = () => updateTrayMenu(launchGame, switchAccountTrigger);
+    (global as any).refreshTray = () =>
+      updateTrayMenu(
+        ipcContext.launchGame,
+        switchAccountTrigger,
+        configService,
+        accountService,
+      );
 
-    setupIpcHandlers(mainWindow, {
-      launchGame,
-      setAutoStart,
-      getAutoStartStatus,
-      getStatus,
-      isValorantRunning,
+    setupIpcHandlers(mainWindow, ipcContext, {
+      configService,
+      securityService,
+      accountService,
+      riotAutomationService,
+      sessionService,
+      systemService,
+      statsService,
     });
 
     setupUpdater(mainWindow);
     await (global as any).refreshTray();
 
-    monitorRiotProcess(mainWindow, () => { });
+    riotAutomationService.monitorRiotProcess(mainWindow);
 
-    setInterval(() => refreshAllAccountStats(mainWindow), STATS_REFRESH_INTERVAL_MS);
-    setTimeout(() => refreshAllAccountStats(mainWindow), INITIAL_STATS_REFRESH_DELAY_MS);
+    setInterval(
+      () => accountService.refreshAllAccountStats(mainWindow),
+      STATS_REFRESH_INTERVAL_MS,
+    );
+    setTimeout(
+      () => accountService.refreshAllAccountStats(mainWindow),
+      INITIAL_STATS_REFRESH_DELAY_MS,
+    );
 
     handleUpdateCheck(mainWindow).catch((err) =>
       devError("Update check failed:", err),
     );
-
   } catch (err) {
     devError("App initialization failed:", err);
   }
 }
 
 app.on("window-all-closed", () => {
-  const config = getConfig();
+  const config = configService.getConfig();
   if (process.platform !== "darwin" && !config.minimizeToTray) {
     app.quit();
   }

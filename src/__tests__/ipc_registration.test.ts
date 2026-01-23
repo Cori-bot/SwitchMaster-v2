@@ -48,10 +48,20 @@ describe("IPC Registration Coverage", () => {
       getStatus: vi.fn(),
       isValorantRunning: vi.fn(),
     };
-    
-    setupIpcHandlers(null, mockContext);
-    
+    const mockServices = {
+      configService: {} as any,
+      securityService: {} as any,
+      accountService: {} as any,
+      riotAutomationService: {} as any,
+      sessionService: {} as any,
+      systemService: {} as any,
+      statsService: {} as any,
+    };
+
+    setupIpcHandlers(null, mockContext, mockServices);
+
     expect(accountHandlers.registerAccountHandlers).toHaveBeenCalled();
+
     expect(configHandlers.registerConfigHandlers).toHaveBeenCalled();
     expect(riotHandlers.registerRiotHandlers).toHaveBeenCalled();
     expect(securityHandlers.registerSecurityHandlers).toHaveBeenCalled();

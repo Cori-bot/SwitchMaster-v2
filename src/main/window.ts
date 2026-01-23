@@ -1,25 +1,16 @@
 import { BrowserWindow, Tray, Menu, app, shell } from "electron";
 import path from "path";
-
-app.commandLine.appendSwitch("disable-gpu-cache");
-app.commandLine.appendSwitch("disable-gpu-shader-disk-cache");
-app.commandLine.appendSwitch("disable-http-cache");
-app.commandLine.appendSwitch("lang", "fr-FR");
-// app.commandLine.appendSwitch("remote-debugging-port", "9222");
-
-import { getConfig } from "./config";
-import { loadAccountsMeta } from "./accounts";
 import { devLog, devError } from "./logger";
-
+import { ConfigService } from "./services/ConfigService";
+import { AccountService } from "./services/AccountService";
 
 let mainWindow: BrowserWindow;
+let trayRef: Tray | null = null;
 
 const DEFAULT_WIDTH = 1000;
 const DEFAULT_HEIGHT = 700;
 const MIN_WIDTH = 600;
 const MIN_HEIGHT = 600;
-
-
 
 export function resetWindowModuleForTests() {
   mainWindow = undefined as any;
@@ -29,7 +20,10 @@ export function resetWindowModuleForTests() {
   }
 }
 
-export function createWindow(isDev: boolean): BrowserWindow {
+export function createWindow(
+  isDev: boolean,
+  configService: ConfigService,
+): BrowserWindow {
   mainWindow = new BrowserWindow({
     width: DEFAULT_WIDTH,
     height: DEFAULT_HEIGHT,
@@ -42,7 +36,7 @@ export function createWindow(isDev: boolean): BrowserWindow {
     },
     backgroundColor: "#121212",
     frame: true,
-    show: false, // Always start hidden and show manually unless minimized
+    show: false,
     autoHideMenuBar: true,
     icon: app.isPackaged
       ? path.join(process.resourcesPath, "assets", "logo.png")
@@ -54,7 +48,6 @@ export function createWindow(isDev: boolean): BrowserWindow {
   } else {
     const indexPath = path.join(__dirname, "..", "dist", "index.html");
     devLog("Chargement du fichier index (prod):", indexPath);
-
     mainWindow.loadFile(indexPath).catch((err) => {
       devError("Erreur lors du chargement de index.html:", err);
     });
@@ -73,10 +66,14 @@ export function createWindow(isDev: boolean): BrowserWindow {
     });
 
     mainWindow.webContents.on("before-input-event", (event, input) => {
-      if ((input.control || input.meta) && input.shift && input.key.toLowerCase() === 'i') {
+      if (
+        (input.control || input.meta) &&
+        input.shift &&
+        input.key.toLowerCase() === "i"
+      ) {
         event.preventDefault();
       }
-      if (input.key === 'F12') {
+      if (input.key === "F12") {
         event.preventDefault();
       }
     });
@@ -89,7 +86,7 @@ export function createWindow(isDev: boolean): BrowserWindow {
 
   mainWindow.on("close", (event) => {
     if ((app as any).isQuitting || (global as any).isQuitting) return;
-    const config = getConfig();
+    const config = configService.getConfig();
     if (config.showQuitModal) {
       event.preventDefault();
       if (mainWindow.webContents && !mainWindow.webContents.isDestroyed()) {
@@ -104,18 +101,16 @@ export function createWindow(isDev: boolean): BrowserWindow {
   return mainWindow;
 }
 
-
-
-
-let trayRef: Tray | null = null;
-
 export async function updateTrayMenu(
   launchGame: (gameId: "league" | "valorant") => Promise<void>,
   switchAccountTrigger: (id: string) => Promise<void>,
+  configService: ConfigService,
+  accountService: AccountService,
 ) {
   const iconPath = app.isPackaged
     ? path.join(process.resourcesPath, "assets", "logo.png")
     : path.join(__dirname, "..", "..", "src", "assets", "logo.png");
+
   if (!trayRef) {
     trayRef = new Tray(iconPath);
     trayRef.setToolTip("SwitchMaster");
@@ -129,8 +124,8 @@ export async function updateTrayMenu(
     });
   }
 
-  const config = getConfig();
-  const accounts = await loadAccountsMeta();
+  const config = configService.getConfig();
+  const accounts = await accountService.getAccounts();
   const favoriteAccounts = accounts.filter((a) => a.isFavorite);
 
   const menuItems: Electron.MenuItemConstructorOptions[] = [
@@ -157,7 +152,10 @@ export async function updateTrayMenu(
     });
   }
 
-  if (config.lastAccountId && !favoriteAccounts.some(a => a.id === config.lastAccountId)) {
+  if (
+    config.lastAccountId &&
+    !favoriteAccounts.some((a) => a.id === config.lastAccountId)
+  ) {
     const lastAccount = accounts.find((a) => a.id === config.lastAccountId);
     if (lastAccount) {
       menuItems.push(
