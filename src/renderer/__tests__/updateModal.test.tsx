@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { UpdateModal } from "../components/Modals/UpdateModal";
 import { vi, describe, it, expect } from "vitest";
-import React from "react";
+
 
 describe("UpdateModal Component", () => {
   const props = {
@@ -18,7 +18,7 @@ describe("UpdateModal Component", () => {
     render(<UpdateModal {...props} />);
     expect(screen.getByText(/Nouvelle version super cool/i)).toBeInTheDocument();
     expect(screen.getByText(/Télécharger maintenant/i)).toBeInTheDocument();
-    
+
     fireEvent.click(screen.getByText(/Télécharger maintenant/i));
     expect(props.onUpdate).toHaveBeenCalled();
   });

@@ -4,7 +4,6 @@ import { renderHook } from "@testing-library/react";
 import { useConfig } from "../hooks/useConfig";
 import { useSecurity } from "../hooks/useSecurity";
 import { vi, describe, it, expect, beforeEach } from "vitest";
-import React from "react";
 
 // Mock global window.ipc
 const mockInvoke = vi.fn();
@@ -19,9 +18,9 @@ describe("useConfig", () => {
   it("doit charger et mettre à jour la config", async () => {
     mockInvoke.mockResolvedValueOnce({ riotPath: "C:\\Riot" });
     const { result } = renderHook(() => useConfig());
-    
-    await waitFor(() => expect(result.current.config.riotPath).toBe("C:\\Riot"));
-    
+
+    await waitFor(() => expect(result.current.config?.riotPath).toBe("C:\\Riot"));
+
     await act(async () => {
       await result.current.updateConfig({ theme: "light" });
     });
@@ -33,7 +32,7 @@ describe("useSecurity", () => {
   it("doit permettre de vérifier le statut de sécurité", async () => {
     mockInvoke.mockResolvedValueOnce(true);
     const { result } = renderHook(() => useSecurity());
-    
+
     await act(async () => {
       const status = await result.current.checkSecurityStatus();
       expect(status).toBe(true);
@@ -63,8 +62,8 @@ describe("Settings Deep Coverage", () => {
     const onOpenGPUModal = vi.fn();
 
     render(
-      <Settings 
-        config={mockConfig as any} 
+      <Settings
+        config={mockConfig as any}
         onUpdate={onUpdate}
         onSelectRiotPath={vi.fn()}
         onOpenPinModal={onOpenPinModal}
