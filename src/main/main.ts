@@ -56,6 +56,7 @@ app.commandLine.appendSwitch("disable-http-cache");
 app.commandLine.appendSwitch("lang", "fr-FR");
 
 import { LauncherFactory } from "./services/LauncherFactory";
+import { LaunchGameData } from "./ipc/types";
 
 // Instantiate Services
 const configService = new ConfigService();
@@ -134,11 +135,7 @@ async function initApp() {
 
     // Register IPC handlers ALWAYS BEFORE window creation
     const ipcContext = {
-      launchGame: async (data: {
-        launcherType: string;
-        gameId: string;
-        credentials?: any;
-      }) => {
+      launchGame: async (data: LaunchGameData) => {
         const service = launcherFactory.getService(data.launcherType || "riot");
         if (data.credentials) {
           await service.login(data.credentials);

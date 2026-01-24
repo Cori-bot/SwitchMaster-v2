@@ -2,15 +2,12 @@ import { BrowserWindow, dialog } from "electron";
 import { safeHandle } from "./utils";
 import { SessionService } from "../services/SessionService";
 import { RiotAutomationService } from "../services/RiotAutomationService";
+import { LaunchGameData } from "./types";
 
 export function registerRiotHandlers(
   getWin: () => BrowserWindow | null,
-  launchGame: (data: {
-    launcherType: string;
-    gameId: string;
-    credentials?: any;
-  }) => Promise<void>,
-  getStatus: () => Promise<any>,
+  launchGame: (data: LaunchGameData) => Promise<void>,
+  getStatus: () => Promise<{ status: string; accountId?: string }>,
   sessionService: SessionService,
   automationService: RiotAutomationService,
 ) {
@@ -40,7 +37,7 @@ export function registerRiotHandlers(
     return { success: true, id };
   });
 
-  safeHandle("launch-game", async (_e, data: any) => {
+  safeHandle("launch-game", async (_e, data: LaunchGameData | string) => {
     if (typeof data === "string") {
       await launchGame({ launcherType: "riot", gameId: data });
     } else {

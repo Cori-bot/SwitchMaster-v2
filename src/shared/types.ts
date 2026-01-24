@@ -19,6 +19,7 @@ export interface Config {
   hasSeenOnboarding: boolean;
   valorantAutoLockAgent?: string | null;
   enableGPU?: boolean;
+  preferredDesign?: "A" | "B";
 }
 
 export interface Account {

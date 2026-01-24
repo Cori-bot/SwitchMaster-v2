@@ -1,9 +1,13 @@
+import { ILauncherCredentials } from "../interfaces/ILauncherService";
+
+export interface LaunchGameData {
+  launcherType: string;
+  gameId: string;
+  credentials?: ILauncherCredentials;
+}
+
 export interface IpcContext {
-  launchGame: (data: {
-    launcherType: string;
-    gameId: string;
-    credentials?: any;
-  }) => Promise<void>;
+  launchGame: (data: LaunchGameData) => Promise<void>;
   setAutoStart: (enable: boolean) => void;
   getAutoStartStatus: () => { enabled: boolean; wasOpenedAtLogin: boolean };
   getStatus: () => Promise<{

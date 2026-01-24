@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
 
 export type DesignType = "A" | "B";
 
@@ -14,8 +20,27 @@ export const DesignProvider: React.FC<{ children: ReactNode }> = ({
 }) => {
   const [currentDesign, setDesign] = useState<DesignType>("A");
 
+  // Load preferred design from config on mount
+  useEffect(() => {
+    const loadPreferredDesign = async () => {
+      try {
+        const config = await window.ipc.invoke("get-config");
+        if (config?.preferredDesign) {
+          setDesign(config.preferredDesign);
+        }
+      } catch {
+        // Fallback to default
+      }
+    };
+    void loadPreferredDesign();
+  }, []);
+
   const switchDesign = (design: DesignType) => {
     setDesign(design);
+    // Persist to config
+    window.ipc.invoke("save-config", { preferredDesign: design }).catch(() => {
+      // Silent fail, design is still applied locally
+    });
   };
 
   return (

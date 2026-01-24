@@ -14,7 +14,7 @@ export class LauncherFactory {
   public getService(launcherId: string): ILauncherService {
     const service = this.services.get(launcherId);
     if (!service) {
-      throw new Error(`Launcher service not support: ${launcherId}`);
+      throw new Error(`Launcher service not supported: ${launcherId}`);
     }
     return service;
   }

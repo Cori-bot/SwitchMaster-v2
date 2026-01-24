@@ -29,7 +29,10 @@ export const DesignB: React.FC<DesignBProps> = ({ accounts, onSwitch }) => {
                 <div className="text-sm text-gray-400">{acc.username}</div>
               </div>
             </div>
-            <button className="opacity-0 group-hover:opacity-100 p-2 bg-green-500 rounded-full text-black transition-all">
+            <button
+              aria-label={`Lancer ${acc.name}`}
+              className="opacity-0 group-hover:opacity-100 p-2 bg-green-500 rounded-full text-black transition-all"
+            >
               <Play size={16} fill="currentColor" />
             </button>
           </li>
