@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { RiotAutomationService } from "../main/services/RiotAutomationService";
+import { ConfigService } from "../main/services/ConfigService";
 import * as cp from "child_process";
 import fs from "fs-extra";
 import { clipboard, app } from "electron";
@@ -20,14 +21,20 @@ vi.mock("electron", () => ({
   BrowserWindow: vi.fn(),
 }));
 vi.mock("../main/logger", () => ({ devDebug: vi.fn(), devError: vi.fn() }));
+vi.mock("../main/services/ConfigService");
 
 describe("RiotAutomationService", () => {
   let service: RiotAutomationService;
+  let mockConfigService: ConfigService;
 
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers();
-    service = new RiotAutomationService();
+    mockConfigService = new ConfigService();
+    (mockConfigService.getRiotPath as any).mockReturnValue("p");
+
+    service = new RiotAutomationService(mockConfigService);
+
     (cp.exec as any).mockImplementation((c, o, cb) => {
       const callback = typeof o === "function" ? o : cb;
       if (callback) callback(null, { stdout: "SUCCESS", stderr: "" });
@@ -55,27 +62,27 @@ describe("RiotAutomationService", () => {
 
   it("launchClient success and fail", async () => {
     (fs.pathExists as any).mockResolvedValue(true);
-    await service.launchClient("p");
+    await service.launchClient();
     expect(cp.spawn).toHaveBeenCalled();
 
     (fs.pathExists as any).mockResolvedValue(false);
-    await expect(service.launchClient("p")).rejects.toThrow();
+    await expect(service.launchClient()).rejects.toThrow();
   });
 
   it("launchGame success and fail", async () => {
     (fs.pathExists as any).mockResolvedValue(true);
-    const p = service.launchGame("p", "valorant");
+    const p = service.launchGame("valorant");
     await vi.advanceTimersByTimeAsync(3000);
     await p;
     expect(cp.spawn).toHaveBeenCalled();
 
     (fs.pathExists as any).mockResolvedValue(false);
-    await expect(service.launchGame("p", "league")).rejects.toThrow();
+    await expect(service.launchGame("league")).rejects.toThrow();
   });
 
   it("launchGame success for league", async () => {
     (fs.pathExists as any).mockResolvedValue(true);
-    const p = service.launchGame("p", "league");
+    const p = service.launchGame("league");
     await vi.advanceTimersByTimeAsync(3000);
     await p;
     expect(cp.spawn).toHaveBeenCalledWith(
@@ -103,41 +110,9 @@ describe("RiotAutomationService", () => {
       return { on: mockOn };
     });
 
-    await expect(service.login("u", "p")).resolves.not.toThrow();
-    expect(clipboard.clear).toHaveBeenCalled();
-  });
-
-  it("launchGame success for league", async () => {
-    (fs.pathExists as any).mockResolvedValue(true);
-    const p = service.launchGame("p", "league");
-    await vi.advanceTimersByTimeAsync(3000);
-    await p;
-    expect(cp.spawn).toHaveBeenCalledWith(
-      "p",
-      expect.arrayContaining(["--launch-product=league_of_legends"]),
-      expect.anything(),
-    );
-  });
-
-  it("login success", async () => {
-    const mockOn = vi.fn();
-    (cp.spawn as any).mockReturnValue({
-      stdout: {
-        on: vi.fn().mockImplementation((ev, cb) => {
-          if (ev === "data") cb("SUCCESS");
-          return { on: vi.fn() };
-        }),
-      },
-      stderr: { on: vi.fn().mockReturnThis() },
-      on: mockOn,
-      unref: vi.fn(),
-    });
-    mockOn.mockImplementation((ev, cb) => {
-      if (ev === "close") cb(0);
-      return { on: mockOn };
-    });
-
-    await expect(service.login("u", "p")).resolves.not.toThrow();
+    await expect(
+      service.login({ username: "u", password: "p" }),
+    ).resolves.not.toThrow();
     expect(clipboard.clear).toHaveBeenCalled();
   });
 
@@ -160,7 +135,7 @@ describe("RiotAutomationService", () => {
       return { on: mockOn };
     });
 
-    await expect(service.login("u", "p")).rejects.toThrow();
+    await expect(service.loginLegacy("u", "p")).rejects.toThrow();
   });
 
   it("autoDetectPaths success and fail", async () => {

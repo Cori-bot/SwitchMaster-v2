@@ -102,7 +102,11 @@ export function createWindow(
 }
 
 export async function updateTrayMenu(
-  launchGame: (gameId: "league" | "valorant") => Promise<void>,
+  launchGame: (data: {
+    launcherType: string;
+    gameId: string;
+    credentials?: any;
+  }) => Promise<void>,
   switchAccountTrigger: (id: string) => Promise<void>,
   configService: ConfigService,
   accountService: AccountService,
@@ -131,8 +135,14 @@ export async function updateTrayMenu(
   const menuItems: Electron.MenuItemConstructorOptions[] = [
     { label: "Afficher SwitchMaster", click: () => mainWindow.show() },
     { type: "separator" },
-    { label: "Lancer League of Legends", click: () => launchGame("league") },
-    { label: "Lancer Valorant", click: () => launchGame("valorant") },
+    {
+      label: "Lancer League of Legends",
+      click: () => launchGame({ launcherType: "riot", gameId: "league" }),
+    },
+    {
+      label: "Lancer Valorant",
+      click: () => launchGame({ launcherType: "riot", gameId: "valorant" }),
+    },
   ];
 
   if (favoriteAccounts.length > 0) {

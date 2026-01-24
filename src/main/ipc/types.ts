@@ -1,5 +1,9 @@
 export interface IpcContext {
-  launchGame: (gameId: "league" | "valorant") => Promise<void>;
+  launchGame: (data: {
+    launcherType: string;
+    gameId: string;
+    credentials?: any;
+  }) => Promise<void>;
   setAutoStart: (enable: boolean) => void;
   getAutoStartStatus: () => { enabled: boolean; wasOpenedAtLogin: boolean };
   getStatus: () => Promise<{

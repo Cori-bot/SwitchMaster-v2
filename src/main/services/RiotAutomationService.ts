@@ -4,16 +4,25 @@ import path from "path";
 import fs from "fs-extra";
 import { clipboard, app, BrowserWindow } from "electron";
 import { devDebug, devError } from "../logger";
+import {
+  ILauncherService,
+  ILauncherCredentials,
+} from "../interfaces/ILauncherService";
+import { ConfigService } from "./ConfigService";
 
 const execAsync = util.promisify(exec);
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export class RiotAutomationService {
+export class RiotAutomationService implements ILauncherService {
+  public readonly id = "riot";
   private readonly PROCESS_TERMINATION_DELAY = 2000;
   private readonly MONITOR_INTERVAL_MS = 30000;
   private readonly GAME_LAUNCH_DELAY_MS = 3000;
+  private configService: ConfigService;
 
-  constructor() {}
+  constructor(configService: ConfigService) {
+    this.configService = configService;
+  }
 
   // Helper to ensure scripts path is correct in dev environment
   private getScriptsPath(): string {
@@ -21,6 +30,10 @@ export class RiotAutomationService {
       return path.join(process.resourcesPath, "scripts");
     }
     return path.resolve(app.getAppPath(), "scripts");
+  }
+
+  public async killAll(): Promise<void> {
+    await this.killProcesses();
   }
 
   public async killProcesses(): Promise<void> {
@@ -41,7 +54,8 @@ export class RiotAutomationService {
     }
   }
 
-  public async launchClient(clientPath: string): Promise<void> {
+  public async launchClient(): Promise<void> {
+    const clientPath = this.configService.getRiotPath();
     if (await fs.pathExists(clientPath)) {
       const child = spawn(clientPath, [], { detached: true, stdio: "ignore" });
       child.unref();
@@ -50,10 +64,8 @@ export class RiotAutomationService {
     }
   }
 
-  public async launchGame(
-    clientPath: string,
-    gameId: "league" | "valorant",
-  ): Promise<void> {
+  public async launchGame(gameId: string): Promise<void> {
+    const clientPath = this.configService.getRiotPath();
     if (!(await fs.pathExists(clientPath))) {
       throw new Error("Executable Riot Client non trouvé à : " + clientPath);
     }
@@ -71,7 +83,12 @@ export class RiotAutomationService {
     spawn(clientPath, args, { detached: true, stdio: "ignore" }).unref();
   }
 
-  public async login(username: string, password: string): Promise<void> {
+  public async login(credentials: ILauncherCredentials): Promise<void> {
+    return this.loginLegacy(credentials.username, credentials.password || "");
+  }
+
+  // Renamed old login to loginLegacy to match signature or just overload
+  public async loginLegacy(username: string, password: string): Promise<void> {
     const psScript = path.join(this.getScriptsPath(), "automate_login.ps1");
 
     return new Promise<void>((resolve, reject) => {
@@ -113,6 +130,11 @@ export class RiotAutomationService {
     });
   }
 
+  public async detectInstallation(): Promise<string | null> {
+    const result = await this.autoDetectPaths();
+    return result ? result.riotPath : null;
+  }
+
   public async autoDetectPaths(): Promise<{ riotPath: string } | null> {
     try {
       const psScript = path.join(this.getScriptsPath(), "detect_games.ps1");
@@ -143,6 +165,10 @@ export class RiotAutomationService {
       devError("Auto detect error:", e);
       return null;
     }
+  }
+
+  public async isRunning(): Promise<boolean> {
+    return this.isRiotClientRunning();
   }
 
   public async isRiotClientRunning(): Promise<boolean> {

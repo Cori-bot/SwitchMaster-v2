@@ -5,7 +5,11 @@ import { RiotAutomationService } from "../services/RiotAutomationService";
 
 export function registerRiotHandlers(
   getWin: () => BrowserWindow | null,
-  launchGame: (gameId: "league" | "valorant") => Promise<void>,
+  launchGame: (data: {
+    launcherType: string;
+    gameId: string;
+    credentials?: any;
+  }) => Promise<void>,
   getStatus: () => Promise<any>,
   sessionService: SessionService,
   automationService: RiotAutomationService,
@@ -36,8 +40,12 @@ export function registerRiotHandlers(
     return { success: true, id };
   });
 
-  safeHandle("launch-game", async (_e, gameId) => {
-    await launchGame(gameId as "league" | "valorant");
+  safeHandle("launch-game", async (_e, data: any) => {
+    if (typeof data === "string") {
+      await launchGame({ launcherType: "riot", gameId: data });
+    } else {
+      await launchGame(data);
+    }
     return true;
   });
 }

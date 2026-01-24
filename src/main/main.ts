@@ -55,18 +55,22 @@ app.commandLine.appendSwitch("disable-gpu-shader-disk-cache");
 app.commandLine.appendSwitch("disable-http-cache");
 app.commandLine.appendSwitch("lang", "fr-FR");
 
+import { LauncherFactory } from "./services/LauncherFactory";
+
 // Instantiate Services
 const configService = new ConfigService();
 const securityService = new SecurityService(configService);
 const statsService = new StatsService();
 const accountService = new AccountService(securityService, statsService);
-const riotAutomationService = new RiotAutomationService();
+const riotAutomationService = new RiotAutomationService(configService);
 const sessionService = new SessionService(
   accountService,
   riotAutomationService,
   configService,
 );
 const systemService = new SystemService();
+
+const launcherFactory = new LauncherFactory([riotAutomationService]);
 
 // Chargement synchrone de la config pour GPU
 
@@ -130,8 +134,17 @@ async function initApp() {
 
     // Register IPC handlers ALWAYS BEFORE window creation
     const ipcContext = {
-      launchGame: (gameId: "league" | "valorant") =>
-        riotAutomationService.launchGame(configService.getRiotPath(), gameId),
+      launchGame: async (data: {
+        launcherType: string;
+        gameId: string;
+        credentials?: any;
+      }) => {
+        const service = launcherFactory.getService(data.launcherType || "riot");
+        if (data.credentials) {
+          await service.login(data.credentials);
+        }
+        await service.launchGame(data.gameId);
+      },
       setAutoStart: (enable: boolean) =>
         systemService.setAutoStart(
           enable,

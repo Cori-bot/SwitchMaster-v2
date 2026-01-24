@@ -216,12 +216,18 @@ describe("Window Exhaustive Coverage", () => {
       (i) => i.label === "Lancer League of Legends",
     );
     await lolItem.click();
-    expect(launchGame).toHaveBeenCalledWith("league");
+    expect(launchGame).toHaveBeenCalledWith({
+      launcherType: "riot",
+      gameId: "league",
+    });
 
     // Click Launch Valorant
     const valItem = template.find((i) => i.label === "Lancer Valorant");
     await valItem.click();
-    expect(launchGame).toHaveBeenCalledWith("valorant");
+    expect(launchGame).toHaveBeenCalledWith({
+      launcherType: "riot",
+      gameId: "valorant",
+    });
 
     // Click Last Account
     const lastItem = template.find(

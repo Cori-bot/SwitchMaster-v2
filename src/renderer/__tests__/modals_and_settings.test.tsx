@@ -1,7 +1,9 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import Settings from "../components/Settings";
 import SecurityLock from "../components/SecurityLock";
+import { DesignProvider } from "../contexts/DesignContext";
 import { DeleteConfirmModal } from "../components/Modals/DeleteConfirmModal";
+
 import { QuitModal } from "../components/Modals/QuitModal";
 import { GPUConfirmModal } from "../components/Modals/GPUConfirmModal";
 import { LaunchConfirmModal } from "../components/Modals/LaunchConfirmModal";
@@ -24,24 +26,27 @@ describe("Settings Component", () => {
     showQuitModal: true,
     security: { enabled: true, pinHash: "hash" },
     hasSeenOnboarding: true,
-    enableGPU: true
+    enableGPU: true,
   };
 
   it("doit afficher les paramètres et gérer les changements", async () => {
     const onUpdate = vi.fn();
     render(
-      <Settings
-        config={mockConfig as any}
-        onUpdate={onUpdate}
-        onSelectRiotPath={vi.fn()}
-        onOpenPinModal={vi.fn()}
-        onDisablePin={vi.fn()}
-        onCheckUpdates={vi.fn()}
-        onOpenGPUModal={vi.fn()}
-      />
+      <DesignProvider>
+        <Settings
+          config={mockConfig as any}
+          onUpdate={onUpdate}
+          onSelectRiotPath={vi.fn()}
+          onOpenPinModal={vi.fn()}
+          onDisablePin={vi.fn()}
+          onCheckUpdates={vi.fn()}
+          onOpenGPUModal={vi.fn()}
+        />
+      </DesignProvider>,
     );
 
     expect(screen.getByText("Paramètres")).toBeInTheDocument();
+
     fireEvent.click(screen.getByText(/Définir \/ Modifier le code PIN/i));
   });
 });
@@ -53,7 +58,9 @@ describe("SecurityLock", () => {
 
     render(<SecurityLock mode="verify" onVerify={onVerify} onSet={vi.fn()} />);
 
-    [1, 2, 3, 4].forEach(n => fireEvent.click(screen.getByText(n.toString())));
+    [1, 2, 3, 4].forEach((n) =>
+      fireEvent.click(screen.getByText(n.toString())),
+    );
 
     await waitFor(() => expect(onVerify).toHaveBeenCalledWith("1234"));
   });
@@ -63,31 +70,65 @@ describe("Confirmation Modals", () => {
   it("DeleteConfirmModal doit gérer la confirmation", () => {
     const onConfirm = vi.fn();
     const onCancel = vi.fn();
-    render(<DeleteConfirmModal isOpen={true} onConfirm={onConfirm} onCancel={onCancel} />);
+    render(
+      <DeleteConfirmModal
+        isOpen={true}
+        onConfirm={onConfirm}
+        onCancel={onCancel}
+      />,
+    );
     fireEvent.click(screen.getByRole("button", { name: /Oui, supprimer/i }));
     expect(onConfirm).toHaveBeenCalled();
   });
 
   it("QuitModal doit gérer les actions", () => {
     const onConfirm = vi.fn();
-    render(<QuitModal isOpen={true} onConfirm={onConfirm} onCancel={vi.fn()} onMinimize={vi.fn()} />);
-    fireEvent.click(screen.getByRole("button", { name: /Quitter complètement/i }));
+    render(
+      <QuitModal
+        isOpen={true}
+        onConfirm={onConfirm}
+        onCancel={vi.fn()}
+        onMinimize={vi.fn()}
+      />,
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: /Quitter complètement/i }),
+    );
     expect(onConfirm).toHaveBeenCalled();
   });
 
   it("GPUConfirmModal doit gérer la confirmation", () => {
     const onConfirm = vi.fn();
-    render(<GPUConfirmModal isOpen={true} targetValue={true} onConfirm={onConfirm} onCancel={vi.fn()} />);
+    render(
+      <GPUConfirmModal
+        isOpen={true}
+        targetValue={true}
+        onConfirm={onConfirm}
+        onCancel={vi.fn()}
+      />,
+    );
 
-    fireEvent.click(screen.getByRole("button", { name: /Changer et redémarrer/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /Changer et redémarrer/i }),
+    );
     expect(onConfirm).toHaveBeenCalled();
   });
 
   it("LaunchConfirmModal doit gérer le lancement", () => {
     const onConfirm = vi.fn();
-    render(<LaunchConfirmModal isOpen={true} onConfirm={onConfirm} onCancel={vi.fn()} gameType="valorant" onClose={vi.fn()} />);
+    render(
+      <LaunchConfirmModal
+        isOpen={true}
+        onConfirm={onConfirm}
+        onCancel={vi.fn()}
+        gameType="valorant"
+        onClose={vi.fn()}
+      />,
+    );
 
-    fireEvent.click(screen.getByRole("button", { name: /Oui, lancer le jeu/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /Oui, lancer le jeu/i }),
+    );
     expect(onConfirm).toHaveBeenCalled();
   });
 });
@@ -104,7 +145,7 @@ describe("Onboarding", () => {
         onUpdateConfig={onUpdateConfig}
         onSelectRiotPath={vi.fn()}
         onFinish={onFinish}
-      />
+      />,
     );
 
     expect(screen.getByText(/Bienvenue sur SwitchMaster/i)).toBeInTheDocument();
@@ -127,16 +168,22 @@ describe("Onboarding", () => {
 
 describe("ErrorBoundary", () => {
   it("doit s'afficher en cas de crash", () => {
-    const ThrowError = () => { throw new Error("Crash"); };
-    vi.spyOn(console, 'error').mockImplementation(() => { });
+    const ThrowError = () => {
+      throw new Error("Crash");
+    };
+    vi.spyOn(console, "error").mockImplementation(() => {});
 
     // Mock global window.ipc pour send
     (window as any).ipc = {
       invoke: vi.fn(),
-      send: vi.fn()
+      send: vi.fn(),
     };
 
-    render(<ErrorBoundary><ThrowError /></ErrorBoundary>);
+    render(
+      <ErrorBoundary>
+        <ThrowError />
+      </ErrorBoundary>,
+    );
     expect(screen.getByText(/Une erreur est survenue/i)).toBeInTheDocument();
   });
 });

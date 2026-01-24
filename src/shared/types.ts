@@ -25,6 +25,7 @@ export interface Account {
   id: string;
   name: string;
   gameType: "league" | "valorant";
+  launcherType?: "riot" | "steam" | "epic";
   riotId: string;
   username?: string;
   password?: string;

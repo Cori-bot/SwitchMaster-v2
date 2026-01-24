@@ -1,7 +1,15 @@
-import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  act,
+} from "@testing-library/react";
 import Settings from "../components/Settings";
+import { DesignProvider } from "../contexts/DesignContext";
 import { renderHook } from "@testing-library/react";
 import { useConfig } from "../hooks/useConfig";
+
 import { useSecurity } from "../hooks/useSecurity";
 import { vi, describe, it, expect, beforeEach } from "vitest";
 
@@ -19,7 +27,9 @@ describe("useConfig", () => {
     mockInvoke.mockResolvedValueOnce({ riotPath: "C:\\Riot" });
     const { result } = renderHook(() => useConfig());
 
-    await waitFor(() => expect(result.current.config?.riotPath).toBe("C:\\Riot"));
+    await waitFor(() =>
+      expect(result.current.config?.riotPath).toBe("C:\\Riot"),
+    );
 
     await act(async () => {
       await result.current.updateConfig({ theme: "light" });
@@ -51,7 +61,7 @@ describe("Settings Deep Coverage", () => {
     showQuitModal: true,
     security: { enabled: true, pinHash: "somehash" },
     hasSeenOnboarding: true,
-    enableGPU: true
+    enableGPU: true,
   };
 
   it("doit gérer les actions complexes dans Settings", async () => {
@@ -62,18 +72,21 @@ describe("Settings Deep Coverage", () => {
     const onOpenGPUModal = vi.fn();
 
     render(
-      <Settings
-        config={mockConfig as any}
-        onUpdate={onUpdate}
-        onSelectRiotPath={vi.fn()}
-        onOpenPinModal={onOpenPinModal}
-        onDisablePin={onDisablePin}
-        onCheckUpdates={onCheckUpdates}
-        onOpenGPUModal={onOpenGPUModal}
-      />
+      <DesignProvider>
+        <Settings
+          config={mockConfig as any}
+          onUpdate={onUpdate}
+          onSelectRiotPath={vi.fn()}
+          onOpenPinModal={onOpenPinModal}
+          onDisablePin={onDisablePin}
+          onCheckUpdates={onCheckUpdates}
+          onOpenGPUModal={onOpenGPUModal}
+        />
+      </DesignProvider>,
     );
 
     fireEvent.click(screen.getByText(/Définir \/ Modifier le code PIN/i));
+
     expect(onOpenPinModal).toHaveBeenCalled();
 
     fireEvent.click(screen.getByText(/Mettre à jour/i));
@@ -85,7 +98,9 @@ describe("Settings Deep Coverage", () => {
     expect(onDisablePin).toHaveBeenCalled();
 
     // Toggle GPU
-    const gpuCheckbox = screen.getByLabelText(/Activer l'accélération matérielle/i);
+    const gpuCheckbox = screen.getByLabelText(
+      /Activer l'accélération matérielle/i,
+    );
     fireEvent.click(gpuCheckbox);
     expect(onOpenGPUModal).toHaveBeenCalled();
   });
