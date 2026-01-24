@@ -9,7 +9,7 @@ import {
     Zap,
     MousePointer2
 } from "lucide-react";
-import logoImg from "@assets/logo.png";
+import logoImg from "@assets/switchmaster/switchmaster-icon.svg";
 import { Config } from "../../shared/types";
 
 interface GuideOnboardingProps {

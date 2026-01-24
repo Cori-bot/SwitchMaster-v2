@@ -1,7 +1,7 @@
 import React from "react";
 import { X, Rocket } from "lucide-react";
-import valorantIcon from "@assets/valorant.png";
-import leagueIcon from "@assets/league.png";
+import valorantIcon from "@assets/games/valorant-icon.svg";
+import leagueIcon from "@assets/games/league-of-legends-icon.svg";
 import {
   ICON_SIZE_SMALL,
   ICON_SIZE_XSMALL,
@@ -61,11 +61,10 @@ export const LaunchConfirmModal: React.FC<LaunchConfirmModalProps> = ({
           <div className="flex flex-col gap-3">
             <button
               onClick={onConfirm}
-              className={`w-full px-6 py-3.5 text-white rounded-xl font-bold shadow-lg transition-all ${ACTIVE_SCALE} flex items-center justify-center gap-2 ${
-                gameType === "valorant"
+              className={`w-full px-6 py-3.5 text-white rounded-xl font-bold shadow-lg transition-all ${ACTIVE_SCALE} flex items-center justify-center gap-2 ${gameType === "valorant"
                   ? "bg-[#ff4655] hover:bg-[#ff5e6a] shadow-[#ff4655]/20"
                   : "bg-blue-600 hover:bg-blue-500 shadow-blue-600/20"
-              }`}
+                }`}
             >
               <Rocket size={ICON_SIZE_XSMALL} />
               Oui, lancer le jeu

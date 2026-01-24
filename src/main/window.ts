@@ -39,8 +39,8 @@ export function createWindow(
     show: false,
     autoHideMenuBar: true,
     icon: app.isPackaged
-      ? path.join(process.resourcesPath, "assets", "logo.png")
-      : path.join(__dirname, "..", "..", "src", "assets", "logo.png"),
+      ? path.join(process.resourcesPath, "assets", "switchmaster", "switchmaster-icon.png")
+      : path.join(__dirname, "..", "..", "src", "assets", "switchmaster", "switchmaster-icon.png"),
   });
 
   if (isDev) {
@@ -112,8 +112,8 @@ export async function updateTrayMenu(
   accountService: AccountService,
 ) {
   const iconPath = app.isPackaged
-    ? path.join(process.resourcesPath, "assets", "logo.png")
-    : path.join(__dirname, "..", "..", "src", "assets", "logo.png");
+    ? path.join(process.resourcesPath, "assets", "switchmaster", "switchmaster-icon.png")
+    : path.join(__dirname, "..", "..", "src", "assets", "switchmaster", "switchmaster-icon.png");
 
   if (!trayRef) {
     trayRef = new Tray(iconPath);

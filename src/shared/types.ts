@@ -19,7 +19,11 @@ export interface Config {
   hasSeenOnboarding: boolean;
   valorantAutoLockAgent?: string | null;
   enableGPU?: boolean;
-  preferredDesign?: "A" | "B";
+
+  riotLaunchDelay?: number;
+  showLaunchGamePopup?: boolean;
+  activeDesignModule?: "classic" | "modern";
+  autoUpdate?: boolean;
 }
 
 export interface Account {
@@ -35,4 +39,10 @@ export interface Account {
   lastUsed?: string;
   stats?: GameStats | null;
   timestamp?: number;
+}
+
+export interface AppStatus {
+  status: string;
+  accountId?: string;
+  accountName?: string;
 }

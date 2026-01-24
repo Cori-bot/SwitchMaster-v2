@@ -1,10 +1,11 @@
 import { app } from "electron";
 import path from "path";
 import fs from "fs-extra";
+import { EventEmitter } from "events";
 import { Config } from "../../shared/types";
 import { devLog, devError } from "../logger";
 
-export class ConfigService {
+export class ConfigService extends EventEmitter {
   private configPath: string;
   private appDataPath: string;
   private config: Config;
@@ -25,9 +26,14 @@ export class ConfigService {
     },
     hasSeenOnboarding: false,
     enableGPU: false,
+    riotLaunchDelay: 10000,
+    showLaunchGamePopup: true,
+    activeDesignModule: "modern",
+    autoUpdate: true,
   };
 
   constructor() {
+    super();
     this.appDataPath = app.getPath("userData");
     this.configPath = path.join(this.appDataPath, "config.json");
     this.config = { ...this.DEFAULT_CONFIG };
@@ -92,6 +98,7 @@ export class ConfigService {
       await fs.ensureDir(path.dirname(this.configPath));
       await fs.writeJson(this.configPath, this.config, { spaces: 2 });
       devLog("ConfigService: Config saved to:", this.configPath);
+      this.emit("updated", this.config);
       return this.config;
     } catch (e) {
       devError("ConfigService: Error saving config:", e);

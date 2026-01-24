@@ -3,7 +3,9 @@ import { ILauncherCredentials } from "../interfaces/ILauncherService";
 export interface LaunchGameData {
   launcherType: string;
   gameId: string;
+  accountId?: string;
   credentials?: ILauncherCredentials;
+  autoLaunch?: boolean;
 }
 
 export interface IpcContext {

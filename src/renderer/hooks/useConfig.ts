@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-export type { Config } from "../../shared/types";
 import { Config } from "../../shared/types";
 import { devError } from "../utils/logger";
 

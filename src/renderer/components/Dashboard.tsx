@@ -9,12 +9,14 @@ import {
   ACTIVE_SCALE,
   ANIMATION_DURATION_LONG,
 } from "@/constants/ui";
+import ReconnectModal from "./Modals/ReconnectModal";
+import { useConfig } from "../hooks/useConfig";
 
 interface DashboardProps {
   accounts: Account[];
   filter: "all" | "favorite" | "valorant" | "league";
   activeAccountId?: string;
-  onSwitch: (id: string) => void;
+  onSwitch: (id: string, autoLaunch?: boolean) => void;
   onDelete: (id: string) => void;
   onEdit: (account: Account) => void;
   onToggleFavorite: (account: Account) => void;
@@ -58,6 +60,12 @@ const Dashboard: React.FC<DashboardProps> = ({
 }) => {
   const [draggedId, setDraggedId] = React.useState<string | null>(null);
   const [localAccounts, setLocalAccounts] = React.useState<Account[]>(accounts);
+  const { config, updateConfig } = useConfig();
+
+  // Modal states
+  // Modal states
+  const [isReconnectOpen, setIsReconnectOpen] = React.useState(false);
+  const [reconnectAccount, setReconnectAccount] = React.useState<Account | null>(null);
 
   // Synchroniser localAccounts avec les props quand on ne drag pas
   React.useEffect(() => {
@@ -65,6 +73,38 @@ const Dashboard: React.FC<DashboardProps> = ({
       setLocalAccounts(accounts);
     }
   }, [accounts, draggedId]);
+
+  // Listen for login-success event - REMOVED as we now ask before
+  /*
+  React.useEffect(() => {
+    const handleLoginSuccess = (_event: any, accountId: string) => {
+      // Only show popup if enabled in config
+      if (window.ipc && config?.showLaunchGamePopup !== false) {
+        const account = accounts.find(a => a.id === accountId);
+        if (account) {
+          setJustConnectedAccount(account);
+          setIsLaunchGameOpen(true);
+        }
+      }
+    };
+
+    if (window.ipc) {
+      window.ipc.on("login-success", handleLoginSuccess);
+    }
+
+    return () => {
+      if (window.ipc) {
+        window.ipc.removeAllListeners("login-success");
+      }
+    };
+  }, [accounts, config]);
+  */
+
+  const onPreSwitch = (id: string, autoLaunch?: boolean) => {
+    // Pass everything to parent
+    onSwitch(id, autoLaunch);
+  };
+
 
   const filteredAccounts = React.useMemo(() => {
     return localAccounts.filter((acc) => {
@@ -143,6 +183,26 @@ const Dashboard: React.FC<DashboardProps> = ({
     onReorder(localAccounts.map((a) => a.id));
   };
 
+  const handleReconnectRequest = (account: Account) => {
+    setReconnectAccount(account);
+    setIsReconnectOpen(true);
+  };
+
+  const handleConfirmReconnect = async (delay: number) => {
+    // Save new delay to config
+    await updateConfig({ riotLaunchDelay: delay });
+
+    // Close modal
+    setIsReconnectOpen(false);
+
+    // Trigger switch (reconnect)
+    if (reconnectAccount) {
+      onSwitch(reconnectAccount.id);
+    }
+  };
+
+
+
   if (accounts.length === 0) {
     return (
       <motion.div
@@ -192,7 +252,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <AccountCard
                 account={account}
                 isActive={account.id === activeAccountId}
-                onSwitch={onSwitch}
+                onSwitch={onPreSwitch}
                 onDelete={onDelete}
                 onEdit={onEdit}
                 onToggleFavorite={onToggleFavorite}
@@ -201,6 +261,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 onDragEnd={handleDragEnd}
                 onDragEnter={(e) => e.preventDefault()}
                 onDrop={handleDrop}
+                onReconnect={handleReconnectRequest}
               />
             </motion.div>
           ))}
@@ -229,6 +290,16 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
         </motion.button>
       </motion.div>
+
+      <ReconnectModal
+        isOpen={isReconnectOpen}
+        onClose={() => setIsReconnectOpen(false)}
+        onConfirm={handleConfirmReconnect}
+        account={reconnectAccount}
+        currentDelay={config?.riotLaunchDelay || 10000}
+      />
+
+
     </div>
   );
 };

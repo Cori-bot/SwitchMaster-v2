@@ -5,11 +5,11 @@ import {
   Monitor,
   Info,
   RefreshCw,
-  LayoutTemplate,
+  Clock,
 } from "lucide-react";
-import { Config } from "../hooks/useConfig";
-import logoImg from "@assets/logo.png";
-import { useDesign } from "../contexts/DesignContext";
+import { Config } from "../../shared/types";
+import logoImg from "@assets/switchmaster/switchmaster-icon.svg";
+
 
 import {
   ICON_SIZE_NORMAL,
@@ -65,9 +65,8 @@ const Checkbox: React.FC<CheckboxProps> = ({
 }) => (
   <label
     htmlFor={id}
-    className={`flex items-start gap-3 py-2 ${
-      disabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer group"
-    }`}
+    className={`flex items-start gap-3 py-2 ${disabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer group"
+      }`}
   >
     <div className="relative flex items-center mt-1">
       <input
@@ -80,11 +79,10 @@ const Checkbox: React.FC<CheckboxProps> = ({
       />
       <div
         className={`w-5 h-5 border-2 rounded-md transition-all duration-200 
-        ${
-          disabled
+        ${disabled
             ? "border-gray-700 bg-gray-800/50"
             : "border-gray-600 peer-checked:bg-blue-600 peer-checked:border-blue-600 group-hover:border-blue-500"
-        }`}
+          }`}
       />
       <svg
         className="absolute w-3.5 h-3.5 text-white opacity-0 transition-opacity duration-200 peer-checked:opacity-100 left-[3px]"
@@ -100,17 +98,15 @@ const Checkbox: React.FC<CheckboxProps> = ({
     </div>
     <div className="flex-1">
       <div
-        className={`text-sm font-medium transition-colors ${
-          disabled ? "text-gray-600" : "text-gray-300 group-hover:text-white"
-        }`}
+        className={`text-sm font-medium transition-colors ${disabled ? "text-gray-600" : "text-gray-300 group-hover:text-white"
+          }`}
       >
         {label}
       </div>
       {subLabel && (
         <div
-          className={`text-[11px] mt-0.5 ${
-            disabled ? "text-gray-700" : "text-gray-500"
-          }`}
+          className={`text-[11px] mt-0.5 ${disabled ? "text-gray-700" : "text-gray-500"
+            }`}
         >
           {subLabel}
         </div>
@@ -138,7 +134,7 @@ const Settings: React.FC<SettingsProps> = ({
   onCheckUpdates,
   onOpenGPUModal,
 }) => {
-  const { currentDesign, switchDesign } = useDesign();
+
 
   if (!config) return null;
 
@@ -172,34 +168,7 @@ const Settings: React.FC<SettingsProps> = ({
         </p>
       </header>
 
-      <SettingItem
-        icon={LayoutTemplate}
-        title="Apparence"
-        description="Choisissez l'interface qui vous convient."
-      >
-        <div className="flex gap-4">
-          <button
-            onClick={() => switchDesign("A")}
-            className={`px-4 py-2 rounded-lg border transition-all ${
-              currentDesign === "A"
-                ? "bg-blue-600 border-blue-600 text-white"
-                : "bg-transparent border-gray-600 text-gray-400 hover:border-gray-500 hover:text-gray-300"
-            }`}
-          >
-            Design A (Grille)
-          </button>
-          <button
-            onClick={() => switchDesign("B")}
-            className={`px-4 py-2 rounded-lg border transition-all ${
-              currentDesign === "B"
-                ? "bg-blue-600 border-blue-600 text-white"
-                : "bg-transparent border-gray-600 text-gray-400 hover:border-gray-500 hover:text-gray-300"
-            }`}
-          >
-            Design B (Liste)
-          </button>
-        </div>
-      </SettingItem>
+
 
       <SettingItem
         icon={Monitor}
@@ -207,6 +176,31 @@ const Settings: React.FC<SettingsProps> = ({
         description="Gérez le comportement général de l'application."
       >
         <div className="space-y-2">
+          <div className="bg-black/40 rounded-xl p-4 border border-white/5 mb-4">
+            <label className="block text-sm text-gray-300 mb-2 font-bold">
+              Design de l'interface
+            </label>
+            <div className="flex bg-black/40 p-1 rounded-lg border border-white/10">
+              <button
+                onClick={() => handleChange("activeDesignModule", "classic")}
+                className={`flex-1 py-1.5 px-3 rounded-md text-sm font-medium transition-all ${config.activeDesignModule !== 'modern'
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "text-gray-400 hover:text-white hover:bg-white/5"
+                  }`}
+              >
+                Classic
+              </button>
+              <button
+                onClick={() => handleChange("activeDesignModule", "modern")}
+                className={`flex-1 py-1.5 px-3 rounded-md text-sm font-medium transition-all ${config.activeDesignModule === 'modern'
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "text-gray-400 hover:text-white hover:bg-white/5"
+                  }`}
+              >
+                Modern
+              </button>
+            </div>
+          </div>
           <Checkbox
             id="showQuitModal"
             label="Confirmation de fermeture"
@@ -278,6 +272,47 @@ const Settings: React.FC<SettingsProps> = ({
       </SettingItem>
 
       <SettingItem
+        icon={Clock}
+        title="Automatisation"
+        description="Configuration du délai et des popups."
+      >
+        <div className="space-y-4">
+          <div className="bg-black/40 rounded-xl p-4 border border-white/5">
+            <label className="block text-sm text-gray-300 mb-2 font-bold">
+              Délai de lancement du client Riot
+            </label>
+            <p className="text-xs text-gray-500 mb-4">
+              Augmentez cette valeur si votre PC est lent à ouvrir le launcher Riot.
+            </p>
+            <div className="flex items-center gap-4">
+              <input
+                type="range"
+                min="5"
+                max="60"
+                step="1"
+                value={(config.riotLaunchDelay || 10000) / 1000}
+                onChange={(e) =>
+                  handleChange("riotLaunchDelay", Number(e.target.value) * 1000)
+                }
+                className="flex-1 accent-blue-600 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+              />
+              <span className="font-mono text-xl font-bold text-blue-500 min-w-[3ch] text-right">
+                {(config.riotLaunchDelay || 10000) / 1000}s
+              </span>
+            </div>
+          </div>
+
+          <Checkbox
+            id="showLaunchGamePopup"
+            label="Proposer de lancer le jeu après connexion"
+            subLabel="Affiche une fenêtre demandant si vous voulez lancer le jeu une fois connecté."
+            checked={config.showLaunchGamePopup !== false}
+            onChange={(val) => handleChange("showLaunchGamePopup", val)}
+          />
+        </div>
+      </SettingItem>
+
+      <SettingItem
         icon={Shield}
         title="Sécurité"
         description="Protégez vos comptes avec un code PIN au démarrage."
@@ -342,7 +377,7 @@ const Settings: React.FC<SettingsProps> = ({
           </button>
         </div>
       </SettingItem>
-    </div>
+    </div >
   );
 };
 

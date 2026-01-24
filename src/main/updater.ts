@@ -34,8 +34,8 @@ export function setupUpdater(mainWindow: BrowserWindow | null) {
   });
 
   const iconPath = app.isPackaged
-    ? path.join(process.resourcesPath, "assets", "logo.png")
-    : path.join(__dirname, "..", "..", "src", "assets", "logo.png");
+    ? path.join(process.resourcesPath, "assets", "switchmaster", "switchmaster-icon.png")
+    : path.join(__dirname, "..", "..", "src", "assets", "switchmaster", "switchmaster-icon.png");
 
   autoUpdater.on("update-available", (info: UpdateInfo) => {
     if (mainWindow) {

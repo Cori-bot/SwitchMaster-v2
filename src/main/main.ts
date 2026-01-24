@@ -63,7 +63,7 @@ const configService = new ConfigService();
 const securityService = new SecurityService(configService);
 const statsService = new StatsService();
 const accountService = new AccountService(securityService, statsService);
-const riotAutomationService = new RiotAutomationService(configService);
+const riotAutomationService = new RiotAutomationService(configService, securityService);
 const sessionService = new SessionService(
   accountService,
   riotAutomationService,
@@ -111,6 +111,14 @@ async function initApp() {
     devLog("Mode développement:", isDev);
 
     await configService.init();
+
+    // Broadcast config updates
+    configService.on("updated", (newConfig) => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send("config-updated", newConfig);
+      }
+    });
+
     await app.whenReady();
 
     // Enregistrement du protocole sm-img pour les images locales
@@ -140,7 +148,10 @@ async function initApp() {
         if (data.credentials) {
           await service.login(data.credentials);
         }
-        await service.launchGame(data.gameId);
+
+        if (data.autoLaunch !== false) {
+          await service.launchGame(data.gameId);
+        }
       },
       setAutoStart: (enable: boolean) =>
         systemService.setAutoStart(

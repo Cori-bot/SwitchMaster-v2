@@ -1,21 +1,17 @@
 import { useState, useEffect } from "react";
 
-export interface AppStatus {
-  status: string;
-  accountId?: string;
-  accountName?: string;
-}
+import { AppStatus } from "../../shared/types";
 
 export interface UpdateInfo {
   isOpen: boolean;
   status:
-    | "idle"
-    | "checking"
-    | "available"
-    | "not-available"
-    | "downloading"
-    | "downloaded"
-    | "error";
+  | "idle"
+  | "checking"
+  | "available"
+  | "not-available"
+  | "downloading"
+  | "downloaded"
+  | "error";
   progress: number;
   version: string;
   releaseNotes: string;
@@ -140,5 +136,6 @@ export function useAppIpc(
     updateInfo,
     setUpdateInfo,
     refreshStatus,
+    closeUpdateModal: () => setUpdateInfo((prev) => ({ ...prev, isOpen: false })),
   };
 }

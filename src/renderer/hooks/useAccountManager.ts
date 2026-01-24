@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { useAccounts } from "./useAccounts";
 import { Account } from "../../shared/types";
-import { useDesign } from "../contexts/DesignContext";
+
 
 export interface UseAccountManagerResult {
   accounts: Account[];
@@ -9,13 +9,13 @@ export interface UseAccountManagerResult {
   isLoading: boolean;
   error: string | null;
   actions: {
-    login: (account: Account) => Promise<void>;
+    login: (account: Account, autoLaunch?: boolean) => Promise<void>;
     deleteAccount: (id: string) => Promise<void>;
     updateAccount: (account: Account) => Promise<void>;
     reorderAccounts: (ids: string[]) => Promise<void>;
     toggleFavorite: (account: Account) => Promise<void>;
     addAccount: (data: Partial<Account>) => Promise<void>;
-    switchDesign: (design: "A" | "B") => void;
+
   };
 }
 
@@ -28,19 +28,20 @@ export const useAccountManager = (): UseAccountManagerResult => {
     addAccount: ipcAdd,
     loading,
   } = useAccounts();
-  const { switchDesign } = useDesign();
   const [activeAccountId, setActiveAccountId] = useState<string | null>(null);
 
   const [error, setError] = useState<string | null>(null);
 
-  const login = useCallback(async (account: Account) => {
+  const login = useCallback(async (account: Account, autoLaunch: boolean = true) => {
     try {
       setError(null);
       setActiveAccountId(account.id);
       await window.ipc.invoke("launch-game", {
         launcherType: account.launcherType || "riot",
         gameId: account.gameType,
+        accountId: account.id,
         credentials: { username: account.username, password: account.password },
+        autoLaunch,
       });
     } catch (err) {
       setError("Échec de la connexion");
@@ -68,9 +69,7 @@ export const useAccountManager = (): UseAccountManagerResult => {
     await ipcAdd(data);
   };
 
-  const switchDesignAction = (design: "A" | "B") => {
-    switchDesign(design);
-  };
+
 
   return {
     accounts,
@@ -84,7 +83,7 @@ export const useAccountManager = (): UseAccountManagerResult => {
       reorderAccounts,
       toggleFavorite,
       addAccount,
-      switchDesign: switchDesignAction,
+
     },
   };
 };

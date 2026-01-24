@@ -1,7 +1,7 @@
 import React from "react";
 import { LayoutDashboard, Settings } from "lucide-react";
 
-import logoImg from "@assets/logo.png";
+import logoImg from "@assets/switchmaster/switchmaster-icon.svg";
 
 
 interface SidebarProps {

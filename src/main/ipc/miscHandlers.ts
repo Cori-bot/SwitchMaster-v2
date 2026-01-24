@@ -1,7 +1,6 @@
 import { ipcMain, dialog, app, BrowserWindow } from "electron";
 import { safeHandle } from "./utils";
 import { IpcContext } from "./types";
-import { handleUpdateCheck } from "../updater";
 import { devLog, devError } from "../logger";
 import { AccountService } from "../services/AccountService";
 import { ConfigService } from "../services/ConfigService";
@@ -48,12 +47,12 @@ export function registerMiscHandlers(
     return true;
   });
 
-  safeHandle("check-updates", async () => {
-    const win = getMainWindow();
-    if (win) {
-      await handleUpdateCheck(win, true);
-    }
-    return true;
+  safeHandle("confirm-quit", () => {
+    app.quit();
+  });
+
+  safeHandle("minimize-to-tray", () => {
+    getMainWindow()?.hide();
   });
 
   safeHandle("handle-quit-choice", async (_e, dataRaw: any) => {

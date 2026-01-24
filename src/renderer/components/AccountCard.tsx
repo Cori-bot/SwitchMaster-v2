@@ -3,8 +3,8 @@ import { MoreVertical, Play, Trash2, Edit2, Star } from "lucide-react";
 import { Account } from "../hooks/useAccounts";
 
 
-import leagueIcon from "@assets/league.png";
-import valorantIcon from "@assets/valorant.png";
+import leagueIcon from "@assets/games/league-of-legends-icon.svg";
+import valorantIcon from "@assets/games/valorant-icon.svg";
 
 import {
   ICON_SIZE_SMALL,
@@ -25,6 +25,7 @@ interface AccountCardProps {
   onDragEnd: (e: React.DragEvent) => void;
   onDragEnter: (e: React.DragEvent, id: string) => void;
   onDrop: (e: React.DragEvent, id: string) => void;
+  onReconnect: (account: Account) => void;
 }
 
 
@@ -40,6 +41,7 @@ const AccountCard: React.FC<AccountCardProps> = ({
   onDragEnd,
   onDragEnter,
   onDrop,
+  onReconnect,
 }) => {
   const { id, name, riotId, gameType, stats, cardImage, isFavorite } = account;
 
@@ -111,7 +113,7 @@ const AccountCard: React.FC<AccountCardProps> = ({
       onDragEnter={(e) => onDragEnter(e, id)}
       onDrop={(e) => onDrop(e, id)}
       className={`group relative bg-[#1a1a1a] rounded-2xl border-2 transition-all ${ANIMATION_DURATION_LONG} ease-in-out cursor-grab active:cursor-grabbing active:scale-[0.98] active:opacity-80 ${isActive
-        ? "border-green-500 shadow-[0_0_20px_rgba(34,197,94,0.2)]"
+        ? "border-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.2)]"
         : "border-transparent hover:border-blue-500/50 hover:shadow-2xl hover:shadow-blue-500/10"
         } overflow-hidden`}
     >
@@ -180,16 +182,21 @@ const AccountCard: React.FC<AccountCardProps> = ({
         {renderStats()}
 
         <button
-          onClick={() => onSwitch(account.id)}
-          disabled={isActive}
+          onClick={() => {
+            if (isActive) {
+              onReconnect(account);
+            } else {
+              onSwitch(account.id);
+            }
+          }}
           className={`w-full flex items-center justify-center gap-2 font-bold py-3 rounded-xl transition-all duration-200 ${ACTIVE_SCALE} group/btn ${isActive
-            ? "bg-green-500/10 text-green-500 border border-green-500/50 cursor-default"
+            ? "bg-blue-600/10 text-blue-500 border border-blue-600/50 hover:bg-blue-600/20 cursor-pointer"
             : "bg-white text-black hover:bg-gray-200 cursor-pointer"
             }`}
         >
           {isActive ? (
             <>
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+              <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
               Connecté
             </>
           ) : (

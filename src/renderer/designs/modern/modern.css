@@ -1,0 +1,1004 @@
+/* Scoped Modern Design CSS */
+.modern-layout {
+  --glass-bg: rgba(255, 255, 255, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.15);
+  --text-dim: rgba(255, 255, 255, 0.65);
+  --radius-xl: 999px;
+  --radius-md: 16px;
+
+  height: 100vh;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  color: white;
+  background:
+    radial-gradient(60% 60% at 50% -10%, #1c1c1c, transparent 70%),
+    linear-gradient(#0b0b0b, #000);
+  overflow: hidden;
+  position: relative;
+}
+
+/* Noise overlay */
+.modern-layout::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
+
+.modern-layout *,
+.modern-layout *::before,
+.modern-layout *::after {
+  box-sizing: border-box;
+}
+
+/* =======================
+   TOP NAVBAR
+======================= */
+.modern-layout .top-nav {
+  position: fixed;
+  top: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  z-index: 10;
+}
+
+.modern-layout .nav-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  align-self: stretch;
+}
+
+.modern-layout .nav-logo img {
+  height: 28px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
+/* =======================
+   SETTINGS BUTTON
+======================= */
+.modern-layout .settings-nav-btn {
+  width: 45px;
+  height: 45px;
+  border-radius: var(--radius-xl);
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid var(--glass-border);
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: 0.25s ease;
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  margin-left: 16px;
+}
+
+.modern-layout .settings-nav-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: white;
+}
+
+.modern-layout .settings-nav-btn.active {
+  background: rgba(255, 255, 255, 0.95);
+  color: black;
+}
+
+.modern-layout .nav-pill {
+  display: flex;
+  padding: 6px;
+  gap: 6px;
+  border-radius: var(--radius-xl);
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid var(--glass-border);
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.modern-layout .nav-pill button {
+  padding: 8px 16px;
+  border-radius: var(--radius-xl);
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.25s ease;
+}
+
+.modern-layout .nav-pill button:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: white;
+}
+
+.modern-layout .nav-pill button.active {
+  background: rgba(255, 255, 255, 0.95);
+  color: black;
+}
+
+/* =======================
+   PAGE TRANSITIONS
+======================= */
+.modern-layout .page-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.modern-layout .page-wrapper.transitioning {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+/* =======================
+   MAIN CONTENT
+======================= */
+.modern-layout main {
+  position: relative;
+  z-index: 1;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 140px 40px 80px;
+}
+
+/* Settings page specific */
+.modern-layout main:has(.section) {
+  max-width: 900px;
+  padding: 140px 24px 80px;
+}
+
+.modern-layout h1 {
+  font-size: 34px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.modern-layout .subtitle {
+  color: var(--text-dim);
+  margin-bottom: 28px;
+  font-size: 14px;
+}
+
+/* =======================
+   FILTERS CONTAINER
+======================= */
+.modern-layout .filters-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+}
+
+/* =======================
+   FILTER TOGGLE ICON
+======================= */
+.modern-layout .filter-toggle-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-xl);
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid var(--glass-border);
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  transition: 0.25s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.modern-layout .filter-toggle-icon:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(1.05);
+}
+
+/* =======================
+   FILTER CHIPS
+======================= */
+.modern-layout .filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  flex: 1;
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  min-width: 0;
+  margin-bottom: 32px;
+}
+
+.modern-layout .filters.hidden {
+  opacity: 0;
+  transform: translateX(-10px);
+  pointer-events: none;
+  width: 0;
+  overflow: hidden;
+  gap: 0;
+}
+
+.modern-layout .filter {
+  padding: 7px 14px;
+  border-radius: var(--radius-xl);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+  font-size: 13px;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.modern-layout .filter:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.modern-layout .filter.active {
+  background: rgba(255, 255, 255, 0.9);
+  color: black;
+}
+
+.modern-layout .filter.filter-favorite {
+  padding: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+}
+
+.modern-layout .filter.filter-favorite svg {
+  display: block;
+}
+
+.modern-layout .filter.filter-favorite.active {
+  background: rgba(255, 215, 0, 0.2);
+  border-color: rgba(255, 215, 0, 0.4);
+  color: #ffd700;
+}
+
+.modern-layout .filter.filter-favorite.active:hover {
+  background: rgba(255, 215, 0, 0.3);
+  color: #ffed4e;
+}
+
+/* =======================
+   GRID & CARDS
+======================= */
+.modern-layout .grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 26px;
+}
+
+.modern-layout .card {
+  position: relative;
+  height: 170px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  cursor: pointer;
+  background: #111;
+  transition: transform .35s ease, box-shadow .35s ease;
+}
+
+.modern-layout .card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: contrast(1.05);
+}
+
+.modern-layout .card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top,
+      rgba(0, 0, 0, 0.65),
+      transparent 60%);
+}
+
+.modern-layout .card-info {
+  position: absolute;
+  bottom: 14px;
+  left: 16px;
+  z-index: 2;
+}
+
+.modern-layout .card-info h3 {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.modern-layout .card-info span {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.modern-layout .card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.65);
+}
+
+/* =======================
+   FAVORITE ICON
+======================= */
+.modern-layout .favorite-icon {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 3;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.7);
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.modern-layout .favorite-icon:hover {
+  background: rgba(0, 0, 0, 0.7);
+  color: rgba(255, 255, 255, 0.9);
+  transform: scale(1.1);
+}
+
+.modern-layout .favorite-icon.active {
+  background: rgba(255, 215, 0, 0.2);
+  border-color: rgba(255, 215, 0, 0.4);
+  color: #ffd700;
+}
+
+.modern-layout .favorite-icon.active:hover {
+  background: rgba(255, 215, 0, 0.3);
+  color: #ffed4e;
+}
+
+.modern-layout .favorite-icon.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.modern-layout .favorite-icon.disabled:hover {
+  transform: none;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+/* =======================
+   GAME & RANK ICONS
+======================= */
+.modern-layout .card-icons-container {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modern-layout .card-game-icon,
+.modern-layout .card-rank-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+}
+
+.modern-layout .card-game-icon img,
+.modern-layout .card-rank-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* =======================
+   SETTINGS SECTIONS
+======================= */
+.modern-layout .section {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: 22px 24px;
+  margin-bottom: 26px;
+  backdrop-filter: blur(16px);
+}
+
+.modern-layout .section h2 {
+  font-size: 18px;
+  margin-bottom: 18px;
+}
+
+/* =======================
+   ROW
+======================= */
+.modern-layout .setting {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.modern-layout .setting:last-child {
+  border-bottom: none;
+}
+
+.modern-layout .setting span {
+  font-size: 14px;
+  color: var(--text-dim);
+}
+
+.modern-layout .setting-right-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* =======================
+   TOGGLE
+======================= */
+.modern-layout .toggle {
+  width: 46px;
+  height: 26px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-xl);
+  position: relative;
+  cursor: pointer;
+  transition: .25s ease;
+}
+
+.modern-layout .toggle::after {
+  content: "";
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  top: 3px;
+  left: 3px;
+  background: white;
+  border-radius: 50%;
+  transition: .25s ease;
+}
+
+.modern-layout .toggle.active {
+  background: white;
+}
+
+.modern-layout .toggle.active::after {
+  left: 23px;
+  background: black;
+}
+
+/* =======================
+   SELECT
+======================= */
+.modern-layout select {
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: white;
+  padding: 6px 12px;
+  border-radius: var(--radius-xl);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* =======================
+   BUTTONS
+======================= */
+.modern-layout .btn-danger {
+  margin-top: 12px;
+  background: rgba(255, 60, 60, 0.15);
+  color: #ff6b6b;
+  border: 1px solid rgba(255, 60, 60, 0.3);
+  padding: 10px 16px;
+  border-radius: var(--radius-xl);
+  cursor: pointer;
+  font-size: 14px;
+  transition: 0.25s ease;
+}
+
+.modern-layout .btn-danger:hover {
+  background: rgba(255, 60, 60, 0.25);
+}
+
+.modern-layout .settings-button {
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: white;
+  padding: 6px 12px;
+  border-radius: var(--radius-xl);
+  font-size: 13px;
+  cursor: pointer;
+  transition: 0.25s ease;
+}
+
+.modern-layout .settings-button:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* =======================
+   WALLPAPER VIEW (FULLSCREEN)
+======================= */
+.modern-layout .wallpaper-view {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  overflow: hidden;
+  opacity: 0;
+  transform: scale(1.05);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.modern-layout .wallpaper-view.opening {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.modern-layout .wallpaper-view.closing {
+  opacity: 0;
+  transform: scale(1.05);
+}
+
+.modern-layout .wallpaper-background {
+  position: fixed;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: 0;
+}
+
+.modern-layout .wallpaper-background::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center,
+      transparent 60%,
+      rgba(0, 0, 0, 0.45));
+}
+
+/* =======================
+   BOTTOM BAR
+======================= */
+.modern-layout .bottom-bar {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, calc(-50% + 20px));
+  z-index: 2;
+  opacity: 0;
+
+  display: flex;
+  align-items: center;
+  gap: 32px;
+
+  padding: 14px 22px;
+  border-radius: var(--radius-xl);
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+
+  transition: opacity 0.25s ease 0.1s, transform 0.25s ease 0.1s;
+}
+
+.modern-layout .bottom-bar.form-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  width: 600px;
+  max-width: 90vw;
+  padding: 24px 28px;
+  border-radius: var(--radius-md);
+}
+
+.modern-layout .wallpaper-view.opening .bottom-bar {
+  opacity: 1;
+  transform: translate(-50%, -50%);
+}
+
+.modern-layout .wallpaper-view.closing .bottom-bar {
+  opacity: 0;
+  transform: translate(-50%, calc(-50% + 20px));
+}
+
+/* =======================
+   FORM CONTAINER
+======================= */
+.modern-layout .form-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.modern-layout .form-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.modern-layout .form-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.modern-layout .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* =======================
+   THEME CARDS
+======================= */
+.modern-layout .theme-cards {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+}
+
+.modern-layout .theme-card {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  cursor: pointer;
+  transition: 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.modern-layout .theme-card:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.modern-layout .theme-card.active {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: white;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.modern-layout .theme-card h4 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.modern-layout .theme-card p {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin: 0;
+}
+
+
+.modern-layout .input-group {
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.modern-layout .path-input {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  box-shadow: none;
+  transition: all 0.2s ease;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.modern-layout .path-input:focus {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: none;
+  outline: none;
+}
+
+.modern-layout .change-path-btn {
+  padding: 10px 20px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.modern-layout .change-path-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* =======================
+   GAMES LIST
+======================= */
+.modern-layout .games-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.modern-layout .game-path-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modern-layout .game-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* =======================
+   GAMES ICONS LIST
+======================= */
+.modern-layout .games-icons-list {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.modern-layout .game-icon-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modern-layout .game-icon {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
+/* =======================
+   GAME NOT DETECTED
+======================= */
+.modern-layout .game-not-detected {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modern-layout .game-not-detected-text {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.modern-layout .game-not-detected-hint {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.4;
+}
+
+.modern-layout .game-not-detected-hint .link-text {
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: underline;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.modern-layout .game-not-detected-hint .link-text:hover {
+  color: rgba(255, 255, 255, 1);
+}
+
+.modern-layout .back-btn {
+  position: fixed;
+  top: 50%;
+  left: calc(50% - 300px - 44px);
+  transform: translateY(20px);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.9);
+  transition: opacity 0.25s ease 0.1s, transform 0.25s ease 0.1s;
+  padding: 0;
+  margin: 0;
+  font-size: 20px;
+  line-height: 1;
+  text-align: center;
+  font-family: inherit;
+  outline: none;
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  -webkit-appearance: none;
+  appearance: none;
+  z-index: 3;
+  opacity: 0;
+}
+
+.modern-layout .wallpaper-view.opening .back-btn {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.modern-layout .wallpaper-view.closing .back-btn {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.modern-layout .back-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 1);
+  transform: scale(1.1);
+}
+
+.modern-layout .back-btn:active {
+  transform: scale(0.95);
+}
+
+/* =======================
+   LEFT INFO (for AccountView)
+======================= */
+.modern-layout .info {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding-right: 28px;
+}
+
+.modern-layout .back {
+  font-size: 22px;
+  line-height: 1;
+  opacity: 0.9;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.modern-layout .back:hover {
+  opacity: 1;
+}
+
+.modern-layout .meta {
+  display: flex;
+  flex-direction: column;
+}
+
+.modern-layout .meta h3 {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.modern-layout .meta span {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 2px;
+}
+
+/* =======================
+   ACTIONS
+======================= */
+.modern-layout .actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-left: 18px;
+}
+
+.modern-layout .icon-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  font-size: 18px;
+  transition: background 0.2s ease;
+  border: none;
+  color: white;
+}
+
+.modern-layout .icon-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* =======================
+   PRIMARY BUTTON
+======================= */
+.modern-layout .primary-btn {
+  padding: 10px 22px;
+  border-radius: var(--radius-xl);
+  background: rgba(255, 255, 255, 0.95);
+  color: black;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  outline: none;
+  transition: background 0.2s ease;
+}
+
+.modern-layout .primary-btn:hover {
+  background: rgba(255, 255, 255, 1);
+}
+
+/* =======================
+   RESPONSIVE
+======================= */
+@media (max-width: 700px) {
+  .modern-layout main {
+    padding: 120px 20px 60px;
+  }
+
+  .modern-layout .setting-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .modern-layout .setting-control {
+    margin-left: 0;
+    width: 100%;
+  }
+}
