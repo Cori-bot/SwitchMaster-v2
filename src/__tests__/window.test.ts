@@ -108,9 +108,88 @@ describe("Window Module", () => {
       expect(event.preventDefault).toHaveBeenCalled();
       expect(win.webContents.send).toHaveBeenCalledWith("show-quit-modal");
     });
+    it("doit gérer l'événement close avec minimizeToTray = true", () => {
+      mockConfigService.getConfig.mockReturnValue({
+        showQuitModal: false,
+        minimizeToTray: true,
+      });
+      const win = createWindow(false, mockConfigService);
+      const closeHandler = (win.on as any).mock.calls.find(
+        (call: any) => call[0] === "close",
+      )[1];
+      const event = { preventDefault: vi.fn() };
+      closeHandler(event);
+      expect(event.preventDefault).toHaveBeenCalled();
+      expect(win.hide).toHaveBeenCalled();
+    });
+
+    it("ne doit pas empêcher la fermeture si ni modal ni tray", () => {
+      mockConfigService.getConfig.mockReturnValue({
+        showQuitModal: false,
+        minimizeToTray: false,
+      });
+      const win = createWindow(false, mockConfigService);
+      const closeHandler = (win.on as any).mock.calls.find(
+        (call: any) => call[0] === "close",
+      )[1];
+      const event = { preventDefault: vi.fn() };
+      closeHandler(event);
+      expect(event.preventDefault).not.toHaveBeenCalled();
+    });
+    it("doit gérer l'événement close avec minimizeToTray = true", () => {
+      mockConfigService.getConfig.mockReturnValue({
+        showQuitModal: false,
+        minimizeToTray: true,
+      });
+      const win = createWindow(false, mockConfigService);
+      const closeHandler = (win.on as any).mock.calls.find(
+        (call: any) => call[0] === "close",
+      )[1];
+      const event = { preventDefault: vi.fn() };
+      closeHandler(event);
+      expect(event.preventDefault).toHaveBeenCalled();
+      expect(win.hide).toHaveBeenCalled();
+    });
+
+    it("ne doit pas empêcher la fermeture si ni modal ni tray", () => {
+      mockConfigService.getConfig.mockReturnValue({
+        showQuitModal: false,
+        minimizeToTray: false,
+      });
+      const win = createWindow(false, mockConfigService);
+      const closeHandler = (win.on as any).mock.calls.find(
+        (call: any) => call[0] === "close",
+      )[1];
+      const event = { preventDefault: vi.fn() };
+      closeHandler(event);
+      expect(event.preventDefault).not.toHaveBeenCalled();
+    });
   });
 
   describe("Tray Menu Interaction", () => {
+    it("doit mettre à jour le Tray s'il existe déjà", async () => {
+      createWindow(true, mockConfigService);
+      // Premier appel : création
+      await updateTrayMenu(
+        vi.fn(),
+        vi.fn(),
+        mockConfigService,
+        mockAccountService,
+      );
+      expect(Tray).toHaveBeenCalledTimes(1);
+
+      // Deuxième appel : mise à jour
+      await updateTrayMenu(
+        vi.fn(),
+        vi.fn(),
+        mockConfigService,
+        mockAccountService,
+      );
+      expect(Tray).toHaveBeenCalledTimes(1); // Pas de nouvelle instance
+      const trayInstance = (Tray as any).mock.results[0].value;
+      expect(trayInstance.setContextMenu).toHaveBeenCalledTimes(2);
+    });
+
     it("doit créer le Tray s'il n'existe pas", async () => {
       createWindow(true, mockConfigService);
       await updateTrayMenu(

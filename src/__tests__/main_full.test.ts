@@ -206,8 +206,16 @@ describe("Main Process IPC Handlers Full Coverage", () => {
 
   it("doit enregistrer et appeler UpdateHandlers", async () => {
     registerUpdateHandlers(() => mockWin as any);
-    if (handlers["check-updates"]) await handlers["check-updates"]();
+
+    // packaged = true branch
+    (app as any).isPackaged = true;
     if (handlers["simulate-update"]) await handlers["simulate-update"]();
+
+    // packaged = false branch
+    (app as any).isPackaged = false;
+    if (handlers["simulate-update"]) await handlers["simulate-update"]();
+
+    if (handlers["check-updates"]) await handlers["check-updates"]();
     if (handlers["download-update"]) await handlers["download-update"]();
     if (handlers["install-update"]) await handlers["install-update"]();
   });

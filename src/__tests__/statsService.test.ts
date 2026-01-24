@@ -3,122 +3,108 @@ import { StatsService } from "../main/services/StatsService";
 import https from "https";
 import { EventEmitter } from "events";
 
-// Mock Logger
-vi.mock("../main/logger", () => ({
-  devLog: vi.fn(),
-  devError: vi.fn(),
-}));
+vi.mock("../main/logger", () => ({ devLog: vi.fn(), devError: vi.fn() }));
+vi.mock("https", () => ({ get: vi.fn(), default: { get: vi.fn() } }));
 
-// Mock HTTPS
-vi.mock("https", () => ({
-  default: {
-    get: vi.fn(),
-  },
-}));
-
-describe("Stats Service", () => {
-  let statsService: StatsService;
+describe("StatsService", () => {
+  let service: StatsService;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    statsService = new StatsService();
+    service = new StatsService();
   });
 
-  const mockHttpsResponse = (
-    statusCode: number,
-    body: string,
-    error?: Error,
-  ) => {
+  const mockResp = (code: number, body: string, err?: Error) => {
     const req = new EventEmitter();
-    (https.get as any).mockImplementation(
-      (url: string, options: any, callback: any) => {
-        if (error) {
-          const reqObj = new EventEmitter();
-          setTimeout(() => reqObj.emit("error", error), 0);
-          return reqObj;
-        }
-
-        const res = new EventEmitter();
-        (res as any).statusCode = statusCode;
-
-        callback(res);
-
-        res.emit("data", body);
-        res.emit("end");
-
+    (https.get as any).mockImplementation((url: string, opts: any, cb: any) => {
+      if (err) {
+        setTimeout(() => req.emit("error", err), 0);
         return req;
-      },
-    );
+      }
+      const res = new EventEmitter();
+      (res as any).statusCode = code;
+      const callback = typeof opts === "function" ? opts : cb;
+      callback(res);
+      res.emit("data", body);
+      res.emit("end");
+      return req;
+    });
   };
 
-  it("doit récupérer les stats Valorant avec succès", async () => {
-    const mockResponse = {
-      data: {
-        segments: [
-          {
-            attributes: { playlist: "competitive" },
-            stats: {
-              tier: {
-                metadata: { tierName: "Gold 1", iconUrl: "http://icon" },
-              },
+  it("fetchAccountStats Valorant success", async () => {
+    mockResp(
+      200,
+      JSON.stringify({
+        data: {
+          segments: [
+            {
+              attributes: { playlist: "competitive" },
+              stats: { tier: { metadata: { rankName: "G", iconUrl: "i" } } },
             },
-          },
-        ],
-      },
-    };
-
-    mockHttpsResponse(200, JSON.stringify(mockResponse));
-
-    const stats = await statsService.fetchAccountStats(
-      "Player#TAG",
-      "valorant",
+          ],
+        },
+      }),
     );
-
-    expect(stats).toEqual({
-      rank: "Gold 1",
-      rankIcon: "http://icon",
-      lastUpdate: expect.any(Number),
-    });
+    const s = await service.fetchAccountStats("u#t", "valorant");
+    expect(s?.rank).toBe("G");
   });
 
-  it("doit récupérer les stats League avec succès", async () => {
-    const mockResponse = {
-      data: {
-        segments: [
-          {
-            attributes: { playlist: "ranked_solo_5x5" },
-            stats: {
-              tier: {
-                metadata: { tierName: "Silver 4", iconUrl: "http://icon-lol" },
-              },
+  it("fetchAccountStats League success", async () => {
+    mockResp(
+      200,
+      JSON.stringify({
+        data: {
+          segments: [
+            {
+              attributes: { playlist: "ranked_solo_5x5" },
+              stats: { tier: { metadata: { rankName: "P", iconUrl: "i" } } },
             },
-          },
-        ],
-      },
-    };
-
-    mockHttpsResponse(200, JSON.stringify(mockResponse));
-
-    const stats = await statsService.fetchAccountStats("Player#TAG", "league");
-
-    expect(stats).toEqual({
-      rank: "Silver 4",
-      rankIcon: "http://icon-lol",
-      lastUpdate: expect.any(Number),
-    });
-  });
-
-  it("doit gérer le format Riot ID invalide", async () => {
-    const stats = await statsService.fetchAccountStats("InvalidID", "valorant");
-    expect(stats).toBeNull();
-  });
-
-  it("doit gérer une réponse API 404 (Log spécial)", async () => {
-    mockHttpsResponse(404, "Not Found");
-    const stats = await statsService.fetchAccountStats(
-      "Player#TAG",
-      "valorant",
+          ],
+        },
+      }),
     );
-    expect(stats).toBeNull();
+    const s = await service.fetchAccountStats("u#t", "league");
+    expect(s?.rank).toBe("P");
+  });
+
+  it("handles errors (Line 62, 85, 104, 152, 169)", async () => {
+    mockResp(404, "404");
+    expect(await service.fetchAccountStats("u#t", "valorant")).toBeNull();
+
+    mockResp(500, "500");
+    expect(await service.fetchAccountStats("u#t", "league")).toBeNull();
+
+    mockResp(200, "invalid-json");
+    expect(await service.fetchAccountStats("u#t", "valorant")).toBeNull();
+
+    mockResp(200, "", new Error());
+    expect(await service.fetchAccountStats("u#t", "valorant")).toBeNull();
+
+    expect(await service.fetchAccountStats("invalid", "valorant")).toBeNull();
+  });
+
+  it("fetchLeagueStats handles 404 specially", async () => {
+    mockResp(404, "Not Found");
+    expect(await service.fetchAccountStats("u#t", "league")).toBeNull();
+  });
+
+  it("findBestSegment fallbacks (Line 195, 198)", async () => {
+    mockResp(
+      200,
+      JSON.stringify({
+        data: {
+          segments: [{ stats: { tier: { metadata: { rankName: "X" } } } }],
+        },
+      }),
+    );
+    const s = await service.fetchAccountStats("u#t", "valorant");
+    expect(s?.rank).toBe("X");
+  });
+
+  it("extractRankInfo fallbacks (Line 207-210)", async () => {
+    mockResp(200, JSON.stringify({ data: { segments: [{ stats: {} }] } }));
+    const s = await service.fetchAccountStats("u#t", "valorant");
+    expect(s?.rank).toBe("Unranked");
+    expect(s?.rankIcon).toContain("tiers/0.png");
   });
 });

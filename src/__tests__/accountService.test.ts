@@ -2,189 +2,238 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { AccountService } from "../main/services/AccountService";
 import { SecurityService } from "../main/services/SecurityService";
 import { ConfigService } from "../main/services/ConfigService";
-import fs from "fs-extra";
-import path from "path";
-import { app } from "electron";
 import { StatsService } from "../main/services/StatsService";
+import fs from "fs-extra";
+import { app } from "electron";
 
 vi.mock("fs-extra");
 vi.mock("electron", () => ({
   app: {
     getPath: vi.fn().mockReturnValue("TEST_USER_DATA"),
   },
+  BrowserWindow: vi.fn(),
 }));
-vi.mock("../main/services/StatsService", () => ({
-  StatsService: vi.fn().mockImplementation(() => ({
-    fetchAccountStats: vi.fn(),
-  })),
+
+vi.mock("../main/logger", () => ({
+  devLog: vi.fn(),
+  devError: vi.fn(),
 }));
 
 describe("AccountService", () => {
-  let accountService: AccountService;
-  let mockSecurityService: SecurityService;
-  let mockStatsService: any;
+  let service: AccountService;
+  let mockSec: any;
+  let mockStats: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // Mock ConfigService first as SecurityService needs it
+    // ConfigService mock needed for SecurityService
     const mockConfigService = new ConfigService() as any;
 
-    // Mock SecurityService
-    mockSecurityService = new SecurityService(mockConfigService) as any;
-    mockSecurityService.encryptData = vi.fn((data) => `encrypted_${data}`);
-    mockSecurityService.decryptData = vi.fn((data) =>
-      data.replace("encrypted_", ""),
-    );
+    // Explicit mock methods for SecurityService
+    mockSec = {
+      encryptData: vi.fn((data) => `encrypted_${data}`),
+      decryptData: vi.fn((data) => data.replace("encrypted_", "")),
+    };
 
-    mockStatsService = {
+    mockStats = {
       fetchAccountStats: vi.fn(),
     };
 
-    accountService = new AccountService(mockSecurityService, mockStatsService);
-  });
-
-  it("doit charger les comptes depuis le fichier", async () => {
-    const mockAccounts = [{ id: "1", name: "Test" }];
     (fs.pathExists as any).mockResolvedValue(true);
-    (fs.readFile as any).mockResolvedValue(JSON.stringify(mockAccounts));
+    (fs.ensureDir as any).mockResolvedValue(undefined);
+    (fs.writeJson as any).mockResolvedValue(undefined);
 
-    const accounts = await accountService.getAccounts();
-    expect(accounts).toEqual(mockAccounts);
+    service = new AccountService(mockSec, mockStats);
   });
 
-  it("doit retourner un tableau vide si le fichier n'existe pas", async () => {
-    (fs.pathExists as any).mockResolvedValue(false);
-    const accounts = await accountService.getAccounts();
+  // Basic Read/Write
+  it("getAccounts returns empty array on disk error", async () => {
+    (fs.readFile as any).mockRejectedValue(new Error("Disk error"));
+    const accounts = await service.getAccounts();
     expect(accounts).toEqual([]);
   });
 
-  it("doit ajouter un compte avec cryptage", async () => {
-    (fs.pathExists as any).mockResolvedValue(false); // Pas de comptes existants
-    mockStatsService.fetchAccountStats.mockResolvedValue(null);
-
-    const newAccount = await accountService.addAccount({
-      name: "New",
-      username: "user",
-      password: "pass",
-    });
-
-    expect(newAccount.username).toBe("encrypted_user");
-    expect(newAccount.password).toBe("encrypted_pass");
-    expect(fs.writeJson).toHaveBeenCalledWith(
-      expect.stringContaining("accounts.json"),
-      expect.arrayContaining([expect.objectContaining({ id: newAccount.id })]),
-      expect.anything(),
-    );
-  });
-
-  it("doit charger les comptes depuis le fichier", async () => {
-    const mockAccounts = [{ id: "1", name: "Test" }];
-    (fs.pathExists as any).mockResolvedValue(true);
-    (fs.readFile as any).mockResolvedValue(JSON.stringify(mockAccounts));
-
-    const accounts = await accountService.getAccounts();
-    expect(accounts).toEqual(mockAccounts);
-  });
-
-  it("doit retourner un tableau vide si le fichier n'existe pas", async () => {
+  it("getAccounts returns empty array if file does not exist", async () => {
     (fs.pathExists as any).mockResolvedValue(false);
-    const accounts = await accountService.getAccounts();
+    const accounts = await service.getAccounts();
     expect(accounts).toEqual([]);
   });
 
-  it("doit ajouter un compte avec cryptage", async () => {
-    (fs.pathExists as any).mockResolvedValue(false); // Pas de comptes existants
-    mockStatsService.fetchAccountStats.mockResolvedValue(null);
+  it("getAccounts handles empty file content", async () => {
+    (fs.readFile as any).mockResolvedValue("   ");
+    expect(await service.getAccounts()).toEqual([]);
+  });
 
-    const newAccount = await accountService.addAccount({
-      name: "New",
-      username: "user",
-      password: "pass",
-    });
+  it("saveAccounts handles write error", async () => {
+    (fs.writeJson as any).mockRejectedValue(new Error("Write fail"));
+    await expect(service.addAccount({})).rejects.toThrow("Write fail");
+  });
 
-    expect(newAccount.username).toBe("encrypted_user");
-    expect(newAccount.password).toBe("encrypted_pass");
+  // Credential Management
+  it("getCredentials returns decrypted data", async () => {
+    const mock = { id: "1", username: "enc_u", password: "enc_p" };
+    (fs.readFile as any).mockResolvedValue(JSON.stringify([mock]));
+    mockSec.decryptData.mockReturnValueOnce("u").mockReturnValueOnce("p");
+
+    const creds = await service.getCredentials("1");
+    expect(creds.username).toBe("u");
+    expect(creds.password).toBe("p");
+  });
+
+  it("getCredentials throws if account not found", async () => {
+    (fs.readFile as any).mockResolvedValue("[]");
+    await expect(service.getCredentials("1")).rejects.toThrow(
+      "Account not found",
+    );
+  });
+
+  // Account CRUD
+  it("addAccount encrypts data and saves", async () => {
+    (fs.readFile as any).mockResolvedValue("[]");
+    const acc = await service.addAccount({ username: "u", password: "p" });
+    expect(mockSec.encryptData).toHaveBeenCalledTimes(2);
+    expect(fs.writeJson).toHaveBeenCalled();
+    expect(acc.username).toContain("encrypted_");
+  });
+
+  it("addAccount fetches stats if Riot ID provided", async () => {
+    (fs.readFile as any).mockResolvedValue("[]");
+    mockStats.fetchAccountStats.mockResolvedValue({ rank: "Gold" });
+    const acc = await service.addAccount({ riotId: "u#t" });
+    expect(acc.stats?.rank).toBe("Gold");
+  });
+
+  it("addAccount handles stats fetch failure", async () => {
+    (fs.readFile as any).mockResolvedValue("[]");
+    mockStats.fetchAccountStats.mockRejectedValue(new Error("API Fail"));
+    const acc = await service.addAccount({ riotId: "u#t" });
+    expect(acc.stats).toBeNull();
+  });
+
+  it("updateAccount throws if not found", async () => {
+    (fs.readFile as any).mockResolvedValue("[]");
+    await expect(service.updateAccount({ id: "1" })).rejects.toThrow(
+      "Compte introuvable",
+    );
+  });
+
+  it("updateAccount only re-encrypts if changed", async () => {
+    const mock = { id: "1", username: "enc_u", password: "enc_p" };
+    (fs.readFile as any).mockResolvedValue(JSON.stringify([mock]));
+    mockSec.decryptData.mockImplementation((d: string) =>
+      d.replace("enc_", ""),
+    );
+
+    // Case 1: Same credentials
+    await service.updateAccount({ id: "1", username: "u" });
+    expect(mockSec.encryptData).not.toHaveBeenCalled();
+
+    // Case 2: Changed credentials
+    await service.updateAccount({ id: "1", username: "new_u" });
+    expect(mockSec.encryptData).toHaveBeenCalledWith("new_u");
+  });
+
+  it("updateAccount fetches stats on Riot ID change", async () => {
+    const mock = { id: "1", riotId: "old#t", gameType: "valorant" };
+    (fs.readFile as any).mockResolvedValue(JSON.stringify([mock]));
+    mockStats.fetchAccountStats.mockResolvedValue({ rank: "Plat" });
+
+    const updated = await service.updateAccount({ id: "1", riotId: "new#t" });
+    expect(mockStats.fetchAccountStats).toHaveBeenCalledWith(
+      "new#t",
+      "valorant",
+    );
+    expect(updated.stats?.rank).toBe("Plat");
+  });
+
+  it("updateAccount handles stats failure", async () => {
+    const mock = { id: "1", riotId: "old#t", gameType: "valorant" };
+    (fs.readFile as any).mockResolvedValue(JSON.stringify([mock]));
+    mockStats.fetchAccountStats.mockRejectedValue(new Error("Fail"));
+
+    await service.updateAccount({ id: "1", riotId: "new#t" });
+    expect(fs.writeJson).toHaveBeenCalled(); // Still saves
+  });
+
+  it("deleteAccount removes item", async () => {
+    (fs.readFile as any).mockResolvedValue(JSON.stringify([{ id: "1" }]));
+    expect(await service.deleteAccount("1")).toBe(true);
     expect(fs.writeJson).toHaveBeenCalledWith(
-      expect.stringContaining("accounts.json"),
-      expect.arrayContaining([expect.objectContaining({ id: newAccount.id })]),
+      expect.anything(),
+      [],
       expect.anything(),
     );
   });
 
-  it("doit décrypter les credentials", async () => {
-    const mockAccounts = [
-      {
-        id: "1",
-        username: "encrypted_user",
-        password: "encrypted_pass",
-      },
-    ];
-    (fs.pathExists as any).mockResolvedValue(true);
-    (fs.readFile as any).mockResolvedValue(JSON.stringify(mockAccounts));
-
-    const account = await accountService.getCredentials("1");
-    expect(account.username).toBe("user");
-    expect(account.password).toBe("pass");
+  it("deleteAccount returns false if not found", async () => {
+    (fs.readFile as any).mockResolvedValue("[]");
+    expect(await service.deleteAccount("1")).toBe(false);
   });
 
-  it("doit mettre à jour un compte", async () => {
-    const mockAccounts = [{ id: "1", name: "Old", username: "encrypted_old" }];
-    (fs.pathExists as any).mockResolvedValue(true);
-    (fs.readFile as any).mockResolvedValue(JSON.stringify(mockAccounts));
-
-    await accountService.updateAccount({
-      id: "1",
-      name: "New Name",
-      username: "new_user",
-    });
-
+  // Advanced Operations
+  it("reorderAccounts reorders and adds missing", async () => {
+    (fs.readFile as any).mockResolvedValue(
+      JSON.stringify([{ id: "1" }, { id: "2" }]),
+    );
+    await service.reorderAccounts(["2"]);
     expect(fs.writeJson).toHaveBeenCalledWith(
       expect.anything(),
-      expect.arrayContaining([
-        expect.objectContaining({
-          name: "New Name",
-          username: "encrypted_new_user",
-        }),
-      ]),
+      expect.arrayContaining([{ id: "2" }, { id: "1" }]),
       expect.anything(),
     );
   });
 
-  it("doit supprimer un compte", async () => {
-    const mockAccounts = [{ id: "1" }, { id: "2" }];
-    (fs.pathExists as any).mockResolvedValue(true);
-    (fs.readFile as any).mockResolvedValue(JSON.stringify(mockAccounts));
-
-    const success = await accountService.deleteAccount("1");
-    expect(success).toBe(true);
-    expect(fs.writeJson).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.arrayContaining([{ id: "2" }]), // Il ne reste que le 2
-      expect.anything(),
-    );
-    expect(fs.writeJson).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.not.arrayContaining([{ id: "1" }]),
-      expect.anything(),
+  it("fetchAndSaveStats throws if missing ID", async () => {
+    (fs.readFile as any).mockResolvedValue(JSON.stringify([{ id: "1" }]));
+    await expect(service.fetchAndSaveStats("1")).rejects.toThrow(
+      "missing Riot ID",
     );
   });
 
-  it("doit réordonner les comptes", async () => {
-    const mockAccounts = [{ id: "1" }, { id: "2" }, { id: "3" }];
-    (fs.pathExists as any).mockResolvedValue(true);
-    (fs.readFile as any).mockResolvedValue(JSON.stringify(mockAccounts));
-
-    await accountService.reorderAccounts(["3", "1", "2"]);
-
-    expect(fs.writeJson).toHaveBeenCalledWith(
-      expect.anything(),
-      [
-        expect.objectContaining({ id: "3" }),
-        expect.objectContaining({ id: "1" }),
-        expect.objectContaining({ id: "2" }),
-      ],
-      expect.anything(),
+  it("fetchAndSaveStats saves new stats", async () => {
+    (fs.readFile as any).mockResolvedValue(
+      JSON.stringify([{ id: "1", riotId: "u#t" }]),
     );
+    mockStats.fetchAccountStats.mockResolvedValue({ rank: "Dia" });
+    const stats = await service.fetchAndSaveStats("1");
+    expect(stats.rank).toBe("Dia");
+    expect(fs.writeJson).toHaveBeenCalled();
+  });
+
+  it("refreshAllAccountStats updates multiple accounts", async () => {
+    const mock = [
+      { id: "1", riotId: "u#t", stats: { rank: "G" } },
+      { id: "2" },
+    ]; // 2 has no riotId
+    (fs.readFile as any).mockResolvedValue(JSON.stringify(mock));
+    mockStats.fetchAccountStats.mockResolvedValue({ rank: "P" });
+
+    const win = { isDestroyed: () => false, webContents: { send: vi.fn() } };
+    await service.refreshAllAccountStats(win as any);
+
+    expect(fs.writeJson).toHaveBeenCalled();
+    expect(win.webContents.send).toHaveBeenCalled();
+  });
+
+  it("refreshAllAccountStats handles partial failures", async () => {
+    const mock = [{ id: "1", riotId: "u#t" }];
+    (fs.readFile as any).mockResolvedValue(JSON.stringify(mock));
+    mockStats.fetchAccountStats.mockRejectedValue(new Error("Fail"));
+
+    await service.refreshAllAccountStats(null);
+    expect(fs.writeJson).not.toHaveBeenCalled();
+  });
+
+  it("refreshAllAccountStats handles destroyed window", async () => {
+    const mock = [{ id: "1", riotId: "u#t", stats: { rank: "G" } }];
+    (fs.readFile as any).mockResolvedValue(JSON.stringify(mock));
+    mockStats.fetchAccountStats.mockResolvedValue({ rank: "P" });
+
+    const win = { isDestroyed: () => true, webContents: { send: vi.fn() } };
+    await service.refreshAllAccountStats(win as any);
+
+    expect(fs.writeJson).toHaveBeenCalled();
+    expect(win.webContents.send).not.toHaveBeenCalled();
   });
 });

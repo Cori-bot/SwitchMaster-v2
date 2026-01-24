@@ -4,8 +4,6 @@ This repository contains **SwitchMaster**, an Electron application for switching
 
 ## 1. Project Overview & Environment
 
-### Stack
-
 - **Runtime:** Electron 40.0.0 (Node 18+)
 - **Frontend:** React 19, TypeScript 5.9
 - **Build Tool:** Vite 7.3
@@ -15,125 +13,94 @@ This repository contains **SwitchMaster**, an Electron application for switching
 
 ### Setup & Commands
 
-| Action            | Command              | Description                                                |
-| ----------------- | -------------------- | ---------------------------------------------------------- |
-| **Install**       | `pnpm install`       | Install all dependencies.                                  |
-| **Dev**           | `pnpm dev`           | Start Electron + Vite dev server concurrently.             |
-| **Build**         | `pnpm build`         | Run full production build (Renderer -> Main -> Builder).   |
-| **Release**       | `pnpm release`       | Build and publish to GitHub Releases.                      |
-| **Test**          | `pnpm test`          | Run all unit tests via Vitest.                             |
-| **Test (Single)** | `pnpm test <file>`   | Run a specific test file (e.g., `pnpm test App.test.tsx`). |
-| **Coverage**      | `pnpm test:coverage` | Generate test coverage report.                             |
-| **Lint/Format**   | `pnpm up-dep`        | Update dependencies (Careful!).                            |
+| Action            | Command                    | Description                                                             |
+| :---------------- | :------------------------- | :---------------------------------------------------------------------- |
+| **Install**       | `pnpm install`             | Install all dependencies.                                               |
+| **Dev**           | `pnpm dev`                 | Start Electron + Vite dev server concurrently.                          |
+| **Build**         | `pnpm build`               | Run full production build (Renderer -> Main -> Builder).                |
+| **Release**       | `pnpm release`             | Build and publish to GitHub Releases.                                   |
+| **Test**          | `pnpm test`                | Run all unit tests via Vitest.                                          |
+| **Test (Single)** | `pnpm test <path/to/file>` | Run a specific test file (e.g., `pnpm test src/renderer/App.test.tsx`). |
+| **Coverage**      | `pnpm test:coverage`       | Generate test coverage report.                                          |
+| **Lint/Format**   | `pnpm up-dep`              | Update dependencies (Careful!).                                         |
 
 ## 2. Directory Structure
 
-- **`build/`**: Output directory for Electron installers (nsis).
-- **`dist/`**: Compiled Renderer assets (Vite output).
-- **`dist-main/`**: Compiled Main process assets.
-- **`src/main/`**: Electron Main Process.
-  - `main.ts`: Application entry point, window creation.
-  - `preload.js`: Context bridge for IPC.
-  - `ipc.ts`: IPC handler registration.
-  - `appLogic.ts`: Core business logic (Game launching, Riot client interaction).
-- **`src/renderer/`**: React Renderer Process.
-  - `components/`: UI Components (Functional).
-  - `contexts/`: React Contexts (Global state).
-  - `hooks/`: Custom React hooks.
-  - `assets/`: Static assets (Images, global CSS).
-  - `__tests__/`: Unit tests.
-- **`scripts/`**: Build scripts (e.g., `build-main.js`).
+- **`src/main/`**: Electron Main Process (Node.js environment).
+  - **`services/`**: Core business logic classes (e.g., `ConfigService`, `AccountService`). Use Dependency Injection pattern.
+  - `main.ts`: Entry point.
+  - `ipc.ts`: IPC handlers.
+- **`src/renderer/`**: React Renderer Process (Browser environment).
+  - `components/`: Functional UI components (`PascalCase.tsx`).
+  - `hooks/`: Custom hooks (`useHook.ts`).
+  - `contexts/`: React Context providers.
+  - `assets/`: Images and global styles.
 
 ## 3. Code Style & Conventions
 
-### TypeScript
+### TypeScript & General
 
-- **Strict Mode:** Enabled. No `any` unless absolutely necessary.
-- **Interfaces:** Prefer `interface` over `type` for object definitions.
+- **Strict Mode:** Enabled. **NO** `any` types. Use proper interfaces/types.
+- **Interfaces:** Use `interface` for object definitions, `type` for unions/primitives.
+- **Path Aliases:**
+  - `@/` -> `src/renderer/` (Renderer only)
+  - `@assets/` -> `src/assets/`
 - **Naming:**
-  - Variables/Functions: `camelCase`
-  - Components/Classes: `PascalCase`
-  - Constants: `UPPER_SNAKE_CASE`
-  - Files: `camelCase.ts` (logic), `PascalCase.tsx` (components).
-
-### Imports
-
-- **Absolute Imports:**
-  - `@/` -> `src/renderer/` (Renderer only).
-  - `@assets/` -> `src/assets/`.
-- **Ordering:**
-  1. External (React, Electron, etc.)
-  2. Internal Absolute (`@/...`)
-  3. Internal Relative (`./...`)
-  4. Styles (`./index.css`)
+  - **Variables/Functions:** `camelCase`
+  - **Components/Classes:** `PascalCase`
+  - **Constants:** `UPPER_SNAKE_CASE`
+  - **Files:** `camelCase.ts` (logic/utils), `PascalCase.tsx` (components/classes).
 
 ### React (Renderer)
 
-- **Functional Components:** Use `const Component = () => {}` syntax.
-- **Hooks:** Extract complex logic into custom hooks (`useAuth`, `useGameStatus`).
-- **Styling:**
-  - Use **Tailwind CSS** for all styling.
-  - Use `clsx` and `tailwind-merge` for conditional classes.
-  - Avoid inline styles (`style={{}}`).
+- **Components:** Functional components only. `const Component = () => {}`.
+- **Styling:** **Tailwind CSS** only. Use `clsx` and `tailwind-merge` for class logic. No inline `style={{}}` unless dynamic (e.g., background images).
 - **Icons:** Use `lucide-react`.
-- **Validation:** Use `zod` for form/data validation.
-- **Animation:** Use `framer-motion` for transitions.
+- **State:** Prefer local state or Context. Avoid Redux unless necessary.
+- **Forms:** Use `zod` for validation.
 
 ### Electron (Main)
 
-- **IPC Pattern:**
+- **Architecture:** Service-based pattern in `src/main/services/`.
+- **IPC:**
   - **Renderer:** `window.electron.ipcRenderer.invoke('channel', data)`
-  - **Main:** `ipcMain.handle('channel', async (event, data) => { ... })`
-- **Security:**
-  - `nodeIntegration: false`
-  - `contextIsolation: true`
-  - Expose only safe APIs via `preload.js`.
-- **File System:**
-  - Use `fs-extra` for simplified fs operations.
-  - **Paths:** Always use `path.join()`. Never string concatenation.
-  - **UserData:** Store user data in `app.getPath('userData')`.
+  - **Main:** `ipcMain.handle('channel', async (evt, data) => { ... })`
+- **File System:** Use `fs-extra` for all FS operations.
+- **Paths:** ALWAYS use `path.join()`. Never string concatenation for paths.
+- **Logging:** Use `devLog`/`devError` from `./logger`. **NO** `console.log` in production code.
+
+### Imports Ordering
+
+1. **External:** `react`, `electron`, third-party libs.
+2. **Internal Absolute:** `@/components/...`, `@assets/...`.
+3. **Internal Relative:** `./utils`, `../hooks`.
+4. **Styles:** `./index.css`.
 
 ## 4. Testing Guidelines
 
-### Framework
-
-- **Vitest:** Test runner.
-- **React Testing Library:** Component testing.
-
-### Writing Tests
-
-- **Location:** `__tests__` folder in the same directory as the code or `src/renderer/__tests__`.
-- **Naming:** `Filename.test.tsx` or `Filename.test.ts`.
-- **Structure:**
-  ```typescript
-  describe("ComponentName", () => {
-    it("should render correctly", () => {
-      render(<ComponentName />);
-      expect(screen.getByText("Hello")).toBeInTheDocument();
-    });
-  });
-  ```
+- **Framework:** Vitest + React Testing Library.
+- **Location:** `__tests__` directory alongside code or in `src/renderer/__tests__`.
+- **Naming:** `Component.test.tsx` or `logic.test.ts`.
 - **Mocking:**
-  - Mock `window.electron` methods in renderer tests.
-  - Mock `fs-extra` or `electron` modules in main process tests.
+  - Mock `window.electron` in renderer tests.
+  - Mock `fs-extra` in main process tests.
 
-## 5. Error Handling & Logging
+```typescript
+// Example Test Structure
+describe("AccountCard", () => {
+  it("should render account name", () => {
+    render(<AccountCard account={mockAccount} />);
+    expect(screen.getByText("PlayerOne")).toBeInTheDocument();
+  });
+});
+```
 
-- **Logging (Main):**
-  - Use `devLog` and `devError` from `./logger`.
-  - Do NOT use `console.log` in production code.
-- **Logging (Renderer):**
-  - `console.error` is acceptable for development debugging.
-- **Error Boundaries:**
-  - The renderer is wrapped in an `ErrorBoundary` component.
-- **Async/Await:**
-  - Always use `try/catch` blocks for async operations, especially file I/O and network requests.
+## 5. Critical Rules for Agents
 
-## 6. Critical Rules for Agents
-
-1.  **Read Before Write:** Always inspect `package.json`, `tsconfig.json`, and relevant source files before making changes.
-2.  **No Blind Installs:** Do not install new `npm` packages without user approval.
-3.  **Preserve Context:** When editing, keep surrounding comments and code style intact.
-4.  **Absolute Paths:** ALWAYS use full absolute paths for file operations (e.g., `D:\Code\SwitchMaster-v2\src\...`).
-5.  **Verify:** Run `pnpm type-check` (if available) or `pnpm build` after significant changes to ensure integrity.
-6.  **No Regressions:** Ensure existing tests pass (`pnpm test`) before considering a task complete.
+1.  **Read First:** Always inspect `package.json` and `tsconfig.json` before changing config.
+2.  **No Blind Installs:** Do not run `npm install` or `pnpm install` for new packages without user permission.
+3.  **Absolute Paths:** ALWAYS use full absolute paths for file operations (e.g., `D:\Code\SwitchMaster-v2\src\main\main.ts`).
+4.  **Preserve Style:** Match indentation (2 spaces), quoting (double quotes), and existing patterns.
+5.  **Verify:** Run `pnpm build` after significant refactoring to ensure type safety.
+6.  **No Regressions:** Run `pnpm test` to verify changes.
+7.  **Error Handling:** Use `try/catch` for all async operations (IPC, FS, Network).

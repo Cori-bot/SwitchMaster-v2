@@ -118,12 +118,19 @@ export class AccountService {
     const existing = accounts[index];
 
     // N-encrypter que si les identifiants sont différents de ceux déjà cryptés
+    const currentUsername = this.securityService.decryptData(
+      existing.username || "",
+    );
+    const currentPassword = this.securityService.decryptData(
+      existing.password || "",
+    );
+
     const encryptedUsername =
-      username && username !== existing.username
+      username && username !== currentUsername
         ? this.securityService.encryptData(username)
         : existing.username;
     const encryptedPassword =
-      password && password !== existing.password
+      password && password !== currentPassword
         ? this.securityService.encryptData(password)
         : existing.password;
 

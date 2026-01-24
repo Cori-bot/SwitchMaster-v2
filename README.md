@@ -1,3 +1,7 @@
+<img src="https://img.shields.io/badge/Status-Beta-orange" height="28">
+<img src="https://img.shields.io/badge/Version-0.1.0-grey" height="28">
+<img src="https://img.shields.io/badge/License-ISC-white" height="28">
+
 # SwitchMaster
 
 SwitchMaster est un gestionnaire de comptes multi-plateforme pour les jeux Riot Games (Valorant, League of Legends). Il permet de basculer rapidement entre vos différents comptes sans avoir à ressaisir vos identifiants à chaque fois.

@@ -178,5 +178,62 @@ describe("miscHandlers - Branches manquantes", () => {
       expect(result.status).toBe("Idle");
       expect(result.accountName).toBeUndefined();
     });
+    it("enrichit status si Active et compte trouvé", async () => {
+      const { registerMiscHandlers } = await import("../main/ipc/miscHandlers");
+
+      const mockContext = {
+        getStatus: vi
+          .fn()
+          .mockResolvedValue({ status: "Active", accountId: "123" }),
+        getAutoStartStatus: vi.fn(),
+        setAutoStart: vi.fn(),
+        isValorantRunning: vi.fn(),
+      };
+
+      const mockService = {
+        getAccounts: vi
+          .fn()
+          .mockResolvedValue([{ id: "123", name: "MyAccount" }]),
+      };
+
+      registerMiscHandlers(
+        () => null,
+        mockContext as any,
+        mockService as any,
+        mockConfigService,
+      );
+
+      const handler = registeredHandlers["get-status"];
+      const result = await handler({});
+
+      expect(result.status).toBe("Active");
+      expect(result.accountName).toBe("MyAccount");
+    });
+  });
+
+  describe("handle-quit-choice errors", () => {
+    it("gère l'erreur lors de la sauvegarde de la config", async () => {
+      const { registerMiscHandlers } = await import("../main/ipc/miscHandlers");
+      const mockConfigServiceError = {
+        getConfig: vi.fn().mockReturnValue({}),
+        saveConfig: vi.fn().mockRejectedValue(new Error("Save failed")),
+      };
+
+      registerMiscHandlers(
+        () => null,
+        {} as any,
+        mockAccountService,
+        mockConfigServiceError as any,
+      );
+
+      const handler = registeredHandlers["handle-quit-choice"];
+      // Should not throw, but log error (which we can check if logger was mocked, but safeHandle catches it? No, safeHandle logs error if handler throws. Here the catch is inside handler)
+      // So we just ensure it completes.
+      const result = await handler(
+        {},
+        { action: "minimize", dontShowAgain: true },
+      );
+      expect(result).toBe(true);
+    });
   });
 });
